@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pick apps to cut back on</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Inter:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#12301A}a:hover{color:#000000}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.tap{transition:transform .15s ease, background .2s ease}.tap:active{transform:scale(.97)}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #12301A">
+<div style="position: absolute; left: 0; top: 0"><dc-import name="Sky" hills="low" hint-size="390px,844px"></dc-import></div>
+
+<div style="position: relative; height: 100%; box-sizing: border-box; padding: 56px 24px 34px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; justify-content: center; gap: 8px">
+<div style="width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.8)"></div>
+<div style="width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.8)"></div>
+<div style="width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.8)"></div>
+<div style="width: 28px; height: 8px; border-radius: 4px; background: #12301A"></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; animation: rise .5s ease-out both">
+<h1 style="margin: 0; font-family: Fredoka, sans-serif; font-size: 32px; font-weight: 700; line-height: 1.05">which apps steal your time?</h1>
+<p style="margin: 0; font-size: 16px; font-weight: 600; line-height: 1.45; color: #2C4A36">i'll check in when you open these.</p>
+</div>
+<div style="padding: 4px 16px; border-radius: 26px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(255,255,255,0.95); backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(20,60,40,0.1); display: flex; flex-direction: column; animation: rise .5s .1s ease-out both">
+<sc-for list="{{apps}}" as="item" hint-placeholder-count="5">
+<button type="button" class="tap" aria-pressed="{{item.pressed}}" onClick="{{item.pick}}" style="min-height: 58px; display: flex; align-items: center; gap: 14px; background: transparent; border: 0; border-bottom: 1px solid rgba(18,48,26,0.08); padding: 0; font-family: Fredoka, sans-serif; color: #12301A; cursor: pointer; text-align: left">
+<span style="{{item.initialStyle}}">{{item.initial}}</span>
+<span style="flex-grow: 1; font-size: 19px; font-weight: 600">{{item.label}}</span>
+<span style="{{item.checkStyle}}">
+<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5 L6.5 12 L13 4.5" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+</span>
+</button>
+</sc-for>
+<sc-if value="{{adding}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; gap: 8px; align-items: center; padding: 10px 0">
+<label for="newApp" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">App name</label>
+<input id="newApp" type="text" placeholder="e.g. discord" value="{{draft}}" onChange="{{onDraft}}" style="flex-grow: 1; min-width: 0; height: 46px; box-sizing: border-box; padding: 0 16px; border-radius: 999px; border: 2px solid #12301A; background: #FFFFFF; font-family: Inter, system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #12301A">
+<button type="button" class="tap" onClick="{{commit}}" style="height: 46px; padding: 0 18px; border-radius: 999px; border: 0; background: #12301A; color: #FFFFFF; font-family: Fredoka, sans-serif; font-size: 16px; font-weight: 600; cursor: pointer">add</button>
+</div>
+</sc-if>
+<button type="button" class="tap" onClick="{{startAdd}}" style="min-height: 56px; display: flex; align-items: center; gap: 14px; background: transparent; border: 0; padding: 0; font-family: Fredoka, sans-serif; color: #12301A; font-size: 18px; font-weight: 600; cursor: pointer; text-align: left">
+<span style="width: 38px; height: 38px; border-radius: 12px; border: 2px dashed #12301A; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-size: 22px">+</span>add another app</button>
+</div>
+<p style="margin: 0; font-size: 13px; font-weight: 600; line-height: 1.45; color: #2C4A36; text-align: center">rilo uses apple's screen time to see when you open these.</p>
+<div style="flex-grow: 1"></div>
+<a href="TimeBack.dc.html" class="tap" style="width: 100%; height: 58px; flex-shrink: 0; border-radius: 999px; background: #FFFFFF; color: #12301A; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(10,40,20,0.25)">turn on screen time</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { on: { tiktok: true, instagram: true, youtube: true }, extra: [], adding: false, draft: '' };
+}
+renderVals() {
+const apps = [['tiktok', '#1B1F1A'], ['instagram', '#B23A6A'], ['youtube', '#C0352B'], ['snapchat', '#8A7A12'], ['x', '#3D4540']].concat(this.state.extra.map((n) => [n, '#2E8B3E']));
+return {
+adding: this.state.adding,
+draft: this.state.draft,
+startAdd: () => this.setState({ adding: true, draft: '' }),
+onDraft: (e) => this.setState({ draft: e.target.value }),
+commit: () => {
+const t = this.state.draft.trim().toLowerCase();
+if (!t) { this.setState({ adding: false }); return; }
+this.setState({ extra: this.state.extra.concat([t]), on: Object.assign({}, this.state.on, { [t]: true }), adding: false, draft: '' });
+},
+apps: apps.map(([label, color]) => {
+const on = !!this.state.on[label];
+return {
+label: label,
+initial: label.charAt(0).toUpperCase(),
+pressed: on ? 'true' : 'false',
+initialStyle: 'width: 38px; height: 38px; border-radius: 12px; background: ' + color + '; color: #FFFFFF; font-size: 17px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0',
+checkStyle: on ? 'width: 30px; height: 30px; border-radius: 15px; background: #12301A; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s ease' : 'width: 30px; height: 30px; border-radius: 15px; background: rgba(255,255,255,0.8); border: 2px solid rgba(18,48,26,0.2); box-sizing: border-box; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s ease',
+pick: () => this.setState({ on: Object.assign({}, this.state.on, { [label]: !on }) })
+};
+})
+};
+}
+}
+</script>
+</body>
+</html>

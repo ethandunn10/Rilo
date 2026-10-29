@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rilo reply: taking a break</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Inter:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFFFFF}a:hover{color:#E6F5E8}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.tap{transition:transform .15s ease, background .2s ease, color .2s ease}.tap:active{transform:scale(.94)}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #12301A">
+<div style="position: absolute; left: 0; top: 0"><dc-import name="Sky" hills="mid" hint-size="390px,844px"></dc-import></div>
+
+<div style="position: relative; height: 100%; box-sizing: border-box; padding: 56px 22px 28px; display: flex; flex-direction: column; gap: 14px">
+<p style="margin: 0; align-self: center; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.6); font-family: Fredoka, sans-serif; font-size: 15px; font-weight: 600">you said: taking a break</p>
+<div style="display: flex; justify-content: center"><dc-import name="Buddy" mood="proud" motion="jump" size="160" hint-size="160px,148px"></dc-import></div>
+<div style="padding: 16px 18px; border-radius: 24px 24px 24px 8px; background: rgba(255,255,255,0.85); border: 1.5px solid #FFFFFF; backdrop-filter: blur(14px); box-shadow: 0 10px 26px rgba(20,60,40,0.1); animation: rise .5s .1s ease-out both">
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 21px; font-weight: 600; line-height: 1.3">you earned it. ap bio homework is done. enjoy it, then i'll come get you.</p>
+</div>
+<div style="padding: 16px; border-radius: 24px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(255,255,255,0.95); backdrop-filter: blur(14px); display: flex; flex-direction: column; gap: 12px; animation: rise .5s .2s ease-out both">
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 17px; font-weight: 600; color: #2C4A36">how long?</p>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{lengths}}" as="l" hint-placeholder-count="3">
+<button type="button" class="tap" aria-pressed="{{l.pressed}}" onClick="{{l.pick}}" style="{{l.style}}">{{l.label}}</button>
+</sc-for>
+</div>
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 46px; font-weight: 700; text-align: center">{{clock}}</p>
+</div>
+<div style="flex-grow: 1"></div>
+<div style="display: flex; flex-direction: column; gap: 6px; animation: rise .5s .3s ease-out both">
+<a href="CheckIn.dc.html" class="tap" style="width: 100%; height: 56px; border-radius: 999px; background: #FFFFFF; color: #12301A; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(10,40,20,0.25)">start my break</a>
+<a href="Home.dc.html" style="font-family: Fredoka, sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; padding: 8px; text-align: center">actually, never mind</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { mins: 15 };
+}
+renderVals() {
+const base = 'min-height: 48px; border-radius: 999px; font-family: Fredoka, sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; ';
+return {
+clock: this.state.mins + ':00',
+lengths: [5, 10, 15].map((m) => {
+const on = this.state.mins === m;
+return {
+label: m + ' min',
+pressed: on ? 'true' : 'false',
+style: on ? base + 'background: #12301A; color: #FFFFFF; border: 2px solid #12301A' : base + 'background: rgba(255,255,255,0.85); color: #12301A; border: 2px solid #FFFFFF',
+pick: () => this.setState({ mins: m })
+};
+})
+};
+}
+}
+</script>
+</body>
+</html>

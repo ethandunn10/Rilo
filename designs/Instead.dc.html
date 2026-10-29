@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rilo suggests something better</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Inter:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#12301A}a:hover{color:#000000}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{opacity:0;transform:scale(.6) translateY(30px)}60%{opacity:1;transform:scale(1.06)}100%{transform:scale(1)}}
+.tap{transition:transform .15s ease}.tap:active{transform:scale(.96)}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #12301A">
+<div style="position: absolute; left: 0; top: 0"><dc-import name="Sky" hills="low" hint-size="390px,844px"></dc-import></div>
+
+<div style="position: absolute; left: 0; right: 0; top: 56px; display: flex; justify-content: center; gap: 8px">
+<div style="width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.8)"></div>
+<div style="width: 28px; height: 8px; border-radius: 4px; background: #12301A"></div>
+<div style="width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.8)"></div>
+<div style="width: 8px; height: 8px; border-radius: 4px; background: rgba(255,255,255,0.8)"></div>
+</div>
+
+<div style="position: absolute; left: 24px; right: 24px; top: 92px; padding: 20px 18px; border-radius: 30px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(255,255,255,0.95); backdrop-filter: blur(16px); box-shadow: 0 14px 40px rgba(20,60,40,0.14); display: flex; flex-direction: column; gap: 14px; animation: rise .6s ease-out both">
+<div style="display: flex; align-items: center; gap: 10px">
+<div style="animation: pop .7s .15s cubic-bezier(.2,.9,.3,1.2) both"><dc-import name="Buddy" mood="coach" size="100" hint-size="100px,93px"></dc-import></div>
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; line-height: 1.25">bored? you said you're working on your jumper.</p>
+</div>
+<div style="border-radius: 22px; background: #12301A; padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; color: #FFFFFF; animation: rise .5s .35s ease-out both">
+<p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9FD8A9">do this instead</p>
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 22px; font-weight: 600">shoot 50 free throws</p>
+<p style="margin: 0; font-size: 14px; font-weight: 600; color: #C9E6CE">about 20 min · +40 xp</p>
+</div>
+<div style="display: flex; gap: 10px; animation: rise .5s .45s ease-out both">
+<span style="flex-grow: 1; height: 46px; border-radius: 999px; background: #FFFFFF; font-family: Fredoka, sans-serif; font-size: 17px; font-weight: 600; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(20,60,40,0.12)">i'm going</span>
+<span style="flex-grow: 1; height: 46px; border-radius: 999px; background: rgba(255,255,255,0.4); border: 1.5px solid #FFFFFF; font-family: Fredoka, sans-serif; font-size: 17px; font-weight: 600; display: flex; align-items: center; justify-content: center">5 more min</span>
+</div>
+</div>
+
+<div style="position: absolute; left: 28px; right: 28px; top: 480px; display: flex; flex-direction: column; gap: 10px; animation: rise .6s .3s ease-out both">
+<h1 style="margin: 0; font-family: Fredoka, sans-serif; font-size: 34px; font-weight: 700; line-height: 1.05">i don't just block apps. i know you.</h1>
+<p style="margin: 0; font-size: 17px; font-weight: 600; line-height: 1.45; color: #2C4A36">i learn what you're into and point you at it right when you're about to lose an hour.</p>
+</div>
+
+<div style="position: absolute; left: 24px; right: 24px; bottom: 34px">
+<a href="AboutYou.dc.html" class="tap" style="width: 100%; height: 58px; border-radius: 999px; background: #FFFFFF; color: #12301A; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(10,40,20,0.25)">next</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

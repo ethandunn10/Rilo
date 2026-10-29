@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rilo buddy</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800;900&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: {{size}}px; height: {{h}}px; font-family: Nunito, system-ui, sans-serif; color: #1B1F1A">
+
+<sc-if value="{{isCoach}}" hint-placeholder-val="{{ true }}">
+<svg width="{{size}}" height="{{h}}" viewBox="0 0 200 185" role="img" aria-label="Rilo, confident and winking">
+<ellipse cx="100" cy="172" rx="60" ry="6" fill="#1B1F1A" opacity="0.08"><animate attributeName="rx" values="{{shadowValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animate></ellipse>
+<g>
+<animateTransform attributeName="transform" type="translate" values="{{moveValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animateTransform>
+<ellipse cx="76" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<ellipse cx="124" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<path d="M30 112 C30 64 66 40 100 40 C134 40 170 64 170 112 C170 143 145 153 100 153 C55 153 30 143 30 112 Z" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M88 46 C88 32 98 24 106 27 C114 30 112 40 103 40" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M78 54 Q86 48 93 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M122 54 Q114 48 107 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M38 74 C24 62 10 62 2 54 C8 70 18 78 34 82 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M38 86 C24 92 12 102 4 110 C18 108 28 100 36 92 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M33 80 Q100 58 167 74 L169 94 Q100 78 32 100 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<text x="101" y="86" text-anchor="middle" transform="rotate(-4 101 86)" font-family="Nunito, sans-serif" font-weight="900" font-size="12" letter-spacing="2" fill="#FFFFFF">RILO</text>
+<path d="M71 112 Q78 106 85 112" fill="none" stroke="#1B1F1A" stroke-width="4" stroke-linecap="round"></path>
+<circle cx="122" cy="112" r="5.5" fill="#1B1F1A"></circle>
+<path d="M114 105 L129 102" stroke="#1B1F1A" stroke-width="3" stroke-linecap="round"></path>
+<path d="M90 126 Q101 134 112 124" fill="none" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round"></path>
+<path d="M32 118 L18 126" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+<path d="M168 110 L182 96" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+</g>
+</svg>
+</sc-if>
+
+<sc-if value="{{isWave}}" hint-placeholder-val="{{ false }}">
+<svg width="{{size}}" height="{{h}}" viewBox="0 0 200 185" role="img" aria-label="Rilo waving hello">
+<ellipse cx="100" cy="172" rx="60" ry="6" fill="#1B1F1A" opacity="0.08"><animate attributeName="rx" values="{{shadowValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animate></ellipse>
+<g>
+<animateTransform attributeName="transform" type="translate" values="{{moveValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animateTransform>
+<ellipse cx="76" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<ellipse cx="124" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<path d="M30 112 C30 64 66 40 100 40 C134 40 170 64 170 112 C170 143 145 153 100 153 C55 153 30 143 30 112 Z" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M88 46 C88 32 98 24 106 27 C114 30 112 40 103 40" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M78 54 Q86 48 93 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M122 54 Q114 48 107 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M38 74 C24 62 10 62 2 54 C8 70 18 78 34 82 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M38 86 C24 92 12 102 4 110 C18 108 28 100 36 92 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M33 80 Q100 58 167 74 L169 94 Q100 78 32 100 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<text x="101" y="86" text-anchor="middle" transform="rotate(-4 101 86)" font-family="Nunito, sans-serif" font-weight="900" font-size="12" letter-spacing="2" fill="#FFFFFF">RILO</text>
+<circle cx="78" cy="114" r="5.5" fill="#1B1F1A"></circle>
+<circle cx="122" cy="114" r="5.5" fill="#1B1F1A"></circle>
+<path d="M90 125 Q100 136 110 125" fill="none" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round"></path>
+<path d="M32 118 L18 126" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+<path d="M168 110 L182 92" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+<path d="M188 78 Q196 84 194 94" fill="none" stroke="#2E8B3E" stroke-width="3" stroke-linecap="round"></path>
+</g>
+</svg>
+</sc-if>
+
+<sc-if value="{{isProud}}" hint-placeholder-val="{{ false }}">
+<svg width="{{size}}" height="{{h}}" viewBox="0 0 200 185" role="img" aria-label="Rilo proud, arms up">
+<ellipse cx="100" cy="172" rx="60" ry="6" fill="#1B1F1A" opacity="0.08"><animate attributeName="rx" values="{{shadowValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animate></ellipse>
+<g>
+<animateTransform attributeName="transform" type="translate" values="{{moveValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animateTransform>
+<ellipse cx="76" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<ellipse cx="124" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<path d="M30 112 C30 64 66 40 100 40 C134 40 170 64 170 112 C170 143 145 153 100 153 C55 153 30 143 30 112 Z" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M88 46 C88 32 98 24 106 27 C114 30 112 40 103 40" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M78 54 Q86 48 93 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M122 54 Q114 48 107 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M38 74 C24 62 10 62 2 54 C8 70 18 78 34 82 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M38 86 C24 92 12 102 4 110 C18 108 28 100 36 92 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M33 80 Q100 58 167 74 L169 94 Q100 78 32 100 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<text x="101" y="86" text-anchor="middle" transform="rotate(-4 101 86)" font-family="Nunito, sans-serif" font-weight="900" font-size="12" letter-spacing="2" fill="#FFFFFF">RILO</text>
+<path d="M71 116 Q78 108 85 116" fill="none" stroke="#1B1F1A" stroke-width="4" stroke-linecap="round"></path>
+<path d="M115 116 Q122 108 129 116" fill="none" stroke="#1B1F1A" stroke-width="4" stroke-linecap="round"></path>
+<path d="M88 124 Q100 140 112 124 Z" fill="#1B1F1A" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M32 110 L18 96" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+<path d="M168 110 L182 96" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+</g>
+</svg>
+</sc-if>
+
+<sc-if value="{{isCurious}}" hint-placeholder-val="{{ false }}">
+<svg width="{{size}}" height="{{h}}" viewBox="0 0 200 185" role="img" aria-label="Rilo curious, asking why">
+<ellipse cx="100" cy="172" rx="60" ry="6" fill="#1B1F1A" opacity="0.08"><animate attributeName="rx" values="{{shadowValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animate></ellipse>
+<g>
+<animateTransform attributeName="transform" type="translate" values="{{moveValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animateTransform>
+<ellipse cx="76" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<ellipse cx="124" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<path d="M30 112 C30 64 66 40 100 40 C134 40 170 64 170 112 C170 143 145 153 100 153 C55 153 30 143 30 112 Z" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M88 46 C88 32 98 24 106 27 C114 30 112 40 103 40" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M78 54 Q86 48 93 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M122 54 Q114 48 107 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M38 74 C24 62 10 62 2 54 C8 70 18 78 34 82 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M38 86 C24 92 12 102 4 110 C18 108 28 100 36 92 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M33 80 Q100 58 167 74 L169 94 Q100 78 32 100 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<text x="101" y="86" text-anchor="middle" transform="rotate(-4 101 86)" font-family="Nunito, sans-serif" font-weight="900" font-size="12" letter-spacing="2" fill="#FFFFFF">RILO</text>
+<circle cx="78" cy="114" r="5.5" fill="#1B1F1A"></circle>
+<circle cx="122" cy="112" r="7" fill="#1B1F1A"></circle>
+<path d="M114 102 L130 98" stroke="#1B1F1A" stroke-width="3" stroke-linecap="round"></path>
+<circle cx="100" cy="129" r="4.5" fill="none" stroke="#1B1F1A" stroke-width="3.5"></circle>
+<text x="184" y="60" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="34" fill="#2E8B3E">?</text>
+<path d="M32 118 L18 126" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+<path d="M168 118 L182 126" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+</g>
+</svg>
+</sc-if>
+
+<sc-if value="{{isSleepy}}" hint-placeholder-val="{{ false }}">
+<svg width="{{size}}" height="{{h}}" viewBox="0 0 200 185" role="img" aria-label="Rilo sleepy">
+<ellipse cx="100" cy="172" rx="60" ry="6" fill="#1B1F1A" opacity="0.08"><animate attributeName="rx" values="{{shadowValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animate></ellipse>
+<g>
+<animateTransform attributeName="transform" type="translate" values="{{moveValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animateTransform>
+<ellipse cx="76" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<ellipse cx="124" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<path d="M30 112 C30 64 66 40 100 40 C134 40 170 64 170 112 C170 143 145 153 100 153 C55 153 30 143 30 112 Z" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M88 46 C88 32 98 24 106 27 C114 30 112 40 103 40" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M78 54 Q86 48 93 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M122 54 Q114 48 107 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M38 78 C24 66 10 66 2 58 C8 74 18 82 34 86 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M38 90 C24 96 12 106 4 114 C18 112 28 104 36 96 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M33 84 Q100 62 167 78 L169 98 Q100 82 32 104 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<text x="101" y="90" text-anchor="middle" transform="rotate(-4 101 90)" font-family="Nunito, sans-serif" font-weight="900" font-size="12" letter-spacing="2" fill="#FFFFFF">RILO</text>
+<path d="M71 116 Q78 122 85 116" fill="none" stroke="#1B1F1A" stroke-width="4" stroke-linecap="round"></path>
+<path d="M115 116 Q122 122 129 116" fill="none" stroke="#1B1F1A" stroke-width="4" stroke-linecap="round"></path>
+<path d="M95 130 L105 130" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round"></path>
+<text x="178" y="58" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="26" fill="#6B7A68">z</text>
+<text x="192" y="38" text-anchor="middle" font-family="Nunito, sans-serif" font-weight="900" font-size="18" fill="#6B7A68">z</text>
+<path d="M32 120 L20 132" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+<path d="M168 120 L180 132" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+</g>
+</svg>
+</sc-if>
+
+<sc-if value="{{isLetdown}}" hint-placeholder-val="{{ false }}">
+<svg width="{{size}}" height="{{h}}" viewBox="0 0 200 185" role="img" aria-label="Rilo let down">
+<ellipse cx="100" cy="172" rx="60" ry="6" fill="#1B1F1A" opacity="0.08"><animate attributeName="rx" values="{{shadowValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animate></ellipse>
+<g>
+<animateTransform attributeName="transform" type="translate" values="{{moveValues}}" keyTimes="{{keyTimes}}" calcMode="spline" keySplines="{{splines}}" dur="{{dur}}" repeatCount="indefinite"></animateTransform>
+<ellipse cx="76" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<ellipse cx="124" cy="156" rx="10" ry="6" fill="#1B1F1A"></ellipse>
+<path d="M30 112 C30 64 66 40 100 40 C134 40 170 64 170 112 C170 143 145 153 100 153 C55 153 30 143 30 112 Z" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M88 46 C88 32 98 24 106 27 C114 30 112 40 103 40" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M78 54 Q86 48 93 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M122 54 Q114 48 107 46" fill="none" stroke="#1B1F1A" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M38 74 C24 62 10 62 2 54 C8 70 18 78 34 82 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M38 86 C24 92 12 102 4 110 C18 108 28 100 36 92 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M33 80 Q100 58 167 74 L169 94 Q100 78 32 100 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path>
+<text x="101" y="86" text-anchor="middle" transform="rotate(-4 101 86)" font-family="Nunito, sans-serif" font-weight="900" font-size="12" letter-spacing="2" fill="#FFFFFF">RILO</text>
+<circle cx="78" cy="116" r="5.5" fill="#1B1F1A"></circle>
+<circle cx="122" cy="116" r="5.5" fill="#1B1F1A"></circle>
+<path d="M70 106 L84 110" stroke="#1B1F1A" stroke-width="3" stroke-linecap="round"></path>
+<path d="M130 106 L116 110" stroke="#1B1F1A" stroke-width="3" stroke-linecap="round"></path>
+<path d="M92 132 Q100 125 108 132" fill="none" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round"></path>
+<path d="M32 120 L20 132" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+<path d="M168 120 L180 132" stroke="#1B1F1A" stroke-width="6" stroke-linecap="round"></path>
+</g>
+</svg>
+</sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mood":{"editor":"enum","options":["coach","wave","proud","curious","sleepy","letdown"],"default":"coach"},"size":{"editor":"int","min":40,"max":400,"default":240},"motion":{"editor":"enum","options":["idle","jump","none"],"default":"idle"},"$preview":{"width":240,"height":222}}'>
+class Component extends DCLogic {
+renderVals() {
+const mood = this.props.mood ?? 'coach';
+const size = Number(this.props.size ?? 240);
+const motion = this.props.motion ?? 'idle';
+const ease = '.45 0 .55 1';
+const m = motion === 'jump'
+? { moveValues: '0 0;0 0;0 -28;0 0;0 0', shadowValues: '60;64;40;64;60', keyTimes: '0;0.2;0.45;0.7;1', splines: '0 0 1 1;.2 .8 .4 1;.6 0 .8 .2;0 0 1 1', dur: '1.3s' }
+: motion === 'none'
+? { moveValues: '0 0;0 0', shadowValues: '60;60', keyTimes: '0;1', splines: ease, dur: '1s' }
+: { moveValues: '0 0;0 -5;0 0', shadowValues: '60;54;60', keyTimes: '0;0.5;1', splines: ease + ';' + ease, dur: '2.4s' };
+return {
+moveValues: m.moveValues,
+shadowValues: m.shadowValues,
+keyTimes: m.keyTimes,
+splines: m.splines,
+dur: m.dur,
+size: size,
+h: Math.round(size * 185 / 200),
+isCoach: mood === 'coach',
+isWave: mood === 'wave',
+isProud: mood === 'proud',
+isCurious: mood === 'curious',
+isSleepy: mood === 'sleepy',
+isLetdown: mood === 'letdown'
+};
+}
+}
+</script>
+</body>
+</html>

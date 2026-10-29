@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pick your Rilo</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Inter:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#12301A}a:hover{color:#000000}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.tap{transition:transform .15s ease, background .2s ease, border-color .2s ease}.tap:active{transform:scale(.93)}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #12301A">
+<div style="position: absolute; left: 0; top: 0"><dc-import name="Sky" hills="mid" hint-size="390px,844px"></dc-import></div>
+
+<div style="position: relative; height: 100%; box-sizing: border-box; padding: 52px 20px 30px; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<a href="Home.dc.html" class="tap" aria-label="Back to home" style="width: 44px; height: 44px; border-radius: 22px; background: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 L8 12 L15 19" fill="none" stroke="#12301A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></a>
+<h1 style="margin: 0; font-family: Fredoka, sans-serif; font-size: 26px; font-weight: 700">your rilo</h1>
+<div style="width: 44px"></div>
+</div>
+
+<div style="display: flex; flex-direction: column; align-items: center; gap: 2px; height: 236px; justify-content: flex-end">
+<dc-import name="Skin" look="{{sel}}" size="200" hint-size="200px,185px"></dc-import>
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 24px; font-weight: 700">{{selName}}</p>
+<p style="{{selTagStyle}}">{{selTag}}</p>
+</div>
+
+<div style="padding: 12px; border-radius: 28px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(255,255,255,0.95); backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(20,60,40,0.12); display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="8">
+<button type="button" class="tap" aria-label="{{t.label}}" aria-pressed="{{t.pressed}}" onClick="{{t.pick}}" style="{{t.style}}">
+<dc-import name="Skin" look="{{t.look}}" size="64" hint-size="64px,59px"></dc-import>
+<span style="{{t.badgeStyle}}">{{t.badge}}</span>
+</button>
+</sc-for>
+</div>
+
+<div style="flex-grow: 1"></div>
+<sc-if value="{{canUse}}" hint-placeholder-val="{{ true }}">
+<a href="Home.dc.html" class="tap" style="width: 100%; height: 58px; flex-shrink: 0; border-radius: 999px; background: #FFFFFF; color: #12301A; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(10,40,20,0.25)">use this rilo</a>
+</sc-if>
+<sc-if value="{{needsPro}}" hint-placeholder-val="{{ false }}">
+<a href="Paywall.dc.html" class="tap" style="width: 100%; height: 58px; flex-shrink: 0; border-radius: 999px; background: #12301A; color: #FFFFFF; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(10,40,20,0.3)">unlock with rilo pro</a>
+</sc-if>
+<sc-if value="{{isGold}}" hint-placeholder-val="{{ false }}">
+<div style="width: 100%; height: 58px; flex-shrink: 0; border-radius: 999px; background: rgba(255,255,255,0.85); color: #12301A; font-family: Fredoka, sans-serif; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px">level 4 of 10 · keep going</div>
+</sc-if>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { sel: 'original' };
+}
+renderVals() {
+const list = [
+['original', 'original', 'free'], ['proband', 'pro band', 'pro'], ['night', 'night', 'pro'], ['shades', 'shades', 'pro'],
+['sakura', 'sakura', 'pro'], ['cloud', 'cloud', 'pro'], ['studio', 'studio', 'pro'], ['gold', 'gold', 'lvl 10']
+];
+const cur = list.find((x) => x[0] === this.state.sel);
+const tagBase = 'margin: 2px 0 0; padding: 4px 11px; border-radius: 999px; font-family: Fredoka, sans-serif; font-size: 13px; font-weight: 600; ';
+return {
+sel: cur[0],
+selName: cur[1] + ' rilo',
+selTag: cur[2] === 'free' ? 'yours' : cur[2] === 'pro' ? 'rilo pro' : 'earn it at level 10',
+selTagStyle: tagBase + (cur[2] === 'free' ? 'background: #FFFFFF; color: #12301A' : cur[2] === 'pro' ? 'background: #12301A; color: #FFFFFF' : 'background: #F2C230; color: #3D2E00'),
+canUse: cur[2] === 'free',
+needsPro: cur[2] === 'pro',
+isGold: cur[2] === 'lvl 10',
+tiles: list.map(([look, name, tier]) => {
+const on = this.state.sel === look;
+return {
+look: look,
+label: name + ' rilo, ' + (tier === 'free' ? 'free' : tier === 'pro' ? 'rilo pro' : 'unlocks at level 10'),
+pressed: on ? 'true' : 'false',
+badge: tier === 'free' ? '' : tier === 'pro' ? 'pro' : 'lvl 10',
+badgeStyle: tier === 'free' ? 'display: none' : 'position: absolute; top: 4px; right: 4px; padding: 2px 6px; border-radius: 999px; font-family: Fredoka, sans-serif; font-size: 10px; font-weight: 600; ' + (tier === 'pro' ? 'background: #12301A; color: #FFFFFF' : 'background: #F2C230; color: #3D2E00'),
+style: 'position: relative; min-height: 84px; border-radius: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; ' + (on ? 'background: #FFFFFF; border: 2.5px solid #12301A' : 'background: rgba(255,255,255,0.5); border: 2px solid transparent'),
+pick: () => this.setState({ sel: look })
+};
+})
+};
+}
+}
+</script>
+</body>
+</html>

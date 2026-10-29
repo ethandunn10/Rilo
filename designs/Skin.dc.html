@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rilo skin</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width: {{size}}px; height: {{h}}px">
+<svg width="{{size}}" height="{{h}}" viewBox="0 0 200 185" role="img" aria-label="{{label}}">
+<ellipse cx="100" cy="172" rx="60" ry="6" fill="#1B1F1A" opacity="0.1"><animate attributeName="rx" values="60;54;60" keyTimes="0;0.5;1" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1" dur="2.4s" repeatCount="indefinite"></animate></ellipse>
+<g>
+<animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" keyTimes="0;0.5;1" calcMode="spline" keySplines=".45 0 .55 1;.45 0 .55 1" dur="2.4s" repeatCount="indefinite"></animateTransform>
+<g opacity="{{phonesOp}}"><path d="M30 104 C30 30 170 30 170 104" fill="none" stroke="{{phonesColor}}" stroke-width="9" stroke-linecap="round"></path></g>
+<ellipse cx="76" cy="156" rx="10" ry="6" fill="{{limbs}}"></ellipse>
+<ellipse cx="124" cy="156" rx="10" ry="6" fill="{{limbs}}"></ellipse>
+<path d="M30 112 C30 64 66 40 100 40 C134 40 170 64 170 112 C170 143 145 153 100 153 C55 153 30 143 30 112 Z" fill="{{body}}" stroke="{{outline}}" stroke-width="3.5" stroke-linejoin="round"></path>
+<path d="M88 46 C88 32 98 24 106 27 C114 30 112 40 103 40" fill="{{pinch}}" stroke="{{outline}}" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path>
+<path d="M78 54 Q86 48 93 46" fill="none" stroke="{{outline}}" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M122 54 Q114 48 107 46" fill="none" stroke="{{outline}}" stroke-width="2.5" stroke-linecap="round"></path>
+<path d="M38 74 C24 62 10 62 2 54 C8 70 18 78 34 82 Z" fill="{{tails}}" stroke="{{outline}}" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M38 86 C24 92 12 102 4 110 C18 108 28 100 36 92 Z" fill="{{tails}}" stroke="{{outline}}" stroke-width="3" stroke-linejoin="round"></path>
+<path d="M33 80 Q100 58 167 74 L169 94 Q100 78 32 100 Z" fill="{{band}}" stroke="{{outline}}" stroke-width="3" stroke-linejoin="round"></path>
+<text x="101" y="86" text-anchor="middle" transform="rotate(-4 101 86)" font-family="Fredoka, sans-serif" font-weight="700" font-size="12" letter-spacing="2" fill="{{bandText}}">RILO</text>
+<g opacity="{{cheeksOp}}"><ellipse cx="62" cy="128" rx="10" ry="5.5" fill="#F4A3B4"></ellipse><ellipse cx="140" cy="126" rx="10" ry="5.5" fill="#F4A3B4"></ellipse></g>
+<path d="M71 112 Q78 106 85 112" fill="none" stroke="{{face}}" stroke-width="4" stroke-linecap="round"></path>
+<circle cx="122" cy="112" r="5.5" fill="{{face}}"></circle>
+<path d="M114 105 L129 102" stroke="{{face}}" stroke-width="3" stroke-linecap="round"></path>
+<path d="M90 126 Q101 134 112 124" fill="none" stroke="{{face}}" stroke-width="3.5" stroke-linecap="round"></path>
+<g opacity="{{shadesOp}}"><rect x="62" y="102" width="32" height="18" rx="8" fill="#12161A"></rect><rect x="106" y="100" width="32" height="18" rx="8" fill="#12161A"></rect><path d="M94 109 L106 108" stroke="#12161A" stroke-width="3.5"></path><path d="M68 106 L76 106" stroke="#7FA3C9" stroke-width="2.5" stroke-linecap="round"></path><path d="M112 104 L120 104" stroke="#7FA3C9" stroke-width="2.5" stroke-linecap="round"></path></g>
+<g opacity="{{phonesOp}}"><rect x="18" y="94" width="20" height="34" rx="9" fill="{{phonesColor}}" stroke="{{outline}}" stroke-width="2.5"></rect><rect x="162" y="94" width="20" height="34" rx="9" fill="{{phonesColor}}" stroke="{{outline}}" stroke-width="2.5"></rect></g>
+<g opacity="{{crownOp}}" transform="rotate(14 132 38)"><path d="M112 46 L114 24 L124 36 L132 20 L140 36 L150 24 L152 46 Z" fill="#F2C230" stroke="#9A6F00" stroke-width="2.5" stroke-linejoin="round"></path><circle cx="132" cy="38" r="3" fill="#E2483D"></circle></g>
+<path d="M32 118 L18 126" stroke="{{limbs}}" stroke-width="6" stroke-linecap="round"></path>
+<path d="M168 110 L182 96" stroke="{{limbs}}" stroke-width="6" stroke-linecap="round"></path>
+<g opacity="{{sparkleOp}}" fill="#F2C230"><path d="M20 40 L23 48 L31 51 L23 54 L20 62 L17 54 L9 51 L17 48 Z"><animate attributeName="opacity" values="1;0.2;1" dur="1.6s" repeatCount="indefinite"></animate></path><path d="M184 60 L186 66 L192 68 L186 70 L184 76 L182 70 L176 68 L182 66 Z"><animate attributeName="opacity" values="0.2;1;0.2" dur="1.9s" repeatCount="indefinite"></animate></path></g>
+</g>
+</svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"look":{"editor":"enum","options":["original","proband","night","cloud","sakura","shades","studio","gold"],"default":"original"},"size":{"editor":"int","min":40,"max":400,"default":200},"$preview":{"width":200,"height":185}}'>
+class Component extends DCLogic {
+renderVals() {
+const K = '#1B1F1A', W = '#FFFFFF', G = '#2E8B3E', V = '#3FBF55';
+const base = { body: W, outline: K, pinch: W, band: G, tails: G, bandText: W, face: K, limbs: K, cheeks: 0, shades: 0, phones: 0, phonesColor: G, crown: 0, sparkle: 0, label: 'Original Rilo' };
+const looks = {
+original: {},
+proband: { band: K, tails: K, bandText: V, label: 'Pro Band Rilo' },
+night: { body: '#2E332F', pinch: '#2E332F', outline: '#0E110E', face: W, limbs: '#0E110E', label: 'Night Rilo' },
+cloud: { body: '#E1E6E3', pinch: '#E1E6E3', outline: '#5D6B63', limbs: '#5D6B63', face: '#33403A', band: '#8FA3B5', tails: '#8FA3B5', label: 'Cloud Rilo' },
+sakura: { band: '#E77A9A', tails: '#E77A9A', pinch: '#F9C9D6', cheeks: 1, label: 'Sakura Rilo' },
+shades: { band: K, tails: K, bandText: W, shades: 1, label: 'Shades Rilo' },
+studio: { phones: 1, phonesColor: '#3A8FD9', band: '#3A8FD9', tails: '#3A8FD9', label: 'Studio Rilo' },
+gold: { band: '#F2C230', tails: '#F2C230', bandText: '#5A4300', crown: 1, sparkle: 1, label: 'Gold Rilo' }
+};
+const v = Object.assign({}, base, looks[this.props.look ?? 'original'] || {});
+const size = Number(this.props.size ?? 200);
+return Object.assign(v, {
+size: size,
+h: Math.round(size * 185 / 200),
+cheeksOp: v.cheeks, shadesOp: v.shades, phonesOp: v.phones, crownOp: v.crown, sparkleOp: v.sparkle
+});
+}
+}
+</script>
+</body>
+</html>

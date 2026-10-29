@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Premium Rilos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Inter:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.card{transition:transform .2s ease, box-shadow .2s ease}.card:hover{transform:translateY(-6px);box-shadow:0 20px 40px rgba(20,60,40,0.18)}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; padding: 52px 60px; background: linear-gradient(180deg, #8CCDEF 0%, #CBEAF5 40%, #EEF8EE 100%); font-family: Inter, system-ui, sans-serif; color: #12301A; display: flex; flex-direction: column; gap: 28px">
+<div style="display: flex; justify-content: space-between; align-items: flex-end">
+<div style="display: flex; flex-direction: column; gap: 6px">
+<h1 style="margin: 0; font-family: Fredoka, sans-serif; font-size: 48px; font-weight: 700">the rilo collection</h1>
+<p style="margin: 0; font-size: 18px; font-weight: 600; color: #2C4A36">1 free, 6 premium, 1 you can only earn. hover a card.</p>
+</div>
+<div style="display: flex; gap: 10px">
+<p style="margin: 0; padding: 7px 14px; border-radius: 999px; background: #FFFFFF; font-family: Fredoka, sans-serif; font-size: 15px; font-weight: 600">free</p>
+<p style="margin: 0; padding: 7px 14px; border-radius: 999px; background: #12301A; color: #FFFFFF; font-family: Fredoka, sans-serif; font-size: 15px; font-weight: 600">premium</p>
+<p style="margin: 0; padding: 7px 14px; border-radius: 999px; background: #F2C230; color: #3D2E00; font-family: Fredoka, sans-serif; font-size: 15px; font-weight: 600">earn it</p>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px">
+<sc-for list="{{looks}}" as="s" hint-placeholder-count="8">
+<div class="card" style="{{s.cardStyle}}">
+<p style="{{s.tagStyle}}">{{s.tag}}</p>
+<dc-import name="Skin" look="{{s.look}}" size="190" hint-size="190px,176px"></dc-import>
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 24px; font-weight: 700">{{s.name}}</p>
+<p style="margin: 0; font-size: 14px; font-weight: 600; color: #2C4A36; text-align: center; line-height: 1.4">{{s.note}}</p>
+</div>
+</sc-for>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+const list = [
+['original', 'original', 'free', 'everyone starts here. the classic.'],
+['proband', 'pro band', 'premium', 'black band, neon green RILO. sports gear energy.'],
+['night', 'night', 'premium', 'charcoal body, glowing white face. made for dark mode.'],
+['shades', 'shades', 'premium', 'too cool to scroll. the fan favorite, probably.'],
+['sakura', 'sakura', 'premium', 'pink band, pink bun, blush. the cutest one.'],
+['cloud', 'cloud', 'premium', 'soft grey and sky blue. calm, chill, minimal.'],
+['studio', 'studio', 'premium', 'headphones on. made for creators, pairs with creator mode.'],
+['gold', 'gold', 'earn it', 'crown + sparkles. only unlocks at level 10. can’t be bought.']
+];
+const tagBase = 'margin: 0; align-self: flex-start; padding: 5px 11px; border-radius: 999px; font-family: Fredoka, sans-serif; font-size: 13px; font-weight: 600; ';
+return {
+looks: list.map(([look, name, tag, note], i) => ({
+look: look, name: name, tag: tag, note: note,
+tagStyle: tagBase + (tag === 'free' ? 'background: #FFFFFF; color: #12301A' : tag === 'premium' ? 'background: #12301A; color: #FFFFFF' : 'background: #F2C230; color: #3D2E00'),
+cardStyle: 'padding: 18px 18px 22px; border-radius: 30px; background: rgba(255,255,255,0.6); border: 1.5px solid rgba(255,255,255,0.95); backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(20,60,40,0.1); display: flex; flex-direction: column; align-items: center; gap: 6px; animation: rise .5s ' + (i * 0.06).toFixed(2) + 's ease-out both'
+}))
+};
+}
+}
+</script>
+</body>
+</html>

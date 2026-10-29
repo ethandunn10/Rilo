@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rilo sky background</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: {{bg}}">
+<svg width="390" height="844" viewBox="0 0 390 844" aria-hidden="true" style="position: absolute; left: 0; top: 0">
+<g opacity="{{cloudOpacity}}">
+<g><animateTransform attributeName="transform" type="translate" values="-24 0;24 0;-24 0" dur="15s" repeatCount="indefinite"></animateTransform>
+<g fill="#FFFFFF" transform="translate(-30 {{c1y}}) scale(1)"><ellipse cx="70" cy="56" rx="58" ry="24"></ellipse><circle cx="92" cy="38" r="30"></circle><circle cx="130" cy="50" r="26"></circle><ellipse cx="110" cy="64" rx="80" ry="18"></ellipse></g></g>
+<g><animateTransform attributeName="transform" type="translate" values="22 0;-22 0;22 0" dur="19s" repeatCount="indefinite"></animateTransform>
+<g fill="#FFFFFF" opacity="0.85" transform="translate(250 {{c2y}}) scale(0.75)"><ellipse cx="70" cy="56" rx="58" ry="24"></ellipse><circle cx="92" cy="38" r="30"></circle><circle cx="130" cy="50" r="26"></circle><ellipse cx="110" cy="64" rx="80" ry="18"></ellipse></g></g>
+<g><animateTransform attributeName="transform" type="translate" values="-16 0;16 0;-16 0" dur="23s" repeatCount="indefinite"></animateTransform>
+<g fill="#FFFFFF" opacity="0.7" transform="translate(140 {{c3y}}) scale(0.55)"><ellipse cx="70" cy="56" rx="58" ry="24"></ellipse><circle cx="92" cy="38" r="30"></circle><circle cx="130" cy="50" r="26"></circle><ellipse cx="110" cy="64" rx="80" ry="18"></ellipse></g></g>
+</g>
+<sc-if value="{{isDusk}}" hint-placeholder-val="{{ false }}">
+<g fill="#FFFFFF"><circle cx="40" cy="70" r="1.5"></circle><circle cx="300" cy="50" r="1.2"></circle><circle cx="200" cy="110" r="1"></circle><circle cx="350" cy="150" r="1.4"></circle><circle cx="90" cy="170" r="1"></circle></g>
+<circle cx="320" cy="90" r="22" fill="#F7F1D8" opacity="0.9"></circle>
+</sc-if>
+<g transform="translate(0 {{hillY}})">
+<path d="M0 120 C90 60 170 70 250 110 C310 140 350 120 390 90 L390 400 L0 400 Z" fill="{{h1}}"></path>
+<path d="M0 190 C80 140 160 120 240 150 C300 172 340 190 390 170 L390 400 L0 400 Z" fill="{{h2}}"></path>
+<path d="M0 270 C110 240 250 236 390 262 L390 400 L0 400 Z" fill="{{h3}}"></path>
+<g><animateTransform attributeName="transform" type="rotate" values="-4 60 160;4 60 160;-4 60 160" dur="3s" repeatCount="indefinite"></animateTransform><path d="M60 160 L60 138 M54 148 L60 140 M66 150 L60 142" stroke="{{h3}}" stroke-width="3" stroke-linecap="round" fill="none"></path></g>
+<g><animateTransform attributeName="transform" type="rotate" values="4 330 178;-4 330 178;4 330 178" dur="3.6s" repeatCount="indefinite"></animateTransform><path d="M330 178 L330 156 M324 166 L330 158 M336 168 L330 160" stroke="{{h3}}" stroke-width="3" stroke-linecap="round" fill="none"></path></g>
+</g>
+</svg>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"hills":{"editor":"enum","options":["tall","mid","low"],"default":"low"},"tone":{"editor":"enum","options":["day","dusk"],"default":"day"},"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const hills = this.props.hills ?? 'low';
+const dusk = (this.props.tone ?? 'day') === 'dusk';
+const hillY = hills === 'tall' ? 484 : hills === 'mid' ? 540 : 600;
+return {
+isDusk: dusk,
+bg: dusk ? 'linear-gradient(180deg, #2B3A6B 0%, #5B6FA6 42%, #A9A9CF 72%, #D9D2E6 100%)' : 'linear-gradient(180deg, #7CC6EE 0%, #A9DCF3 38%, #DDF2F4 66%, #EEF8EE 100%)',
+cloudOpacity: dusk ? 0.35 : 1,
+c1y: 110, c2y: 220, c3y: 330,
+hillY: hillY,
+h1: dusk ? '#6E8F86' : '#9EDCA6',
+h2: dusk ? '#3F7A5A' : '#4CC160',
+h3: dusk ? '#24533A' : '#2E8B3E'
+};
+}
+}
+</script>
+</body>
+</html>

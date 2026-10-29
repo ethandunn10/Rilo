@@ -1,0 +1,24 @@
+# dependencies and build output
+node_modules/
+dist/
+
+# transfer archives (scratch, not source)
+*.tgz
+
+# local / editor / OS
+.DS_Store
+*.local
+.vscode/
+.idea/
+
+# deploy + secrets
+.vercel
+.env
+.env.*
+
+# superseded variant folders — app/ is the live version
+app-themes/
+app-both/
+app-less-nudgy/
+app-skins-15-100/
+.claude-branches/

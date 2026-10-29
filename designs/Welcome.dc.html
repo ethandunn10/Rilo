@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rilo welcome, Touch Grass</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Inter:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#1B1F1A}a:hover{color:#000000}
+@keyframes drift{0%{transform:translateX(-26px)}50%{transform:translateX(26px)}100%{transform:translateX(-26px)}}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+.tap{transition:transform .15s ease}.tap:active{transform:scale(.96)}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; background: linear-gradient(180deg, #7CC6EE 0%, #A9DCF3 38%, #DDF2F4 62%, #EAF7EC 100%); font-family: Inter, system-ui, sans-serif; color: #1B1F1A">
+
+<svg width="200" height="86" viewBox="0 0 200 86" aria-hidden="true" style="position: absolute; left: -30px; top: 120px; opacity: 0.95; animation: drift 14s ease-in-out infinite"><g fill="#FFFFFF"><ellipse cx="70" cy="56" rx="58" ry="24"></ellipse><circle cx="92" cy="38" r="30"></circle><circle cx="130" cy="50" r="26"></circle><ellipse cx="110" cy="64" rx="80" ry="18"></ellipse></g></svg>
+<svg width="150" height="66" viewBox="0 0 200 86" aria-hidden="true" style="position: absolute; right: -20px; top: 230px; opacity: 0.85; animation: drift 18s ease-in-out infinite reverse"><g fill="#FFFFFF"><ellipse cx="70" cy="56" rx="58" ry="24"></ellipse><circle cx="92" cy="38" r="30"></circle><circle cx="130" cy="50" r="26"></circle><ellipse cx="110" cy="64" rx="80" ry="18"></ellipse></g></svg>
+<svg width="110" height="48" viewBox="0 0 200 86" aria-hidden="true" style="position: absolute; left: 150px; top: 330px; opacity: 0.7; animation: drift 22s ease-in-out infinite"><g fill="#FFFFFF"><ellipse cx="70" cy="56" rx="58" ry="24"></ellipse><circle cx="92" cy="38" r="30"></circle><circle cx="130" cy="50" r="26"></circle><ellipse cx="110" cy="64" rx="80" ry="18"></ellipse></g></svg>
+
+<svg width="390" height="360" viewBox="0 0 390 360" aria-hidden="true" style="position: absolute; left: 0; bottom: 0">
+<path d="M0 120 C90 60 170 70 250 110 C310 140 350 120 390 90 L390 360 L0 360 Z" fill="#9EDCA6"></path>
+<path d="M0 190 C80 140 160 120 240 150 C300 172 340 190 390 170 L390 360 L0 360 Z" fill="#4CC160"></path>
+<path d="M0 270 C110 240 250 236 390 262 L390 360 L0 360 Z" fill="#2E8B3E"></path>
+<g style="transform-origin: 60px 160px; animation: sway 3s ease-in-out infinite"><path d="M60 160 L60 138 M54 148 L60 140 M66 150 L60 142" stroke="#2E8B3E" stroke-width="3" stroke-linecap="round" fill="none"></path></g>
+<g style="transform-origin: 330px 178px; animation: sway 3.6s ease-in-out infinite"><path d="M330 178 L330 156 M324 166 L330 158 M336 168 L330 160" stroke="#2E8B3E" stroke-width="3" stroke-linecap="round" fill="none"></path></g>
+</svg>
+
+<div style="position: absolute; left: 0; right: 0; top: 56px; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 0 28px; animation: rise .7s ease-out both">
+<p style="margin: 0; padding: 7px 16px; border-radius: 999px; background: rgba(255,255,255,0.55); border: 1.5px solid rgba(255,255,255,0.85); backdrop-filter: blur(12px); font-family: Fredoka, sans-serif; font-size: 17px; font-weight: 600; color: #1F5C2B">rilo</p>
+<h1 style="margin: 0; font-family: Fredoka, sans-serif; font-size: 44px; font-weight: 700; line-height: 1.02; text-align: center; color: #12301A">hey, i'm rilo.</h1>
+<p style="margin: 0; font-size: 17px; font-weight: 600; line-height: 1.45; text-align: center; color: #234030">less scrolling. more of the stuff you actually care about.</p>
+</div>
+
+<div style="position: absolute; left: 0; right: 0; top: 410px; display: flex; justify-content: center">
+<dc-import name="Buddy" mood="wave" motion="jump" size="210" hint-size="210px,194px"></dc-import>
+</div>
+
+<div style="position: absolute; left: 24px; right: 24px; bottom: 34px; display: flex; flex-direction: column; align-items: center; gap: 8px; animation: rise .7s .25s ease-out both">
+<a href="HowItWorks.dc.html" class="tap" style="width: 100%; height: 58px; border-radius: 999px; background: #FFFFFF; color: #12301A; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(10,40,20,0.25)">let's go</a>
+<a href="Home.dc.html" style="font-size: 15px; font-weight: 600; text-decoration: none; padding: 10px; color: #FFFFFF">i already have an account</a>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+</script>
+</body>
+</html>

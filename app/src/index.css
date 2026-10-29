@@ -1,0 +1,527 @@
+/* Rilo — global styles.
+   Colors, fonts and the "Touch Grass" look all come straight from designs/. */
+
+:root {
+  /* ink + text */
+  --ink: #12301A;
+  --ink-2: #2C4A36;
+  --ink-3: #3D5A46;
+  /* greens */
+  --green-pale: #9EDCA6;
+  --green: #4CC160;
+  --green-deep: #2E8B3E;
+  /* sky */
+  --sky-top: #7CC6EE;
+  --sky-bottom: #EEF8EE;
+  /* less-nudgy branch: solid "sticker" cards with Rilo's ink outline
+     instead of frosted glass */
+  --card: #FFFBF1;
+  --line: #12301A;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--ink);
+  /* warm behind the phone frame on a laptop */
+  background: #F3E7D3;
+  overscroll-behavior: none;
+}
+
+#root {
+  min-height: 100%;
+}
+
+/* ---------- phone frame ----------
+   On a phone the stage fills the screen like a real app.
+   On a laptop it sits in a centered iPhone-sized 390x844 frame. */
+
+.stage-wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stage {
+  position: relative;
+  overflow: hidden;
+  background: #EEF8EE;
+}
+
+/* phone: be the app */
+.stage-full {
+  width: 100vw;
+  height: 100dvh;
+}
+
+/* laptop: always the exact 390x844 the designs are drawn at.
+   PhoneFrame scales this to fit the window instead of squashing it, so
+   nothing ever overlaps the bottom buttons. */
+.stage-framed {
+  width: 390px;
+  height: 844px;
+  border-radius: 44px;
+  box-shadow:
+    0 30px 70px rgba(20, 60, 90, 0.28),
+    0 0 0 1.5px rgba(255, 255, 255, 0.7);
+}
+
+.stage-sizer {
+  position: relative;
+  flex-shrink: 0;
+}
+
+@media (min-width: 440px) {
+  .stage-wrap {
+    padding: 24px;
+    box-sizing: border-box;
+    background: linear-gradient(180deg, #F6E6CC 0%, #EEF3DF 100%);
+  }
+}
+
+/* ---------- shared interaction ----------
+   Buttons shrink slightly when tapped. The designs use slightly different
+   active scales per screen, so each one is kept as its own class. */
+
+.tap {
+  transition: transform 0.15s ease;
+}
+
+.tap:active {
+  transform: scale(0.96);
+}
+
+/* AboutYou.dc.html */
+.tap-94 {
+  transition: transform 0.15s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.tap-94:active {
+  transform: scale(0.94);
+}
+
+/* PickApps.dc.html */
+.tap-97 {
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.tap-97:active {
+  transform: scale(0.97);
+}
+
+/* TimeBack.dc.html */
+.tap-92 {
+  transition: transform 0.15s ease;
+}
+
+.tap-92:active {
+  transform: scale(0.92);
+}
+
+/* Paywall.dc.html */
+.tap-pw {
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.tap-pw:active {
+  transform: scale(0.96);
+}
+
+/* ---------- entry animations, straight from the design files ---------- */
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Home.dc.html / Plan.dc.html use a shorter rise */
+@keyframes rise14 {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.6) translateY(30px);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes drift {
+  0% {
+    transform: translateX(-26px);
+  }
+  50% {
+    transform: translateX(26px);
+  }
+  100% {
+    transform: translateX(-26px);
+  }
+}
+
+@keyframes sway {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+
+/* ---------- screen transitions (less-nudgy branch) ----------
+   Instead of an iPhone-style side slide, the new screen "pops" in: it rises
+   a little, scales up from 96% and fades in, while the old one sinks back and
+   fades. Going back reverses it. Same timing, different feel. */
+
+.screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.screen-enter-right {
+  animation: screen-pop-in 0.36s cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  z-index: 2;
+}
+
+.screen-exit-left {
+  animation: screen-sink-out 0.3s ease-in both;
+  z-index: 1;
+}
+
+.screen-enter-left {
+  animation: screen-rise-back 0.34s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  z-index: 1;
+}
+
+.screen-exit-right {
+  animation: screen-drop-out 0.3s ease-in both;
+  z-index: 2;
+}
+
+@keyframes screen-pop-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 28px, 0) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes screen-sink-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes screen-rise-back {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes screen-drop-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translate3d(0, 40px, 0) scale(0.97);
+  }
+}
+
+/* ---------- Home rings (Home.dc.html) ---------- */
+
+@keyframes ring {
+  from {
+    stroke-dashoffset: 214;
+  }
+}
+
+/* ---------- CheckIn (CheckIn.dc.html) ---------- */
+
+@keyframes ringin {
+  from {
+    stroke-dashoffset: 653;
+  }
+}
+
+@keyframes burst {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  40% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* CheckIn's "done" Rilo pops without the translate (CheckIn.dc.html) */
+@keyframes pop-plain {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Intercept.dc.html */
+.tap-ic {
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.tap-ic:active {
+  transform: scale(0.95);
+}
+
+/* Break.dc.html / NeedIt.dc.html */
+.tap-95 {
+  transition: transform 0.15s ease, background 0.2s ease;
+}
+
+.tap-95:active {
+  transform: scale(0.95);
+}
+
+/* ---------- scrolling content with a pinned button ----------
+   Per the testing fixes: long chip / app lists scroll, the main button
+   stays pinned on the grass. */
+
+.scroll-y {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(18, 48, 26, 0.22) transparent;
+}
+
+.scroll-y::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll-y::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-y::-webkit-scrollbar-thumb {
+  background: rgba(18, 48, 26, 0.22);
+  border-radius: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- add-app sheet ---------- */
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---------- Plan (Plan.dc.html) ---------- */
+
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(46, 139, 62, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(46, 139, 62, 0);
+  }
+}
+
+/* ---------- Progress (Progress.dc.html) ---------- */
+
+@keyframes grow {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes fill {
+  from {
+    width: 0;
+  }
+}
+
+/* horizontal app row on Home */
+.scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------- Rilo motion ----------
+   The panda art has no bob of its own, so the gentle bob and the jump live
+   on a wrapper. That keeps them from clashing with the animations built into
+   the wave and angry SVGs. Same timings as the old character. */
+
+.rilo {
+  display: block;
+  will-change: transform;
+}
+
+.rilo-bob {
+  animation: rilo-bob 2.4s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+
+.rilo-jump {
+  animation: rilo-jump 1.3s linear infinite;
+}
+
+@keyframes rilo-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes rilo-jump {
+  0%,
+  20% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.4, 1);
+  }
+  45% {
+    transform: translateY(-28px);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.8, 0.2);
+  }
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rilo-bob,
+  .rilo-jump {
+    animation: none;
+  }
+}
+
+/* ---------- less-nudgy: falling bamboo leaves + bamboo sway ---------- */
+@keyframes leaf-fall {
+  0% { transform: translate3d(0, -40px, 0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  50% { transform: translate3d(26px, 380px, 0) rotate(160deg); }
+  90% { opacity: 1; }
+  100% { transform: translate3d(-10px, 820px, 0) rotate(320deg); opacity: 0; }
+}
+
+@keyframes bamboo-sway {
+  0%, 100% { transform: rotate(-1.2deg); }
+  50% { transform: rotate(1.2deg); }
+}
+
+@keyframes sun-glow {
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+@keyframes bar-fill-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .leaf, .bamboo, .sun { animation: none !important; }
+}
+
+/* themes branch: butterflies (grass theme) */
+@keyframes flap {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0.35); }
+}
+
+@keyframes butterfly {
+  0% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(90px, -40px, 0); }
+  50% { transform: translate3d(160px, 10px, 0); }
+  75% { transform: translate3d(60px, 50px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Rilo reply: need it</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Inter:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFFFFF}a:hover{color:#E6F5E8}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.tap{transition:transform .15s ease, background .2s ease}.tap:active{transform:scale(.95)}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #12301A">
+<div style="position: absolute; left: 0; top: 0"><dc-import name="Sky" hills="mid" hint-size="390px,844px"></dc-import></div>
+
+<div style="position: relative; height: 100%; box-sizing: border-box; padding: 56px 22px 28px; display: flex; flex-direction: column; gap: 14px">
+<p style="margin: 0; align-self: center; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.6); font-family: Fredoka, sans-serif; font-size: 15px; font-weight: 600">you said: need it</p>
+<div style="display: flex; align-items: flex-end; gap: 6px">
+<dc-import name="Buddy" mood="curious" size="140" hint-size="140px,130px"></dc-import>
+<div style="padding: 14px 16px; margin-bottom: 40px; border-radius: 22px 22px 22px 6px; background: rgba(255,255,255,0.85); border: 1.5px solid #FFFFFF; flex-grow: 1; animation: rise .5s .1s ease-out both">
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 22px; font-weight: 600">fair. what for?</p>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; animation: rise .5s .2s ease-out both">
+<sc-for list="{{reasons}}" as="r" hint-placeholder-count="4">
+<button type="button" class="tap" aria-pressed="{{r.pressed}}" onClick="{{r.pick}}" style="{{r.style}}">{{r.label}}</button>
+</sc-for>
+</div>
+<sc-if value="{{picked}}" hint-placeholder-val="{{ false }}">
+<div style="padding: 16px 18px; border-radius: 24px; background: #12301A; color: #FFFFFF; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 12px 30px rgba(10,40,20,0.25); animation: rise .4s ease-out both">
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; line-height: 1.3">{{reply}}</p>
+<p style="margin: 0; font-size: 14px; font-weight: 600; color: #9FD8A9">i'll check in when time's up.</p>
+</div>
+</sc-if>
+<div style="flex-grow: 1"></div>
+<sc-if value="{{picked}}" hint-placeholder-val="{{ false }}">
+<a href="CheckIn.dc.html" class="tap" style="width: 100%; height: 56px; border-radius: 999px; background: #FFFFFF; color: #12301A; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(10,40,20,0.25)">open tiktok for {{mins}} min</a>
+</sc-if>
+<a href="Home.dc.html" style="font-family: Fredoka, sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; padding: 8px; text-align: center">never mind, close it</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { pick: null };
+}
+renderVals() {
+const list = [
+{ id: 'text', label: 'texting someone', reply: 'got it. reply, then get out. no feed.', mins: 5 },
+{ id: 'post', label: 'posting a video', reply: 'creator move. post it, don’t scroll after. i’m watching.', mins: 10 },
+{ id: 'school', label: 'school thing', reply: 'respect. handle it.', mins: 10 },
+{ id: 'other', label: 'something else', reply: 'alright, i trust you. make it quick.', mins: 5 }
+];
+const base = 'min-height: 64px; border-radius: 22px; font-family: Fredoka, sans-serif; font-size: 17px; font-weight: 600; cursor: pointer; padding: 0 10px; backdrop-filter: blur(14px); ';
+const cur = list.find((x) => x.id === this.state.pick);
+return {
+picked: !!cur,
+reply: cur ? cur.reply : '',
+mins: cur ? cur.mins : 5,
+reasons: list.map((x) => {
+const on = this.state.pick === x.id;
+return {
+label: x.label,
+pressed: on ? 'true' : 'false',
+style: on ? base + 'background: #FFFFFF; color: #12301A; border: 2.5px solid #12301A' : base + 'background: rgba(255,255,255,0.6); color: #12301A; border: 1.5px solid rgba(255,255,255,0.95)',
+pick: () => this.setState({ pick: x.id })
+};
+})
+};
+}
+}
+</script>
+</body>
+</html>

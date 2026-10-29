@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Your time back</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Inter:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#12301A}a:hover{color:#000000}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.tap{transition:transform .15s ease}.tap:active{transform:scale(.92)}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #12301A">
+<div style="position: absolute; left: 0; top: 0"><dc-import name="Sky" hills="low" hint-size="390px,844px"></dc-import></div>
+
+<div style="position: relative; height: 100%; box-sizing: border-box; padding: 48px 24px 34px; display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: center; gap: 8px; animation: rise .5s ease-out both">
+<dc-import name="Buddy" mood="proud" motion="jump" size="96" hint-size="96px,89px"></dc-import>
+<h1 style="margin: 0; font-family: Fredoka, sans-serif; font-size: 28px; font-weight: 700; line-height: 1.05">here's what we're getting back.</h1>
+</div>
+
+<div style="padding: 18px; border-radius: 26px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(255,255,255,0.95); backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(20,60,40,0.1); display: flex; flex-direction: column; gap: 16px; animation: rise .5s .1s ease-out both">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 17px; font-weight: 600; color: #2C4A36">screen time now</p>
+<div style="display: flex; align-items: center; gap: 6px">
+<button type="button" class="tap" aria-label="Less screen time now" onClick="{{nowDown}}" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: #FFFFFF; font-size: 22px; font-weight: 700; color: #12301A; cursor: pointer; box-shadow: 0 4px 10px rgba(20,60,40,0.1)">−</button>
+<p style="margin: 0; min-width: 70px; text-align: center; font-family: Fredoka, sans-serif; font-size: 22px; font-weight: 700">{{nowLabel}}</p>
+<button type="button" class="tap" aria-label="More screen time now" onClick="{{nowUp}}" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: #FFFFFF; font-size: 22px; font-weight: 700; color: #12301A; cursor: pointer; box-shadow: 0 4px 10px rgba(20,60,40,0.1)">+</button>
+</div>
+</div>
+<div style="height: 22px; border-radius: 11px; background: rgba(18,48,26,0.08); overflow: hidden"><div style="{{nowBar}}"></div></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<div style="display: flex; justify-content: space-between; align-items: center">
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 17px; font-weight: 600; color: #2C4A36">goal with rilo</p>
+<div style="display: flex; align-items: center; gap: 6px">
+<button type="button" class="tap" aria-label="Lower goal" onClick="{{goalDown}}" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: #FFFFFF; font-size: 22px; font-weight: 700; color: #12301A; cursor: pointer; box-shadow: 0 4px 10px rgba(20,60,40,0.1)">−</button>
+<p style="margin: 0; min-width: 70px; text-align: center; font-family: Fredoka, sans-serif; font-size: 22px; font-weight: 700; color: #1F6B2E">{{goalLabel}}</p>
+<button type="button" class="tap" aria-label="Raise goal" onClick="{{goalUp}}" style="width: 44px; height: 44px; border-radius: 22px; border: 0; background: #FFFFFF; font-size: 22px; font-weight: 700; color: #12301A; cursor: pointer; box-shadow: 0 4px 10px rgba(20,60,40,0.1)">+</button>
+</div>
+</div>
+<div style="height: 22px; border-radius: 11px; background: rgba(18,48,26,0.08); overflow: hidden"><div style="{{goalBar}}"></div></div>
+</div>
+</div>
+
+<div style="padding: 20px; border-radius: 26px; background: #12301A; color: #FFFFFF; display: flex; flex-direction: column; gap: 4px; box-shadow: 0 14px 34px rgba(10,40,20,0.25); animation: rise .5s .2s ease-out both">
+<p style="margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #9FD8A9">time back every year</p>
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 54px; font-weight: 700; line-height: 1">{{yearHours}} hrs</p>
+<p style="margin: 0; font-size: 16px; font-weight: 600; color: #C9E6CE">that's {{yearDays}} full days. every single year.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; animation: rise .5s .3s ease-out both">
+<div style="padding: 14px 16px; border-radius: 22px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(255,255,255,0.95); backdrop-filter: blur(14px)">
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 26px; font-weight: 700">{{weekHours}} hrs</p>
+<p style="margin: 0; font-size: 13px; font-weight: 600; color: #2C4A36">back every week</p>
+</div>
+<div style="padding: 14px 16px; border-radius: 22px; background: rgba(255,255,255,0.62); border: 1.5px solid rgba(255,255,255,0.95); backdrop-filter: blur(14px)">
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 26px; font-weight: 700">{{sessions}}</p>
+<p style="margin: 0; font-size: 13px; font-weight: 600; color: #2C4A36">hour-long practices</p>
+</div>
+</div>
+<div style="flex-grow: 1"></div>
+<a href="Paywall.dc.html" class="tap" style="width: 100%; height: 58px; flex-shrink: 0; border-radius: 999px; background: #FFFFFF; color: #12301A; font-family: Fredoka, sans-serif; font-size: 20px; font-weight: 600; text-decoration: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 10px 30px rgba(10,40,20,0.25)">let's get it back</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+constructor(props) {
+super(props);
+this.state = { now: 4, goal: 2 };
+}
+fmt(h) {
+const whole = Math.floor(h);
+const mins = Math.round((h - whole) * 60);
+return mins ? whole + 'h ' + mins + 'm' : whole + 'h';
+}
+renderVals() {
+const now = this.state.now, goal = this.state.goal;
+const saved = Math.max(0, now - goal);
+const max = 10;
+const bar = (h, color) => 'height: 22px; border-radius: 11px; background: ' + color + '; width: ' + Math.round(h / max * 100) + '%; transition: width 0.5s cubic-bezier(.2,.8,.3,1)';
+return {
+nowLabel: this.fmt(now),
+goalLabel: this.fmt(goal),
+nowBar: bar(now, '#9EB8A4'),
+goalBar: bar(goal, 'linear-gradient(90deg, #4CC160, #2E8B3E)'),
+yearHours: Math.round(saved * 365).toLocaleString('en-US'),
+yearDays: Math.round(saved * 365 / 24),
+weekHours: Math.round(saved * 7 * 10) / 10,
+sessions: Math.round(saved * 365).toLocaleString('en-US'),
+nowUp: () => this.setState({ now: Math.min(max, now + 0.5) }),
+nowDown: () => this.setState({ now: Math.max(goal + 0.5, now - 0.5) }),
+goalUp: () => this.setState({ goal: Math.min(now - 0.5, goal + 0.5) }),
+goalDown: () => this.setState({ goal: Math.max(0.5, goal - 0.5) })
+};
+}
+}
+</script>
+</body>
+</html>

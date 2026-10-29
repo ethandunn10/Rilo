@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Today's plan</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Inter:wght@500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#12301A}a:hover{color:#000000}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(46,139,62,0.5)}50%{box-shadow:0 0 0 8px rgba(46,139,62,0)}}
+.tap{transition:transform .15s ease}.tap:active{transform:scale(.96)}
+</style>
+</helmet>
+<div style="position: relative; width: 390px; height: 844px; overflow: hidden; font-family: Inter, system-ui, sans-serif; color: #12301A">
+<div style="position: absolute; left: 0; top: 0"><dc-import name="Sky" hills="low" hint-size="390px,844px"></dc-import></div>
+
+<div style="position: relative; padding: 52px 20px 0; display: flex; flex-direction: column; gap: 12px">
+<div style="display: flex; align-items: center; gap: 8px; animation: rise .4s ease-out both">
+<div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1">
+<div style="display: flex; align-items: center; gap: 8px">
+<h1 style="margin: 0; font-family: Fredoka, sans-serif; font-size: 30px; font-weight: 700">today's plan</h1>
+<span style="padding: 3px 9px; border-radius: 999px; background: #12301A; color: #FFFFFF; font-family: Fredoka, sans-serif; font-size: 12px; font-weight: 600">pro</span>
+</div>
+<p style="margin: 0; font-size: 14px; font-weight: 600; color: #2C4A36">made by rilo from your goals</p>
+</div>
+<dc-import name="Buddy" mood="proud" size="74" hint-size="74px,68px"></dc-import>
+</div>
+<div style="padding: 6px 16px; border-radius: 26px; background: rgba(255,255,255,0.65); border: 1.5px solid rgba(255,255,255,0.95); backdrop-filter: blur(14px); box-shadow: 0 10px 30px rgba(20,60,40,0.1); display: flex; flex-direction: column">
+<sc-for list="{{items}}" as="item" hint-placeholder-count="7">
+<div style="{{item.rowStyle}}">
+<p style="margin: 0; width: 44px; flex-shrink: 0; font-family: Fredoka, sans-serif; font-size: 15px; font-weight: 600; color: #3D5A46">{{item.time}}</p>
+<span style="{{item.dotStyle}}"></span>
+<div style="display: flex; flex-direction: column; gap: 1px; flex-grow: 1">
+<p style="margin: 0; font-family: Fredoka, sans-serif; font-size: 17px; font-weight: 600">{{item.title}}</p>
+<p style="margin: 0; font-size: 12px; font-weight: 600; color: #3D5A46">{{item.sub}}</p>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<nav aria-label="Main" style="position: absolute; left: 20px; right: 20px; bottom: 26px; height: 72px; border-radius: 36px; background: rgba(255,255,255,0.8); border: 1.5px solid #FFFFFF; backdrop-filter: blur(16px); box-shadow: 0 12px 34px rgba(20,60,40,0.2); display: flex; align-items: center; justify-content: space-around; padding: 0 6px">
+<a href="Home.dc.html" style="min-width: 56px; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; color: #4F6B58; font-family: Fredoka, sans-serif; font-size: 13px; font-weight: 600"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 L12 4 L20 11 V20 H14 V14 H10 V20 H4 Z" fill="none" stroke="#4F6B58" stroke-width="2.2" stroke-linejoin="round"></path></svg>home</a>
+<a href="Plan.dc.html" aria-current="page" style="min-width: 56px; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; color: #1F6B2E; font-family: Fredoka, sans-serif; font-size: 13px; font-weight: 600"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3" fill="none" stroke="#1F6B2E" stroke-width="2.2"></rect><path d="M4 10 H20 M9 3 V7 M15 3 V7" stroke="#1F6B2E" stroke-width="2.2" stroke-linecap="round"></path></svg>plan</a>
+<a href="PickRilo.dc.html" aria-label="Your Rilo" class="tap" style="width: 76px; height: 76px; margin-top: -34px; border-radius: 38px; background: linear-gradient(180deg, #7CC6EE, #CDEBF6); border: 4px solid #FFFFFF; box-shadow: 0 10px 24px rgba(20,60,40,0.22); display: flex; align-items: flex-end; justify-content: center; overflow: hidden"><dc-import name="Buddy" mood="wave" motion="none" size="66" hint-size="66px,61px"></dc-import></a>
+<a href="Progress.dc.html" style="min-width: 56px; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; color: #4F6B58; font-family: Fredoka, sans-serif; font-size: 13px; font-weight: 600"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19 V13 M12 19 V8 M19 19 V4" stroke="#4F6B58" stroke-width="2.6" stroke-linecap="round"></path></svg>progress</a>
+<a href="PickRilo.dc.html" style="min-width: 56px; min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-decoration: none; color: #4F6B58; font-family: Fredoka, sans-serif; font-size: 13px; font-weight: 600"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="9" r="4" fill="none" stroke="#4F6B58" stroke-width="2.2"></circle><path d="M4 20 C5 15 19 15 20 20" fill="none" stroke="#4F6B58" stroke-width="2.2" stroke-linecap="round"></path></svg>you</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const rows = [
+['3:15', 'chill + snack', '15 min free scroll allowed', 'done'],
+['3:45', 'ap bio homework', 'apps locked for 45 min', 'done'],
+['4:30', 'shoot 50 free throws', 'up next · +40 xp', 'now'],
+['5:15', 'film 2 videos', 'creator mode on', ''],
+['6:30', 'dinner', 'phone away', ''],
+['7:30', 'ap gov review', 'apps locked for 40 min', ''],
+['9:00', 'free time', '30 min scroll allowed', '']
+];
+return {
+items: rows.map(([time, title, sub, status], i) => ({
+time: time, title: title, sub: sub,
+rowStyle: (status === 'now' ? 'display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 3px -12px; border-radius: 18px; background: #FFFFFF; box-shadow: 0 6px 16px rgba(20,60,40,0.12)' : 'display: flex; align-items: center; gap: 10px; padding: 9px 0; opacity: ' + (status === 'done' ? '0.5' : '1')) + '; animation: rise .4s ' + (0.05 + i * 0.05).toFixed(2) + 's ease-out both',
+dotStyle: status === 'now' ? 'width: 14px; height: 14px; border-radius: 7px; background: #2E8B3E; flex-shrink: 0; animation: pulse 1.8s infinite' : status === 'done' ? 'width: 14px; height: 14px; border-radius: 7px; background: #12301A; flex-shrink: 0' : 'width: 14px; height: 14px; border-radius: 7px; border: 2.5px solid #7FA38A; box-sizing: border-box; flex-shrink: 0'
+}))
+};
+}
+}
+</script>
+</body>
+</html>
