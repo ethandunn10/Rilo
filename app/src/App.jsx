@@ -14,6 +14,7 @@ import Welcome from './screens/Welcome';
 import HowItWorks from './screens/HowItWorks';
 import Instead from './screens/Instead';
 import AboutYou from './screens/AboutYou';
+import Talk from './screens/Talk';
 import PickApps from './screens/PickApps';
 import TimeBack from './screens/TimeBack';
 import Paywall from './screens/Paywall';
@@ -30,11 +31,17 @@ import Progress from './screens/Progress';
 import PickRilo from './screens/PickRilo';
 import You from './screens/You';
 import LevelUp from './screens/LevelUp';
+import Locked from './screens/Locked';
+import StrictAsk from './screens/StrictAsk';
 import Results from './screens/Results';
 
 import { loadState, saveState, clearState, DEFAULT_STATE, today } from './lib/storage';
 import { track } from './lib/track';
 import { pickedApps } from './lib/apps';
+import {
+  dayStr, daysFromNow, overGoal, shouldRecommend,
+  markOverGoal, rollStreak, NOT_YET_LIMIT, SNOOZE_DAYS,
+} from './lib/strict';
 import { levelFor, skinsUnlockedBetween, XP, UNLOCK_ALL } from './lib/levels';
 import { ThemeContext, themeInfo } from './lib/themes';
 
@@ -93,13 +100,25 @@ export default function App() {
 
   /* the app + length of the session being "opened" right now */
   const [session, setSession] = useState({ app: null, minutes: 5 });
+  /* came through Talk in onboarding → About you says "here's what i got" */
+  const [talked, setTalked] = useState(false);
+
+  /* strict mode (lib/strict) */
+  const [used, setUsed] = useState(saved.used);
+  const [strictMode, setStrictMode] = useState(saved.strictMode);
+  /* a new day with strict already on grows the streak, counted at load */
+  const [strict, setStrict] = useState(() =>
+    saved.strictMode ? rollStreak(saved.strict) : saved.strict,
+  );
 
   useEffect(() => {
     saveState({
       name, about, apps, time, plan, planChoice, isPro,
       xp, level, chosenRilo, theme, opens, extras, stats,
+      used, strictMode, strict,
     });
-  }, [name, about, apps, time, plan, planChoice, isPro, xp, level, chosenRilo, theme, opens, extras, stats]);
+  }, [name, about, apps, time, plan, planChoice, isPro, xp, level, chosenRilo, theme, opens,
+      extras, stats, used, strictMode, strict]);
 
   /* Ignore taps while a slide is already running. */
   const goTo = (next, dir = 'forward') =>
@@ -107,8 +126,15 @@ export default function App() {
 
   /* Heading home with an unlock waiting shows the celebration first.
      Leaving the celebration calls goTo directly so it can't bounce back. */
-  const go = (next, dir = 'forward') =>
-    goTo(next === 'home' && pendingSkin ? 'levelup' : next, dir);
+  const go = (next, dir = 'forward') => {
+    if (next === 'home' && pendingSkin) return goTo('levelup', dir);
+    if (next === 'home' && shouldRecommend({ strictMode, strict, extrasToday })) {
+      setStrict((st) => ({ ...st, askedOn: dayStr() }));
+      track('strict', 'recommended');
+      return goTo('strictask', dir);
+    }
+    return goTo(next, dir);
+  };
 
   /* XP never goes below 0, and a level once earned is never lost.
      Returns true if a Pro unlock is now waiting to be celebrated. */
@@ -151,7 +177,8 @@ export default function App() {
 
     setOpens({ date: day, counts: { ...counts, [label]: next } });
     setSession({ app: label, minutes: 5 });
-    go('intercept');
+    /* strict + past the daily goal = locked till midnight */
+    go(strictMode && overGoal(used, time.goal) ? 'locked' : 'intercept');
   };
 
   const openCount = (opens.date === today() ? opens.counts[currentApp] : 0) ?? 0;
@@ -159,7 +186,18 @@ export default function App() {
   /* how many times they've already taken "5 more" today */
   const extrasToday = extras.date === today() ? extras.count : 0;
 
+  /* every minute spent in a watched app counts toward the daily goal */
+  const spend = (minutes) => {
+    const day = dayStr();
+    const mins = (used.date === day ? used.minutes : 0) + minutes;
+    setUsed({ date: day, minutes: mins });
+    if (mins >= time.goal * 60) {
+      setStrict((st) => ({ ...st, overGoalOn: markOverGoal(st.overGoalOn) }));
+    }
+  };
+
   const startSession = (minutes) => {
+    spend(minutes);
     setSession((s) => ({ app: s.app ?? currentApp, minutes }));
     go('timer');
   };
@@ -169,6 +207,42 @@ export default function App() {
       savedMinutes: s.savedMinutes + BLOCK_MINUTES,
       saidNo: s.saidNo + 1,
     }));
+  };
+
+  const turnStrictOn = (how) => {
+    setStrictMode(true);
+    setStrict((st) => ({ ...st, streak: 1, streakOn: dayStr() }));
+    track('strict', how);
+  };
+
+  const turnStrictOff = () => {
+    setStrictMode(false);
+    setStrict((st) => ({ ...st, streak: 0, streakOn: '' }));
+    track('strict', 'turned off');
+  };
+
+  const declineStrict = () => {
+    setStrict((st) => {
+      const n = st.notYetCount + 1;
+      return {
+        ...st,
+        notYetCount: n,
+        /* three "not yet"s and Rilo drops it for a week */
+        snoozedUntil: n >= NOT_YET_LIMIT ? daysFromNow(SNOOZE_DAYS) : st.snoozedUntil,
+      };
+    });
+    track('strict', 'declined');
+    goTo('home', 'back');
+  };
+
+  const useNeedIt = (reason) => {
+    const day = dayStr();
+    const count = (strict.needIt.date === day ? strict.needIt.count : 0) + 1;
+    setStrict((st) => ({ ...st, needIt: { date: day, count } }));
+    track('needit', reason);
+    setSession((ses) => ({ ...ses, minutes: 5 }));
+    spend(5);
+    goTo('timer');
   };
 
   const startOver = () => {
@@ -189,6 +263,11 @@ export default function App() {
     setExtras({ date: today(), count: 0 });
     setStats({ savedMinutes: 0, saidNo: 0 });
     setSession({ app: null, minutes: 5 });
+    /* the next tester hasn't talked to Rilo yet */
+    setTalked(false);
+    setUsed({ date: dayStr(), minutes: 0 });
+    setStrictMode(DEFAULT_STATE.strictMode);
+    setStrict(DEFAULT_STATE.strict);
     /* straight back to Welcome, no slide — it's a new tester */
     setNav({ entries: ['welcome'], dir: 'forward' });
   };
@@ -211,9 +290,24 @@ export default function App() {
         return <HowItWorks go={go} skin={OG_SKIN} />;
       case 'instead':
         return <Instead go={go} skin={OG_SKIN} />;
+      case 'talk':
+      case 'talkchat':
+        return (
+          <Talk
+            go={go}
+            onTalked={() => setTalked(true)}
+            mode={screen === 'talk' ? 'onboarding' : 'chat'}
+            skin={screen === 'talk' ? OG_SKIN : chosenRilo}
+            name={name}
+            setName={setName}
+            about={about}
+            setAbout={setAbout}
+          />
+        );
       case 'aboutyou':
         return (
           <AboutYou
+            talked={talked}
             go={go}
             about={about}
             setAbout={setAbout}
@@ -252,6 +346,8 @@ export default function App() {
             apps={apps}
             xp={xp}
             skin={chosenRilo}
+            strictMode={strictMode}
+            strictStreak={strict.streak}
             onOpenApp={openApp}
           />
         );
@@ -327,9 +423,11 @@ export default function App() {
             minutes={session.minutes}
             skin={chosenRilo}
             angry={extrasToday >= 1}
+            strict={strictMode}
             onDone={() => {
               track('checkin', "i'm done");
-              awardXp(XP.done);
+              /* strict pays double */
+              awardXp(strictMode ? XP.done * 2 : XP.done);
               /* finishing a shorter session banks the time not spent */
               setStats((s) => ({
                 savedMinutes: s.savedMinutes + Math.max(0, BLOCK_MINUTES - session.minutes),
@@ -393,10 +491,46 @@ export default function App() {
               go('paywall');
             }}
             stats={stats}
+            strictMode={strictMode}
+            strict={strict}
+            onStrictOn={() => turnStrictOn('turned on')}
+            onStrictOff={turnStrictOff}
+            onDemoStrictAsk={() => {
+              setStrict((st) => ({ ...st, askedOn: '', snoozedUntil: '' }));
+              goTo('strictask');
+            }}
+            onDemoOverLimit={() => {
+              const mins = Math.round(time.goal * 60) + 15;
+              setUsed({ date: dayStr(), minutes: mins });
+              setStrict((st) => ({ ...st, overGoalOn: markOverGoal(st.overGoalOn) }));
+            }}
             onStartOver={startOver}
             onDemoXp={(amount = 500) => {
               if (awardXp(amount)) go('levelup');
             }}
+          />
+        );
+
+      case 'locked':
+        return (
+          <Locked
+            go={go}
+            app={currentApp}
+            skin={chosenRilo}
+            strict={strict}
+            onNeedIt={useNeedIt}
+          />
+        );
+
+      case 'strictask':
+        return (
+          <StrictAsk
+            skin={chosenRilo}
+            onAccept={() => {
+              turnStrictOn('accepted');
+              goTo('home', 'back');
+            }}
+            onDecline={declineStrict}
           />
         );
 

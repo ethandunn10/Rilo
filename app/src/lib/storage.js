@@ -45,6 +45,24 @@ export const DEFAULT_STATE = {
   /* how many times they took "5 more minutes" today — the 2nd+ makes Rilo angry */
   extras: { date: today(), count: 0 },
   stats: { savedMinutes: 0, saidNo: 0 },
+  /* minutes of watched-app time used today (drives the strict lock) */
+  used: { date: today(), minutes: 0 },
+  /* strict mode — see lib/strict */
+  strictMode: false,
+  strict: {
+    streak: 0,
+    /* last day the streak was counted */
+    streakOn: '',
+    /* need-its used today */
+    needIt: { date: today(), count: 0 },
+    /* "not yet"s to the recommendation, and the 7-day snooze after 3 */
+    notYetCount: 0,
+    snoozedUntil: '',
+    /* last day Rilo offered strict — at most once a day */
+    askedOn: '',
+    /* recent days that went over the goal */
+    overGoalOn: [],
+  },
 };
 
 /* One-time reset (Oct 29).
@@ -110,6 +128,24 @@ export function loadState() {
         saved.extras?.date === today()
           ? { date: saved.extras.date, count: saved.extras.count ?? 0 }
           : { date: today(), count: 0 },
+      used:
+        saved.used?.date === today()
+          ? { date: saved.used.date, minutes: saved.used.minutes ?? 0 }
+          : { date: today(), minutes: 0 },
+      strictMode: saved.strictMode === true,
+      strict: {
+        streak: typeof saved.strict?.streak === 'number' ? saved.strict.streak : 0,
+        streakOn: saved.strict?.streakOn ?? '',
+        needIt:
+          saved.strict?.needIt?.date === today()
+            ? { date: saved.strict.needIt.date, count: saved.strict.needIt.count ?? 0 }
+            : { date: today(), count: 0 },
+        notYetCount:
+          typeof saved.strict?.notYetCount === 'number' ? saved.strict.notYetCount : 0,
+        snoozedUntil: saved.strict?.snoozedUntil ?? '',
+        askedOn: saved.strict?.askedOn ?? '',
+        overGoalOn: Array.isArray(saved.strict?.overGoalOn) ? saved.strict.overGoalOn : [],
+      },
       stats: {
         savedMinutes:
           typeof saved.stats?.savedMinutes === 'number' ? saved.stats.savedMinutes : 0,

@@ -7,6 +7,7 @@
    The watched-apps row shows the real count and the real logos. */
 
 import Rilo from '../components/Rilo';
+import { MicIcon } from '../components/TalkBits';
 import { ThemeDecor } from '../components/Sky';
 import { useTheme } from '../lib/themes';
 import TabBar from '../components/TabBar';
@@ -70,7 +71,7 @@ function Ring({ dashoffset, color, delay, big, label, value }) {
   );
 }
 
-export default function Home({ go, name, about, apps, xp, skin, onOpenApp }) {
+export default function Home({ go, name, about, apps, xp, skin, strictMode, strictStreak, onOpenApp }) {
   const theme = useTheme();
   const upNext = suggestion(about).task;
   const watched = pickedApps(apps);
@@ -118,6 +119,24 @@ export default function Home({ go, name, about, apps, xp, skin, onOpenApp }) {
         >
           lvl 4 · {xp} xp
         </p>
+        {strictMode && (
+          <p
+            style={{
+              margin: 0,
+              padding: '6px 10px',
+              borderRadius: 999,
+              background: '#12301A',
+              color: '#FFFFFF',
+              border: '2px solid var(--line)',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 13,
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🔥 strict streak: {strictStreak}
+          </p>
+        )}
       </div>
 
       <div
@@ -161,9 +180,46 @@ export default function Home({ go, name, about, apps, xp, skin, onOpenApp }) {
           <path d="M0 40 C90 10 220 14 350 36 L350 90 L0 90 Z" fill={theme.hills[1]} />
           <path d="M0 70 C120 54 230 56 350 70 L350 90 L0 90 Z" fill={theme.hills[2]} />
         </svg>
-        <div style={{ position: 'absolute', left: 16, bottom: 30 }}>
+        <button
+          type="button"
+          className="tap-94"
+          aria-label="talk to rilo"
+          onClick={() => go('talkchat')}
+          style={{
+            position: 'absolute',
+            left: 16,
+            bottom: 30,
+            border: 0,
+            padding: 0,
+            background: 'transparent',
+            cursor: 'pointer',
+          }}
+        >
           <Rilo skin={skin} mood="coach" size={140} />
-        </div>
+          {/* tap Rilo to talk */}
+          <span
+            style={{
+              position: 'absolute',
+              right: -6,
+              bottom: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              padding: '4px 9px 4px 6px',
+              borderRadius: 999,
+              background: '#12301A',
+              border: '2px solid #FFFFFF',
+              color: '#FFFFFF',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 13,
+              fontWeight: 600,
+              animation: 'pulse 2.2s ease-in-out infinite',
+            }}
+          >
+            <MicIcon size={14} />
+            talk
+          </span>
+        </button>
         <div
           style={{
             position: 'absolute',

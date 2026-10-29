@@ -10,6 +10,8 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
 import ChipPicker from '../components/ChipPicker';
+import { TalkCircle } from '../components/TalkBits';
+import { hobbiesIn, goalsIn, joinNice } from '../lib/listen';
 
 const cardStyle = (delay) => ({
   padding: 16,
@@ -24,7 +26,17 @@ const cardStyle = (delay) => ({
   animation: `rise .5s ${delay} ease-out both`,
 });
 
-export default function AboutYou({ go, about, setAbout, name, setName, skin }) {
+export default function AboutYou({ go, about, setAbout, name, setName, skin, talked }) {
+  /* say it instead: "i also do gym" / "get rid of golf" */
+  const hearAbout = (said) => {
+    const found = [...hobbiesIn(said), ...goalsIn(said)];
+    if (!found.length) return '';
+    const off = /not|don't|get rid|remove|take off|no more/.test(said.toLowerCase());
+    const on = { ...about.on };
+    found.forEach((k) => (on[k] = !off));
+    setAbout({ ...about, on });
+    return off ? `took off ${joinNice(found)}.` : `added ${joinNice(found)}.`;
+  };
   return (
     <div
       style={{
@@ -72,7 +84,7 @@ export default function AboutYou({ go, about, setAbout, name, setName, skin }) {
               animation: 'rise .5s ease-out both',
             }}
           >
-            <Rilo skin={skin} mood="curious" size={84} />
+            <Rilo skin={skin} mood={talked ? 'proud' : 'curious'} size={84} />
             <h1
               style={{
                 margin: 0,
@@ -82,7 +94,12 @@ export default function AboutYou({ go, about, setAbout, name, setName, skin }) {
                 lineHeight: 1.05,
               }}
             >
-              tell me about you.
+              {talked ? "here's what i got." : 'tell me about you.'}
+              {talked && (
+                <span style={{ display: 'block', marginTop: 4, fontFamily: 'Inter, system-ui, sans-serif', fontSize: 15, fontWeight: 600, color: '#2C4A36' }}>
+                  fix anything i got wrong.
+                </span>
+              )}
             </h1>
           </div>
 
@@ -121,12 +138,14 @@ export default function AboutYou({ go, about, setAbout, name, setName, skin }) {
           <ChipPicker about={about} setAbout={setAbout} cardStyle={cardStyle} />
         </div>
 
-        <button
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
+          <button
           type="button"
           className="tap-94"
           onClick={() => go('pickapps')}
           style={{
-            width: '100%',
+            flexGrow: 1,
+            minWidth: 0,
             height: 58,
             flexShrink: 0,
             border: '2px solid var(--line)',
@@ -145,6 +164,8 @@ export default function AboutYou({ go, about, setAbout, name, setName, skin }) {
         >
           continue
         </button>
+          <TalkCircle skin={skin} onHeard={hearAbout} />
+        </div>
       </div>
     </div>
   );

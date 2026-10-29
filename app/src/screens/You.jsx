@@ -12,6 +12,7 @@ import TabBar from '../components/TabBar';
 import ChipPicker from '../components/ChipPicker';
 import AppPicker from '../components/AppPicker';
 import GoalStepper from '../components/GoalStepper';
+import StrictCard from '../components/StrictCard';
 import { levelProgress, skinInfo, UNLOCK_ALL } from '../lib/levels';
 import { THEMES } from '../lib/themes';
 
@@ -92,6 +93,12 @@ export default function You({
   onLockedTheme,
   stats,
   onStartOver,
+  strictMode,
+  strict,
+  onStrictOn,
+  onStrictOff,
+  onDemoStrictAsk,
+  onDemoOverLimit,
   onDemoXp,
 }) {
   const prog = levelProgress(xp, level);
@@ -302,6 +309,16 @@ export default function You({
             </div>
           </div>
 
+          {/* strict mode */}
+          <StrictCard
+            style={card('.1s')}
+            on={strictMode}
+            streak={strict.streak}
+            skin={chosenRilo}
+            onTurnOn={onStrictOn}
+            onTurnOff={onStrictOff}
+          />
+
           {/* hobbies + goals, same chips as onboarding */}
           <ChipPicker about={about} setAbout={setAbout} cardStyle={chipCard} />
 
@@ -428,6 +445,48 @@ export default function You({
           >
             demo: +5,000 xp
           </button>
+          <button
+            type="button"
+            className="tap"
+            onClick={onDemoStrictAsk}
+            style={{
+              width: '100%',
+              height: 44,
+              flexShrink: 0,
+              borderRadius: 999,
+              background: 'rgba(18,48,26,0.07)',
+              border: '1px solid rgba(18,48,26,0.18)',
+              color: '#4F6B58',
+              fontFamily: 'Inter, system-ui, sans-serif',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            demo: trigger strict pop-up
+          </button>
+
+          <button
+            type="button"
+            className="tap"
+            onClick={onDemoOverLimit}
+            style={{
+              width: '100%',
+              height: 44,
+              flexShrink: 0,
+              borderRadius: 999,
+              background: 'rgba(18,48,26,0.07)',
+              border: '1px solid rgba(18,48,26,0.18)',
+              color: '#4F6B58',
+              fontFamily: 'Inter, system-ui, sans-serif',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            demo: go over limit
+          </button>
+
         </div>
       </div>
 

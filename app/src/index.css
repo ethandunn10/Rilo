@@ -525,3 +525,47 @@ body {
   75% { transform: translate3d(60px, 50px, 0); }
   100% { transform: translate3d(0, 0, 0); }
 }
+
+/* ---------- Talk to Rilo ---------- */
+
+@keyframes talk-ring {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.62);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.45);
+  }
+}
+
+@keyframes talk-bar {
+  0%,
+  100% {
+    transform: scaleY(0.22);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes talk-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(76, 193, 96, 0.55), 0 4px 0 var(--line);
+  }
+  50% {
+    box-shadow: 0 0 0 14px rgba(76, 193, 96, 0), 0 4px 0 var(--line);
+  }
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

@@ -7,6 +7,9 @@ import { ThemeDecor } from '../components/Sky';
 import { useTheme } from '../lib/themes';
 import AppLogo from '../components/AppLogo';
 import { ordinal } from '../lib/apps';
+import { useState } from 'react';
+import { MicButton, WaveBars } from '../components/TalkBits';
+import { useListen, reasonIn } from '../lib/listen';
 
 /* no clouds — the theme's sky things instead (see ThemeDecor) */
 const CLOUD = null;
@@ -21,6 +24,21 @@ const REASONS = [
 /* `app` is the app they just "opened"; `openCount` is how many times today */
 export default function Intercept({ go, onReason, app, openCount, skin }) {
   const theme = useTheme();
+  const mic = useListen();
+  const [missed, setMissed] = useState(false);
+
+  /* say it instead of tapping: "i'm bored", "just tired", "need to reply to a text" */
+  const heard = (said) => {
+    const reason = reasonIn(said || '');
+    if (!reason) {
+      setMissed(true);
+      return;
+    }
+    if (onReason) onReason(reason);
+    if (reason === 'never mind') return go('home', 'back');
+    const r = REASONS.find((x) => x.label === reason);
+    go(r ? r.to : 'needit');
+  };
   return (
     <div
       style={{
@@ -181,6 +199,60 @@ export default function Intercept({ go, onReason, app, openCount, skin }) {
           </button>
         ))}
       </div>
+
+      {mic.supported && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 22,
+            right: 22,
+            top: 636,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            padding: '8px 14px 8px 8px',
+            borderRadius: 999,
+            background: 'var(--card)',
+            border: '2px solid var(--line)',
+            boxShadow: '0 4px 0 var(--line)',
+            animation: 'rise .5s .56s ease-out both',
+          }}
+        >
+          <MicButton
+            size={52}
+            listening={mic.listening}
+            onStart={() => {
+              setMissed(false);
+              mic.start(heard);
+            }}
+            onStop={mic.stop}
+          />
+          <div style={{ flexGrow: 1, minWidth: 0 }}>
+            {mic.listening && !mic.text ? (
+              <WaveBars on />
+            ) : (
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 17,
+                  fontWeight: 600,
+                  lineHeight: 1.2,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {mic.text
+                  ? `“${mic.text}”`
+                  : missed
+                    ? "didn't catch that. try again or tap one."
+                    : 'or just tell rilo why'}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       <div
         style={{
