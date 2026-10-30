@@ -326,8 +326,6 @@ export default function App() {
             go={go}
             about={about}
             setAbout={setAbout}
-            name={name}
-            setName={setName}
             skin={OG_SKIN}
           />
         );

@@ -107,7 +107,7 @@ export default function Talk({
   /* `take` and `mic` are rebuilt every render; the auto-listen effect reads
      them through this ref so it can key off the question alone — depending
      on them directly would restart the mic mid-sentence. */
-  const latest = useRef({ mic: null, take: null });
+  const latest = useRef({ mic: null, take: null, finish: null });
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -170,6 +170,7 @@ export default function Talk({
   useEffect(() => {
     latest.current.mic = mic;
     latest.current.take = take;
+    latest.current.finish = finish;
   });
 
   const tapRilo = async () => {
@@ -200,8 +201,15 @@ export default function Talk({
     return () => clearTimeout(t);
   }, [step, autoTalk, typing, done, reply]);
 
+  /* finished asking → let it sit for a beat, then move on by itself */
+  useEffect(() => {
+    if (!done) return;
+    const t = setTimeout(() => latest.current.finish(), 3000);
+    return () => clearTimeout(t);
+  }, [done]);
+
   /* what sits above Rilo: his question, or his reply to it */
-  const line = done ? "that's everything. thanks." : reply || q.ask;
+  const line = done ? "that's everything — thanks!" : reply || q.ask;
   const heard = listening ? mic.text : '';
 
   return (
@@ -256,50 +264,57 @@ export default function Talk({
           gap: 8,
         }}
       >
-        {/* back a step */}
-        <button
-          type="button"
-          className="tap"
-          aria-label="back a step"
-          onClick={() => {
-            if (listening) mic.stop();
-            if (step > 0) {
-              setReply('');
-              setStep((n) => n - 1);
-            } else {
-              go('timeback', 'back');
-            }
-          }}
+        {/* header: back on the left, progress dots centred */}
+        <div
           style={{
-            position: 'absolute',
-            left: 18,
-            top: 46,
-            width: 44,
-            height: 44,
-            borderRadius: 999,
-            border: '2px solid var(--line)',
-            background: 'rgba(255,255,255,0.85)',
+            width: '100%',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
+            justifyContent: 'space-between',
+            marginBottom: 2,
           }}
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M15 5 L8 12 L15 19"
-              fill="none"
-              stroke="#12301A"
-              strokeWidth="2.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
+          <button
+            type="button"
+            className="tap"
+            aria-label="back a step"
+            onClick={() => {
+              if (listening) mic.stop();
+              if (step > 0) {
+                setReply('');
+                setStep((n) => n - 1);
+              } else {
+                go('timeback', 'back');
+              }
+            }}
+            style={{
+              width: 40,
+              height: 40,
+              flexShrink: 0,
+              borderRadius: 999,
+              border: '2px solid var(--line)',
+              background: 'rgba(255,255,255,0.85)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              padding: 0,
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M15 5 L8 12 L15 19"
+                fill="none"
+                stroke="#12301A"
+                strokeWidth="2.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
 
-        {/* which question we're on */}
-        {qs.length > 1 && !done && (
-          <div style={{ display: 'flex', gap: 6, marginBottom: 2 }}>
+          {qs.length > 1 && !done ? (
+            <div style={{ display: 'flex', gap: 6 }}>
             {qs.map((x, i) => (
               <span
                 key={x.id}
@@ -312,8 +327,14 @@ export default function Talk({
                 }}
               />
             ))}
-          </div>
-        )}
+            </div>
+          ) : (
+            <span />
+          )}
+
+          {/* keeps the dots centred against the back button */}
+          <span style={{ width: 40, flexShrink: 0 }} />
+        </div>
 
         {/* the question, on its own */}
         <p
@@ -335,7 +356,7 @@ export default function Talk({
         {/* the panda */}
         <RiloStage
           skin={skin}
-          mood={listening ? 'coach' : mood}
+          mood={done ? 'proud' : listening ? 'coach' : mood}
           size={215}
           state={listening ? 'listening' : 'idle'}
           onTap={mic.usable ? tapRilo : undefined}

@@ -24,7 +24,7 @@ const cardStyle = (delay) => ({
   animation: `rise .5s ${delay} ease-out both`,
 });
 
-export default function AboutYou({ go, about, setAbout, name, setName, skin, talked }) {
+export default function AboutYou({ go, about, setAbout, skin, talked }) {
   /* say it instead: "i also do gym" / "get rid of golf" */
   return (
     <div
@@ -90,38 +90,6 @@ export default function AboutYou({ go, about, setAbout, name, setName, skin, tal
                 </span>
               )}
             </h1>
-          </div>
-
-          {/* optional first name, so Rilo can say hey properly */}
-          <div style={cardStyle('.05s')}>
-            <p
-              style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}
-            >
-              what should i call you?
-            </p>
-            <input
-              id="firstName"
-              type="text"
-              placeholder="first name (optional)"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              spellCheck={false}
-              autoCorrect="off"
-              autoCapitalize="words"
-              autoComplete="given-name"
-              style={{
-                height: 46,
-                boxSizing: 'border-box',
-                padding: '0 16px',
-                borderRadius: 999,
-                border: '2px solid #12301A',
-                background: '#FFFFFF',
-                fontFamily: 'Inter, system-ui, sans-serif',
-                fontSize: 16,
-                fontWeight: 600,
-                color: '#12301A',
-              }}
-            />
           </div>
 
           <ChipPicker about={about} setAbout={setAbout} cardStyle={cardStyle} />
