@@ -9,22 +9,9 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
 import AppPicker from '../components/AppPicker';
-import { TalkCircle } from '../components/TalkBits';
-import { appsIn, joinNice } from '../lib/listen';
-import { APP_CATALOG, STARTING_APPS } from '../lib/apps';
 
 export default function PickApps({ go, apps, setApps, skin }) {
   /* say it instead: "tiktok, insta and snap" / "not youtube" */
-  const hearApps = (said) => {
-    const found = appsIn(said, APP_CATALOG.map((a) => a.label));
-    if (!found.length) return '';
-    const off = /not|don't|get rid|remove|take off/.test(said.toLowerCase());
-    const extra = apps.extra.concat(found.filter((l) => !STARTING_APPS.includes(l) && !apps.extra.includes(l)));
-    const on = { ...apps.on };
-    found.forEach((l) => (on[l] = !off));
-    setApps({ on, extra });
-    return off ? `okay, i'll leave ${joinNice(found)} alone.` : `got it. i'll watch ${joinNice(found)}.`;
-  };
   return (
     <div
       style={{
@@ -159,7 +146,6 @@ export default function PickApps({ go, apps, setApps, skin }) {
         >
           turn on screen time
         </button>
-          <TalkCircle skin={skin} onHeard={hearApps} />
         </div>
       </div>
     </div>

@@ -185,7 +185,7 @@ export function TalkCircle({ skin, onHeard, hint = 'hold me and just say it' }) 
     return () => clearTimeout(t.current);
   }, []);
 
-  if (!mic.supported) return null;
+  if (!mic.usable) return null;
 
   const heard = (said) => {
     const line = said ? onHeard(said) : '';

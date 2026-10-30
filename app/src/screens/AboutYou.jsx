@@ -10,8 +10,6 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
 import ChipPicker from '../components/ChipPicker';
-import { TalkCircle } from '../components/TalkBits';
-import { hobbiesIn, goalsIn, joinNice } from '../lib/listen';
 
 const cardStyle = (delay) => ({
   padding: 16,
@@ -28,15 +26,6 @@ const cardStyle = (delay) => ({
 
 export default function AboutYou({ go, about, setAbout, name, setName, skin, talked }) {
   /* say it instead: "i also do gym" / "get rid of golf" */
-  const hearAbout = (said) => {
-    const found = [...hobbiesIn(said), ...goalsIn(said)];
-    if (!found.length) return '';
-    const off = /not|don't|get rid|remove|take off|no more/.test(said.toLowerCase());
-    const on = { ...about.on };
-    found.forEach((k) => (on[k] = !off));
-    setAbout({ ...about, on });
-    return off ? `took off ${joinNice(found)}.` : `added ${joinNice(found)}.`;
-  };
   return (
     <div
       style={{
@@ -164,7 +153,6 @@ export default function AboutYou({ go, about, setAbout, name, setName, skin, tal
         >
           continue
         </button>
-          <TalkCircle skin={skin} onHeard={hearAbout} />
         </div>
       </div>
     </div>

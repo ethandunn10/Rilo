@@ -97,10 +97,22 @@ export default function Home({ go, name, about, apps, xp, skin, strictMode, stri
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          gap: 10,
           animation: 'rise14 .5s ease-out both',
         }}
       >
-        <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 26, fontWeight: 700 }}>
+        <p
+          style={{
+            margin: 0,
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontFamily: 'Fredoka, sans-serif',
+            fontSize: 26,
+            fontWeight: 700,
+          }}
+        >
           {name ? `hey ${name.toLowerCase()}` : 'hey there'}
         </p>
         <p
@@ -119,24 +131,7 @@ export default function Home({ go, name, about, apps, xp, skin, strictMode, stri
         >
           lvl 4 · {xp} xp
         </p>
-        {strictMode && (
-          <p
-            style={{
-              margin: 0,
-              padding: '6px 10px',
-              borderRadius: 999,
-              background: '#12301A',
-              color: '#FFFFFF',
-              border: '2px solid var(--line)',
-              fontFamily: 'Fredoka, sans-serif',
-              fontSize: 13,
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            🔥 strict streak: {strictStreak}
-          </p>
-        )}
+
       </div>
 
       <div
@@ -180,6 +175,28 @@ export default function Home({ go, name, about, apps, xp, skin, strictMode, stri
           <path d="M0 40 C90 10 220 14 350 36 L350 90 L0 90 Z" fill={theme.hills[1]} />
           <path d="M0 70 C120 54 230 56 350 70 L350 90 L0 90 Z" fill={theme.hills[2]} />
         </svg>
+                {strictMode && (
+          <p
+            style={{
+              position: 'absolute',
+              right: 14,
+              bottom: 12,
+              margin: 0,
+              padding: '6px 12px',
+              borderRadius: 999,
+              background: '#12301A',
+              color: '#FFFFFF',
+              border: '2px solid var(--line)',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 13,
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            🔥 strict streak: {strictStreak} {strictStreak === 1 ? 'day' : 'days'}
+          </p>
+        )}
+
         <button
           type="button"
           className="tap-94"

@@ -46,31 +46,33 @@ body {
    On a phone the stage fills the screen like a real app.
    On a laptop it sits in a centered iPhone-sized 390x844 frame. */
 
+/* 100dvh, not min-height: PhoneFrame measures this box to decide the
+   scale, so it has to be exactly the height the app may occupy. dvh tracks
+   the browser toolbars and ignores the keyboard, which is what we want. */
 .stage-wrap {
-  min-height: 100dvh;
+  width: 100%;
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
 }
 
+/* PhoneFrame sets width/height (in design px) and the scale inline. */
 .stage {
   position: relative;
   overflow: hidden;
   background: #EEF8EE;
 }
 
-/* phone: be the app */
+/* phone: be the app, full bleed, square corners */
 .stage-full {
-  width: 100vw;
-  height: 100dvh;
+  border-radius: 0;
 }
 
-/* laptop: always the exact 390x844 the designs are drawn at.
-   PhoneFrame scales this to fit the window instead of squashing it, so
-   nothing ever overlaps the bottom buttons. */
+/* laptop: the iPhone-shaped frame. PhoneFrame scales it to fit the window
+   instead of squashing it, so nothing ever overlaps the bottom buttons. */
 .stage-framed {
-  width: 390px;
-  height: 844px;
   border-radius: 44px;
   box-shadow:
     0 30px 70px rgba(20, 60, 90, 0.28),
@@ -568,4 +570,20 @@ body {
     opacity: 1;
     transform: none;
   }
+}
+
+/* ---------- nothing gets cut off ----------
+   The screens are laid out for a 390x844 phone. If a longer name, a bigger
+   font or a themed decoration pushes content past the bottom, the screen
+   scrolls instead of clipping it. */
+
+.screen {
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.screen::-webkit-scrollbar {
+  display: none;
 }

@@ -1,171 +1,177 @@
-/* Talk — tell Rilo about yourself, out loud.
+/* Talk — the last step of onboarding, and the "tell rilo something" screen
+   from Home.
 
-   mode="onboarding": after "Instead", before About you. Rilo asks 4 quick
-   questions (name, hobbies, goals, when you scroll most). What he hears is
-   turned into the same chips About you uses, so the next screen shows
-   "here's what i got" and they can fix anything.
+   Deliberately bare: the panda, one question at a time above him, and
+   "click to talk". Typing and skipping are always there underneath, so a
+   dead mic never blocks anyone.
 
-   mode="chat": from Home (tap Rilo). Tell him anything new — a hobby, a
-   goal — and he adds it.
-
-   The mic is only on while you hold the button (or after one tap, until
-   you tap again). No mic / said no → typing. */
+   The mic is only on while you're talking to him — never in the background. */
 
 import { useEffect, useRef, useState } from 'react';
-import Dots from '../components/Dots';
-import { ThemeDecor } from '../components/Sky';
-import { useTheme } from '../lib/themes';
-import { RiloStage, WaveBars, MicButton } from '../components/TalkBits';
-import { useListen, say, hobbiesIn, goalsIn, nameIn, joinNice } from '../lib/listen';
-import { track } from '../lib/track';
+import Sky from '../components/Sky';
+import { RiloStage, WaveBars } from '../components/TalkBits';
+import { useListen, hobbiesIn, goalsIn, nameIn, joinNice } from '../lib/listen';
 import { HOBBIES, GOALS } from '../lib/profile';
+import { track } from '../lib/track';
 
-const ONBOARDING = [
+/* Rilo's questions, asked one at a time — but only the ones he still
+   needs. By this point onboarding already has the name, hobbies and goals,
+   so he skips whatever he's been told and just asks the rest. If there's
+   nothing left, he opens it up instead of asking filler. */
+const QS = [
   { id: 'name', ask: "hey! i'm rilo. what should i call you?", mood: 'wave' },
   { id: 'hobby', ask: "what do you love doing when you're not on your phone?", mood: 'curious' },
-  { id: 'goal', ask: "what are you working toward right now?", mood: 'curious' },
+  { id: 'goal', ask: 'what are you working toward right now?', mood: 'curious' },
   { id: 'when', ask: 'last one. when do you end up scrolling the most?', mood: 'curious' },
 ];
 
-const CHAT = [{ id: 'chat', ask: "what's new? tell me a hobby, a goal, anything.", mood: 'curious' }];
+/* nothing to ask — they just describe themselves */
+const OPEN = [
+  { id: 'chat', ask: 'tell me anything. a hobby, a goal, what you’re into.', mood: 'curious' },
+];
+
+function applyPicks(about, picks, list) {
+  if (!picks.length) return about;
+  const on = { ...about.on };
+  const extra = { ...about.extra };
+  picks.forEach((p) => {
+    on[p] = true;
+    const known = !list || list.includes(p);
+    const kind = list === GOALS ? 'goal' : 'hobby';
+    if (!known && !extra[kind].includes(p)) extra[kind] = [...extra[kind], p];
+  });
+  return { on, extra };
+}
 
 function whenReply(t) {
   const s = t.toLowerCase();
-  if (/night|bed|late|sleep/.test(s)) return "late at night, huh. i'll be extra annoying then.";
-  if (/school|class|lunch/.test(s)) return "during school? i'll keep an eye on that.";
-  if (/morning|wake/.test(s)) return 'first thing in the morning? not on my watch.';
-  if (/homework|study/.test(s)) return "when you should be doing homework. classic. i've got you.";
-  if (/bored|always|all day/.test(s)) return "okay, honesty. i like that. we'll fix it together.";
-  return "noted. i'll watch out for that.";
+  if (/night|bed|late|2 ?am|midnight/.test(s)) return "late at night. that's the one i'll guard.";
+  if (/morning|wake|breakfast/.test(s)) return "mornings. i'll catch you before you spiral.";
+  if (/school|class|lunch/.test(s)) return "during school. noted.";
+  if (/bored|nothing/.test(s)) return 'when you’re bored. that’s exactly when i’ll step in.';
+  return "got it. i'll watch for that.";
 }
 
-/* turn picks into the about-you shape. In onboarding, spoken picks replace
-   the demo defaults in that list (hobbies or goals); in chat they add. */
-function applyPicks(about, picks, replaceList) {
-  if (!picks.length) return about;
-  const on = { ...about.on };
-  if (replaceList) replaceList.forEach((k) => (on[k] = false));
-  picks.forEach((k) => (on[k] = true));
-  return { ...about, on };
-}
+/* the two ways out of a question — both real buttons, not faint links */
+const footBtn = {
+  flex: 1,
+  minHeight: 54,
+  borderRadius: 999,
+  border: '2px solid var(--line)',
+  fontFamily: 'Fredoka, sans-serif',
+  fontSize: 18,
+  fontWeight: 600,
+  cursor: 'pointer',
+  boxShadow: '0 4px 0 var(--line)',
+};
 
-export default function Talk({ go, mode = 'onboarding', skin, name, setName, setAbout, onTalked }) {
-  const theme = useTheme();
-  const qs = mode === 'chat' ? CHAT : ONBOARDING;
-  const [step, setStep] = useState(0);
-  const [bubble, setBubble] = useState(qs[0].ask);
-  const [mood, setMood] = useState(qs[0].mood);
-  const [speaking, setSpeaking] = useState(true);
-  const [thinking, setThinking] = useState(false);
-  const [typingPick, setTyping] = useState(false);
-  const [draft, setDraft] = useState('');
-  const [voice, setVoice] = useState(false);
-  const [heard, setHeard] = useState({ hobbies: [], goals: [], name: '' });
-  const [done, setDone] = useState(false);
+export default function Talk({
+  go,
+  mode = 'onboarding',
+  skin,
+  name,
+  about,
+  setName,
+  setAbout,
+  onTalked,
+}) {
+  const chat = mode === 'chat';
+
+  /* Worked out once, when the screen opens: what does he already know, and
+     so which questions are still worth asking? */
+  const [qs] = useState(() => {
+    if (chat) return OPEN;
+    const picked = (list) => list.some((x) => about?.on?.[x]);
+    const extras = (kind) => (about?.extra?.[kind] ?? []).length > 0;
+    const knows = {
+      name: Boolean(name),
+      hobby: picked(HOBBIES) || extras('hobby'),
+      goal: picked(GOALS) || extras('goal'),
+    };
+    const left = QS.filter((x) => !knows[x.id]);
+    return left.length ? left : OPEN;
+  });
+
   const mic = useListen();
-  const timers = useRef([]);
-  const heardName = useRef('');
+  const [step, setStep] = useState(0);
+  /* no speech support (Firefox, locked-down Safari) → typing from the start */
+  const [typing, setTyping] = useState(() => !mic.usable);
+  const [draft, setDraft] = useState('');
+  const [reply, setReply] = useState('');
+  const [mood, setMood] = useState(qs[0].mood);
+  const timer = useRef(null);
 
-  const later = (fn, ms) => timers.current.push(setTimeout(fn, ms));
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  useEffect(() => () => clearTimeout(timer.current), []);
 
-  /* Rilo "talks" for a moment whenever his line changes */
-  const riloSays = (line, m) => {
-    setBubble(line);
-    if (m) setMood(m);
-    setSpeaking(true);
-    say(line, voice);
-    later(() => setSpeaking(false), Math.min(2600, 700 + line.length * 28));
+  const done = step >= qs.length;
+  const q = qs[Math.min(step, qs.length - 1)];
+  const listening = mic.listening;
+
+  const finish = () => {
+    if (!chat) onTalked?.();
+    go(chat ? 'home' : 'paywall', chat ? 'back' : 'forward');
   };
 
-  useEffect(() => {
-    later(() => setSpeaking(false), 1800);
-  }, []);
-
-
-  const answer = (raw) => {
+  /* take one answer, move to the next question */
+  const take = (raw) => {
     const text = (raw || '').trim();
     if (!text) return;
-    setThinking(true);
-    const q = qs[step];
     track('talk', q.id);
 
-    let reply = '';
+    let said = '';
     if (q.id === 'name') {
       const n = nameIn(text);
       if (n) setName(n);
-      setHeard((h) => ({ ...h, name: n }));
-      heardName.current = n;
-      reply = n ? `nice to meet you, ${n.toLowerCase()}.` : "cool. i'll just call you friend for now.";
+      said = n ? `nice to meet you, ${n.toLowerCase()}.` : "cool, i'll call you friend for now.";
     } else if (q.id === 'hobby') {
       const found = hobbiesIn(text);
-      setHeard((h) => ({ ...h, hobbies: found }));
       setAbout((a) => applyPicks(a, found, HOBBIES));
-      reply = found.length
-        ? `${joinNice(found)}? love that. that's what i'll point you to.`
-        : "ooh okay. i'll learn more about that as we go.";
+      said = found.length
+        ? `${joinNice(found)}? love that.`
+        : "ooh okay. i'll learn more as we go.";
     } else if (q.id === 'goal') {
       const found = goalsIn(text);
-      setHeard((h) => ({ ...h, goals: found }));
       setAbout((a) => applyPicks(a, found, GOALS));
-      reply = found.length
-        ? `${joinNice(found)}. okay, i'm locked in on that.`
-        : "got it. we'll work on that together.";
+      said = found.length ? `${joinNice(found)}. i'm locked in on that.` : "got it. we'll work on it.";
     } else if (q.id === 'when') {
-      reply = whenReply(text);
+      said = whenReply(text);
     } else {
-      const hs = hobbiesIn(text);
-      const gs = goalsIn(text);
-      setAbout((a) => applyPicks(a, [...hs, ...gs]));
-      const added = [...hs, ...gs];
-      reply = added.length
-        ? `added ${joinNice(added)}. i'll use that when you're bored.`
-        : "got it. i'll keep that in mind.";
+      const picks = [...hobbiesIn(text), ...goalsIn(text)];
+      setAbout((a) => applyPicks(a, picks));
+      said = picks.length ? `added ${joinNice(picks)}.` : "got it. i'll keep that in mind.";
     }
 
-    later(() => {
-      setThinking(false);
-      riloSays(reply, 'proud');
-      mic.setText('');
-      setDraft('');
-      const next = step + 1;
-      later(
-        () => {
-          if (next < qs.length) {
-            setStep(next);
-            riloSays(qs[next].ask, qs[next].mood);
-          } else if (mode === 'chat') {
-            riloSays('anything else? or tap done.', 'coach');
-          } else {
-            setDone(true);
-            riloSays(
-              `that's all i needed${heardName.current || name ? `, ${(heardName.current || name).toLowerCase()}` : ''}. i'll remember this.`,
-              'proud',
-            );
-          }
-        },
-        Math.min(2800, 1100 + reply.length * 25),
-      );
-    }, 450);
+    setReply(said);
+    setMood('proud');
+    setDraft('');
+    mic.setText('');
+
+    timer.current = setTimeout(() => {
+      setReply('');
+      setStep((n) => {
+        const next = n + 1;
+        setMood(qs[Math.min(next, qs.length - 1)].mood);
+        return next;
+      });
+    }, 1500);
   };
 
-  const listening = mic.listening;
-  const typing = typingPick || !mic.supported;
-  const stageState = listening ? 'listening' : speaking || thinking ? 'talking' : 'idle';
-  const showText = listening ? mic.text : mic.text || draft;
-  const finish = () => go(mode === 'chat' ? 'home' : 'aboutyou', mode === 'chat' ? 'back' : 'forward');
-
-  const startMic = () => {
-    if (done || thinking) return;
-    if (!mic.supported) {
+  const tapRilo = () => {
+    if (done) return;
+    if (listening) {
+      mic.stop();
+      return;
+    }
+    if (!mic.usable) {
       setTyping(true);
       return;
     }
-    window.speechSynthesis?.cancel?.();
-    setSpeaking(false);
-    setMood('coach');
-    mic.start((said) => answer(said));
+    mic.start(take);
   };
+
+  /* what sits above Rilo: his question, or his reply to it */
+  const line = done ? "that's everything. thanks." : reply || q.ask;
+  const heard = listening ? mic.text : '';
 
   return (
     <div
@@ -173,293 +179,189 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
         position: 'absolute',
         inset: 0,
         overflow: 'hidden',
-        background: theme.sky,
         fontFamily: 'Inter, system-ui, sans-serif',
         color: '#12301A',
       }}
     >
-      <ThemeDecor />
+      <Sky hills="mid" />
 
       <div
         style={{
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '54px 22px 26px',
+          padding: '52px 22px 26px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          gap: 8,
         }}
       >
-        {/* top row */}
-        <div
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            minHeight: 36,
-          }}
-        >
-          {mode === 'chat' ? (
-            <button type="button" className="tap" onClick={finish} style={pillBtn}>
-              done
-            </button>
-          ) : (
-            <span style={{ width: 64 }} />
-          )}
-          {mode === 'onboarding' ? <Dots active={2} /> : <span />}
-          <button
-            type="button"
-            className="tap"
-            aria-pressed={voice}
-            onClick={() => setVoice((v) => !v)}
-            style={{ ...pillBtn, width: 64, background: voice ? '#12301A' : 'var(--card)', color: voice ? '#FFFFFF' : '#12301A' }}
-          >
-            {voice ? 'voice on' : 'voice'}
-          </button>
-        </div>
+        {/* which question we're on */}
+        {qs.length > 1 && !done && (
+          <div style={{ display: 'flex', gap: 6, marginBottom: 2 }}>
+            {qs.map((x, i) => (
+              <span
+                key={x.id}
+                style={{
+                  width: i === step ? 22 : 7,
+                  height: 7,
+                  borderRadius: 4,
+                  background: i <= step ? '#12301A' : 'rgba(255,255,255,0.85)',
+                  transition: 'width .2s ease',
+                }}
+              />
+            ))}
+          </div>
+        )}
 
-        {/* Rilo's line */}
-        <div
-          key={bubble}
+        {/* the question, on its own */}
+        <p
+          key={line}
           style={{
-            marginTop: 18,
-            maxWidth: 320,
-            padding: '14px 18px',
-            borderRadius: 22,
-            background: 'var(--card)',
-            border: '2px solid var(--line)',
-            boxShadow: '0 4px 0 var(--line)',
+            margin: 0,
+            minHeight: 86,
+            fontFamily: 'Fredoka, sans-serif',
+            fontSize: 26,
+            fontWeight: 600,
+            lineHeight: 1.25,
             textAlign: 'center',
-            animation: 'bubble-in .35s ease-out both',
-            position: 'relative',
+            animation: 'rise .4s ease-out both',
           }}
         >
-          <p
-            style={{
-              margin: 0,
-              fontFamily: 'Fredoka, sans-serif',
-              fontSize: 22,
-              fontWeight: 600,
-              lineHeight: 1.2,
-            }}
-          >
-            {thinking ? '…' : bubble}
-          </p>
-          <span
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              left: '50%',
-              bottom: -9,
-              width: 16,
-              height: 16,
-              marginLeft: -8,
-              background: 'var(--card)',
-              borderRight: '2px solid var(--line)',
-              borderBottom: '2px solid var(--line)',
-              transform: 'rotate(45deg)',
-            }}
-          />
-        </div>
+          {line}
+        </p>
 
-        {/* big Rilo + sound waves */}
-        <div style={{ marginTop: 4 }}>
-          <RiloStage
-            skin={skin}
-            mood={listening ? 'coach' : mood}
-            size={235}
-            state={stageState}
-            onTap={() => (listening ? mic.stop() : startMic())}
-          />
-        </div>
+        {/* the panda */}
+        <RiloStage
+          skin={skin}
+          mood={listening ? 'coach' : mood}
+          size={215}
+          state={listening ? 'listening' : 'idle'}
+          onTap={mic.usable ? tapRilo : undefined}
+        />
 
         <WaveBars on={listening} />
 
-        {/* what you said */}
-        <div
+        {/* click to talk / what he's hearing */}
+        <p
           style={{
-            marginTop: 6,
-            width: '100%',
-            minHeight: 58,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            margin: '2px 0 0',
+            minHeight: 24,
+            fontFamily: 'Fredoka, sans-serif',
+            fontSize: 17,
+            fontWeight: 600,
+            color: listening ? '#1F6B2E' : '#2C4A36',
+            textAlign: 'center',
           }}
         >
-          {done ? (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, justifyContent: 'center' }}>
-              {[...heard.hobbies, ...heard.goals].slice(0, 6).map((k) => (
-                <span key={k} style={chip}>
-                  {k}
-                </span>
-              ))}
-            </div>
-          ) : typing && !listening ? (
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                answer(draft);
-              }}
-              style={{ display: 'flex', gap: 8, width: '100%' }}
-            >
-              <input
-                autoFocus
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                placeholder="type it to rilo…"
-                style={{
-                  flexGrow: 1,
-                  minWidth: 0,
-                  height: 50,
-                  boxSizing: 'border-box',
-                  padding: '0 18px',
-                  borderRadius: 999,
-                  border: '2px solid var(--line)',
-                  background: '#FFFFFF',
-                  fontSize: 16,
-                  fontWeight: 600,
-                  color: '#12301A',
-                }}
-              />
-              <button type="submit" className="tap" style={{ ...pillBtn, height: 50, padding: '0 18px' }}>
-                send
-              </button>
-            </form>
-          ) : (
-            <p
-              style={{
-                margin: 0,
-                textAlign: 'center',
-                fontSize: showText ? 18 : 15,
-                fontWeight: 700,
-                color: showText ? '#12301A' : '#2C4A36',
-                lineHeight: 1.35,
-              }}
-            >
-              {showText ? `“${showText}”` : listening ? 'listening…' : 'hold the mic or tap rilo and just talk'}
-            </p>
-          )}
-        </div>
+          {heard
+            ? `“${heard}”`
+            : listening
+              ? 'listening…'
+              : done
+                ? ''
+                : mic.usable
+                  ? 'click to talk'
+                  : 'type your answer below'}
+        </p>
 
-        <div style={{ flexGrow: 1 }} />
-
-        {/* bottom controls */}
-        {done ? (
-          <button
-            type="button"
-            className="tap-94"
-            onClick={() => {
-              onTalked?.();
-              finish();
-            }}
-            style={bigBtn}
-          >
-            looks good
-          </button>
-        ) : (
-          <div
+        {mic.problem && !listening && (
+          <p
             style={{
-              width: '100%',
-              display: 'grid',
-              gridTemplateColumns: '1fr auto 1fr',
-              alignItems: 'center',
+              margin: 0,
+              fontSize: 13,
+              fontWeight: 600,
+              color: '#A33A2B',
+              textAlign: 'center',
             }}
           >
-            <button
-              type="button"
-              className="tap"
-              onClick={() => setTyping((t) => !t)}
-              style={{ ...linkBtn, justifySelf: 'start' }}
-            >
-              {typing ? 'talk instead' : 'type instead'}
-            </button>
-            <MicButton
-              listening={listening}
-              disabled={!mic.supported || thinking}
-              onStart={startMic}
-              onStop={mic.stop}
+            {mic.problem}
+          </p>
+        )}
+
+        {typing && !done && (
+          <div style={{ width: '100%', display: 'flex', gap: 8, marginTop: 4 }}>
+            <input
+              type="text"
+              autoFocus
+              value={draft}
+              placeholder="type it to rilo…"
+              onChange={(e) => setDraft(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') take(draft);
+              }}
+              style={{
+                flexGrow: 1,
+                minWidth: 0,
+                height: 48,
+                boxSizing: 'border-box',
+                padding: '0 16px',
+                borderRadius: 999,
+                border: '2px solid var(--line)',
+                background: '#FFFFFF',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontSize: 16,
+                fontWeight: 600,
+                color: '#12301A',
+              }}
             />
             <button
               type="button"
               className="tap"
-              onClick={() => {
-                track('talk', 'skipped');
-                finish();
+              onClick={() => take(draft)}
+              style={{
+                height: 48,
+                padding: '0 18px',
+                borderRadius: 999,
+                border: '2px solid var(--line)',
+                background: '#12301A',
+                color: '#FFFFFF',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'pointer',
               }}
-              style={{ ...linkBtn, justifySelf: 'end' }}
             >
-              {mode === 'chat' ? 'done' : 'skip'}
+              send
             </button>
           </div>
         )}
 
-        <p
-          style={{
-            margin: '14px 0 0',
-            fontSize: 12,
-            fontWeight: 600,
-            color: '#2C4A36',
-            textAlign: 'center',
-          }}
-        >
-          {mic.supported
-            ? "rilo only listens while you're holding the button."
-            : "no mic here, so just type. rilo still gets it."}
-        </p>
+        <div style={{ flexGrow: 1 }} />
+
+        {/* type instead · next step */}
+        <div style={{ width: '100%', display: 'flex', gap: 10 }}>
+          <button
+            type="button"
+            className="tap-94"
+            onClick={() => setTyping((t) => !t)}
+            style={{
+              ...footBtn,
+              background: 'rgba(255,255,255,0.9)',
+              color: '#12301A',
+            }}
+          >
+            {typing && mic.usable ? 'talk instead' : 'type instead'}
+          </button>
+          <button
+            type="button"
+            className="tap-94"
+            onClick={() => {
+              if (!done) track('talk', 'skipped');
+              finish();
+            }}
+            style={{
+              ...footBtn,
+              background: '#12301A',
+              color: '#FFFFFF',
+            }}
+          >
+            {done ? 'done' : 'next step'}
+          </button>
+        </div>
+
       </div>
     </div>
   );
 }
-
-const pillBtn = {
-  height: 36,
-  padding: '0 14px',
-  borderRadius: 999,
-  border: '2px solid var(--line)',
-  background: 'var(--card)',
-  boxShadow: '0 3px 0 var(--line)',
-  fontFamily: 'Fredoka, sans-serif',
-  fontSize: 15,
-  fontWeight: 600,
-  color: '#12301A',
-  cursor: 'pointer',
-};
-
-const linkBtn = {
-  border: 0,
-  background: 'transparent',
-  fontFamily: 'Fredoka, sans-serif',
-  fontSize: 16,
-  fontWeight: 600,
-  color: '#12301A',
-  textDecoration: 'underline',
-  textUnderlineOffset: 3,
-  cursor: 'pointer',
-  padding: 8,
-};
-
-const chip = {
-  padding: '8px 14px',
-  borderRadius: 999,
-  background: '#12301A',
-  color: '#FFFFFF',
-  fontFamily: 'Fredoka, sans-serif',
-  fontSize: 15,
-  fontWeight: 600,
-};
-
-const bigBtn = {
-  width: '100%',
-  height: 58,
-  border: '2px solid var(--line)',
-  borderRadius: 999,
-  background: '#FFFFFF',
-  color: '#12301A',
-  fontFamily: 'Fredoka, sans-serif',
-  fontSize: 20,
-  fontWeight: 600,
-  cursor: 'pointer',
-  boxShadow: '0 4px 0 var(--line)',
-};

@@ -15,27 +15,70 @@ const SR =
   typeof window !== 'undefined' ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 
 export function useListen() {
-  const [supported, setSupported] = useState(Boolean(SR));
+  const [supported] = useState(Boolean(SR));
+  /* mic refused or missing — the whole app hides its voice bits when true */
+  const [blocked, setBlocked] = useState(false);
   const [listening, setListening] = useState(false);
   const [text, setText] = useState('');
+  /* a human-readable reason the last attempt failed, '' when fine */
+  const [problem, setProblem] = useState('');
   const rec = useRef(null);
   const finalText = useRef('');
   const lastText = useRef('');
   const onDone = useRef(null);
+  const gotAudio = useRef(false);
 
   useEffect(() => () => rec.current?.abort?.(), []);
 
-  const start = (done) => {
+  /* Ask the browser up front whether the mic is already refused, so screens
+     can hide their talk buttons instead of offering something that fails. */
+  useEffect(() => {
+    let alive = true;
+    navigator.permissions
+      ?.query({ name: 'microphone' })
+      .then((p) => {
+        if (alive && p.state === 'denied') setBlocked(true);
+        p.onchange = () => alive && setBlocked(p.state === 'denied');
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  /* Ask for the mic up front. Chrome shows its prompt here, so a denial is
+     reported properly instead of the recogniser dying half a second later. */
+  const permission = async () => {
+    if (gotAudio.current) return true;
+    if (!navigator.mediaDevices?.getUserMedia) return true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      gotAudio.current = true;
+      return true;
+    } catch {
+      setBlocked(true);
+      setProblem('no mic. allow it in the address bar, or type instead.');
+      return false;
+    }
+  };
+
+  const start = async (done) => {
     if (!SR || listening) return;
+    setProblem('');
+    if (!(await permission())) return;
+
     onDone.current = done;
     finalText.current = '';
     lastText.current = '';
     setText('');
+
     try {
       const r = new SR();
       r.lang = 'en-US';
       r.interimResults = true;
       r.continuous = true;
+
       r.onresult = (e) => {
         let interim = '';
         let fin = '';
@@ -48,29 +91,62 @@ export function useListen() {
         lastText.current = (fin + ' ' + interim).trim();
         setText(lastText.current);
       };
+
+      /* Say what went wrong rather than going quiet. A bad run never
+         disables the mic for good — they can always tap again. */
       r.onerror = (e) => {
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') setSupported(false);
+        /* an error can fire without onend — never leave it stuck "listening" */
+        setListening(false);
+        rec.current = null;
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+          gotAudio.current = false;
+          setBlocked(true);
+          setProblem('mic is blocked. allow it in the address bar, or type instead.');
+        } else if (e.error === 'network') {
+          setProblem("couldn't reach the speech service. check wifi, or type instead.");
+        } else if (e.error === 'no-speech') {
+          setProblem("didn't catch that. try again, or type instead.");
+        } else if (e.error === 'audio-capture') {
+          setBlocked(true);
+          setProblem('no microphone found. type instead.');
+        }
       };
+
       r.onend = () => {
         setListening(false);
         rec.current = null;
         const out = (finalText.current || '').trim() || lastText.current;
         setText(out);
-        const done = onDone.current;
+        const fn = onDone.current;
         onDone.current = null;
-        if (done) done(out);
+        if (fn) fn(out);
       };
+
       rec.current = r;
       r.start();
       setListening(true);
     } catch {
-      setSupported(false);
+      setProblem("couldn't start the mic. type instead.");
     }
   };
 
-  const stop = () => rec.current?.stop?.();
+  const stop = () => {
+    if (!rec.current) {
+      setListening(false);
+      return;
+    }
+    try {
+      rec.current.stop();
+    } catch {
+      rec.current = null;
+      setListening(false);
+    }
+  };
 
-  return { supported, listening, text, setText, start, stop };
+  /* the only flag screens should check: can we actually offer talking? */
+  const usable = supported && !blocked;
+
+  return { supported, usable, blocked, listening, text, setText, start, stop, problem, setProblem };
 }
 
 /* Rilo talking out loud (optional, off by default) */

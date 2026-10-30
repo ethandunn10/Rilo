@@ -3,8 +3,6 @@
 
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
-import { TalkCircle } from '../components/TalkBits';
-import { hoursIn } from '../lib/listen';
 
 const MAX = 10;
 
@@ -60,17 +58,6 @@ export default function TimeBack({ go, time, setTime, skin }) {
   const sessions = Math.round(saved * 365).toLocaleString('en-US');
 
   /* say it instead: "like 5 hours, i want to get to 2" */
-  const hearTime = (said) => {
-    const nums = hoursIn(said);
-    if (!nums.length) return '';
-    const isGoal = nums.length === 1 && /goal|want|get (it )?(down )?to|only|aim/.test(said.toLowerCase());
-    let n = nums.length > 1 || !isGoal ? nums[0] : now;
-    let g = nums.length > 1 ? nums[1] : isGoal ? nums[0] : goal;
-    n = Math.min(MAX, Math.round(n * 2) / 2);
-    g = Math.max(0.5, Math.min(n - 0.5, Math.round(g * 2) / 2));
-    setTime({ now: n, goal: g });
-    return `${n}h a day now, goal ${g}h. we got this.`;
-  };
 
   const nowUp = () => setTime({ ...time, now: Math.min(MAX, now + 0.5) });
   const nowDown = () => setTime({ ...time, now: Math.max(goal + 0.5, now - 0.5) });
@@ -330,7 +317,7 @@ export default function TimeBack({ go, time, setTime, skin }) {
           <button
           type="button"
           className="tap-92"
-          onClick={() => go('paywall')}
+          onClick={() => go('talk')}
           style={{
             flexGrow: 1,
             minWidth: 0,
@@ -352,7 +339,6 @@ export default function TimeBack({ go, time, setTime, skin }) {
         >
           let's get it back
         </button>
-          <TalkCircle skin={skin} onHeard={hearTime} />
         </div>
       </div>
     </div>
