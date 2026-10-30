@@ -205,7 +205,7 @@ export default function Talk({
   /* finished asking → let it sit for a beat, then move on by itself */
   useEffect(() => {
     if (!done) return;
-    const t = setTimeout(() => latest.current.finish(), 2000);
+    const t = setTimeout(() => latest.current.finish(), 1500);
     return () => clearTimeout(t);
   }, [done]);
 
@@ -348,7 +348,7 @@ export default function Talk({
             fontWeight: 600,
             lineHeight: 1.25,
             textAlign: 'center',
-            animation: 'rise .4s ease-out both',
+            animation: 'line-in .34s cubic-bezier(.2,.8,.3,1) both',
           }}
         >
           {line}
@@ -370,11 +370,17 @@ export default function Talk({
           style={{
             margin: '2px 0 0',
             minHeight: 24,
+            padding: heard || done ? 0 : '9px 18px',
+            borderRadius: 999,
+            background: heard || done ? 'transparent' : listening ? '#DCF3DF' : '#12301A',
+            border: heard || done ? 0 : '2px solid var(--line)',
+            boxShadow: heard || done ? 'none' : '0 3px 0 var(--line)',
             fontFamily: 'Fredoka, sans-serif',
             fontSize: 17,
             fontWeight: 600,
-            color: listening ? '#1F6B2E' : '#2C4A36',
+            color: heard || done ? '#2C4A36' : listening ? '#12301A' : '#FFFFFF',
             textAlign: 'center',
+            transition: 'background .2s ease, color .2s ease',
           }}
         >
           {heard
@@ -388,8 +394,8 @@ export default function Talk({
                   : !mic.usable
                     ? 'type your answer below'
                     : mic.granted
-                      ? 'click to talk'
-                      : 'click me — can i listen?'}
+                      ? 'tap the panda to talk'
+                      : 'tap the panda to start'}
         </p>
 
         {mic.problem && !listening && (
@@ -480,35 +486,38 @@ export default function Talk({
 
         <div style={{ flexGrow: 1 }} />
 
-        {/* type instead · next step */}
+        {/* while he's still asking: only the typing toggle.
+            once he's done: only the way forward. */}
         <div style={{ width: '100%', display: 'flex', gap: 10 }}>
-          <button
-            type="button"
-            className="tap-94"
-            onClick={() => setTyping((t) => !t)}
-            style={{
-              ...footBtn,
-              background: 'rgba(255,255,255,0.9)',
-              color: '#12301A',
-            }}
-          >
-            {typingPick && mic.usable ? 'talk instead' : 'type instead'}
-          </button>
-          <button
-            type="button"
-            className="tap-94"
-            onClick={() => {
-              if (!done) track('talk', 'skipped');
-              finish();
-            }}
-            style={{
-              ...footBtn,
-              background: '#12301A',
-              color: '#FFFFFF',
-            }}
-          >
-            {done ? 'done' : 'next step'}
-          </button>
+          {!done && mic.usable && (
+            <button
+              type="button"
+              className="tap-94"
+              onClick={() => setTyping((t) => !t)}
+              style={{
+                ...footBtn,
+                background: 'rgba(255,255,255,0.9)',
+                color: '#12301A',
+              }}
+            >
+              {typingPick ? 'talk instead' : 'type instead'}
+            </button>
+          )}
+
+          {done && (
+            <button
+              type="button"
+              className="tap-94"
+              onClick={finish}
+              style={{
+                ...footBtn,
+                background: '#12301A',
+                color: '#FFFFFF',
+              }}
+            >
+              next step
+            </button>
+          )}
         </div>
 
       </div>

@@ -35,7 +35,7 @@ import Locked from './screens/Locked';
 import StrictAsk from './screens/StrictAsk';
 import Results from './screens/Results';
 
-import { loadState, saveState, clearState, DEFAULT_STATE, today } from './lib/storage';
+import { saveState, clearState, DEFAULT_STATE, today } from './lib/storage';
 import { track } from './lib/track';
 import { pickedApps } from './lib/apps';
 import {
@@ -93,8 +93,11 @@ export default function App() {
      remounted (which would re-run its entry animations as it leaves). */
   const [nav, setNav] = useState({ entries: ['welcome'], dir: 'forward' });
 
-  /* saved state */
-  const [saved] = useState(loadState);
+  /* DEMO: every refresh is a fresh tester — defaults, OG Rilo, grass sky,
+     the starting apps. State is still written to localStorage as they go so
+     /results can report on the last run, it just isn't read back in. Swap
+     this for loadState to make progress survive a reload again. */
+  const [saved] = useState(DEFAULT_STATE);
   const [name, setName] = useState(saved.name);
   const [about, setAbout] = useState(saved.about);
   const [apps, setApps] = useState(saved.apps);
