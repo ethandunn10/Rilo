@@ -12,15 +12,10 @@ export function today() {
 export const DEFAULT_STATE = {
   /* optional, asked for on About you */
   name: '',
-  /* defaults copied from the design files */
+  /* Nothing pre-picked: the designs showed chips already selected, but a
+     tester should choose their own rather than deselect someone else's. */
   about: {
-    on: {
-      basketball: true,
-      golf: true,
-      'making videos': true,
-      'better grades': true,
-      'grow my content': true,
-    },
+    on: {},
     extra: { hobby: [], goal: [] },
   },
   apps: {
