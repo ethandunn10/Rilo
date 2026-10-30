@@ -35,11 +35,6 @@ function rememberBlocked() {
   }
 }
 
-/* stop listening after this much quiet — a pause means they're done */
-const SILENCE_MS = 2000;
-/* and never hang on indefinitely if nothing is said at all */
-const NOTHING_MS = 7000;
-
 export function useListen() {
   const [supported] = useState(Boolean(SR));
   /* mic refused or missing — the whole app hides its voice bits when true */
@@ -61,15 +56,8 @@ export function useListen() {
   const lastText = useRef('');
   const onDone = useRef(null);
   const gotAudio = useRef(false);
-  const hush = useRef(null);
 
-  useEffect(
-    () => () => {
-      clearTimeout(hush.current);
-      rec.current?.abort?.();
-    },
-    [],
-  );
+  useEffect(() => () => rec.current?.abort?.(), []);
 
   /* Ask the browser up front whether the mic is already refused, so screens
      can hide their talk buttons instead of offering something that fails. */
@@ -141,13 +129,7 @@ export function useListen() {
       r.interimResults = true;
       r.continuous = true;
 
-      const quiet = (ms) => {
-        clearTimeout(hush.current);
-        hush.current = setTimeout(() => r.stop(), ms);
-      };
-
       r.onresult = (e) => {
-        quiet(SILENCE_MS);
         let interim = '';
         let fin = '';
         for (let i = 0; i < e.results.length; i++) {
@@ -164,7 +146,6 @@ export function useListen() {
          disables the mic for good — they can always tap again. */
       r.onerror = (e) => {
         /* an error can fire without onend — never leave it stuck "listening" */
-        clearTimeout(hush.current);
         setListening(false);
         rec.current = null;
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
@@ -182,7 +163,6 @@ export function useListen() {
       };
 
       r.onend = () => {
-        clearTimeout(hush.current);
         setListening(false);
         rec.current = null;
         const out = (finalText.current || '').trim() || lastText.current;
@@ -195,7 +175,6 @@ export function useListen() {
       rec.current = r;
       r.start();
       setListening(true);
-      quiet(NOTHING_MS);
     } catch {
       setProblem("couldn't start the mic. type instead.");
     }
@@ -297,13 +276,37 @@ function matches(text, table) {
 export const hobbiesIn = (text) => matches(text, HOBBY_WORDS);
 export const goalsIn = (text) => matches(text, GOAL_WORDS);
 
-/* "my name's ethan" / "i'm ethan" / "ethan" → "Ethan" */
+/* Pull a first name out of whatever they said: "hi ethan", "hey i'm ethan",
+   "my name is ethan nice to meet you" all give "Ethan". Greetings and
+   lead-ins are stripped, then the first real word is the name. */
+const LEAD_IN =
+  /^(hi|hii+|hey+|hello|yo|sup|um+|uh+|so|well|ok|okay|its|it's|this is|my name is|my name's|name's|the name is|i am|i'm|im|call me|they call me|you can call me|everyone calls me|people call me)\b[\s,]*/;
+
+/* words that are never the answer, even first in the sentence */
+const NOT_A_NAME = new Set([
+  'the', 'a', 'an', 'and', 'but', 'is', 'am', 'are', 'my', 'me', 'you', 'your',
+  'what', 'who', 'thats', "that's", 'nice', 'good', 'hello', 'there',
+]);
+
 export function nameIn(text) {
-  const t = text.trim().replace(/[.!?,]/g, '');
-  const m = t.match(/(?:my name is|my name's|name's|i'm|i am|call me|it's|its)\s+([a-z'-]+)/i);
-  const word = m ? m[1] : t.split(/\s+/).slice(-1)[0];
+  let t = text.trim().toLowerCase().replace(/[.!?,]/g, '');
+
+  /* peel off any number of lead-ins: "hi, hey, i'm ethan" */
+  let before;
+  do {
+    before = t;
+    t = t.replace(LEAD_IN, '').trim();
+  } while (t !== before && t);
+
+  const word = t.split(/\s+/)[0] ?? '';
   if (!word || word.length > 16) return '';
-  return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  if (!/^[a-z][a-z'-]*$/.test(word)) return '';
+  if (NOT_A_NAME.has(word)) return '';
+
+  return word
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('-');
 }
 
 /* what you said on the pop-up → which screen */

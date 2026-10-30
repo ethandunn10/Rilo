@@ -172,6 +172,11 @@ export default function Talk({
   const [autoTalk, setAutoTalk] = useState(false);
   /* out of questions: wait a beat, then say thanks, then leave */
   const [wrapUp, setWrapUp] = useState(false);
+  /* what he heard for each question, for the check-over screen */
+  const [answers, setAnswers] = useState({});
+  /* set while they're redoing one answer, so we come straight back */
+  const [redoing, setRedoing] = useState(null);
+  const [checked, setChecked] = useState(false);
   const [draft, setDraft] = useState('');
   const [reply, setReply] = useState('');
   const [mood, setMood] = useState(qs[0].mood);
@@ -187,7 +192,9 @@ export default function Talk({
   const done = step >= qs.length;
   /* saying thanks and heading out — immediate in onboarding, after the
      3s pause in the Home chat */
-  const winding = wrapUp || (done && !chat);
+  /* onboarding stops on a check-over screen first; the chat doesn't */
+  const reviewing = done && !chat && !checked;
+  const winding = wrapUp || (done && !chat && checked);
   const q = qs[Math.min(step, qs.length - 1)];
   const listening = mic.listening;
 
@@ -228,6 +235,8 @@ export default function Talk({
     /* they answered after "anything else?" — take it and wind up */
     if (done) setWrapUp(true);
 
+    setAnswers((a) => ({ ...a, [step]: { ask: q.ask, said: text } }));
+
     setReply(said);
     setMood('proud');
     setDraft('');
@@ -235,12 +244,18 @@ export default function Talk({
 
     timer.current = setTimeout(() => {
       setReply('');
+      if (redoing !== null) {
+        /* straight back to the check-over screen */
+        setRedoing(null);
+        setStep(qs.length);
+        return;
+      }
       setStep((n) => {
         const next = n + 1;
         setMood(qs[Math.min(next, qs.length - 1)].mood);
         return next;
       });
-    }, 2000);
+    }, 1000);
   };
 
   /* refreshed after every render, so the effect below always calls the
@@ -399,6 +414,112 @@ export default function Talk({
           <span style={{ width: 40, flexShrink: 0 }} />
         </div>
 
+        {reviewing ? (
+          <div
+            style={{
+              width: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              animation: 'line-in .34s cubic-bezier(.2,.8,.3,1) both',
+            }}
+          >
+            <p
+              style={{
+                margin: '4px 0 2px',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 26,
+                fontWeight: 600,
+                textAlign: 'center',
+              }}
+            >
+              is this right?
+            </p>
+
+            {qs.map((x, i) => (
+              <div
+                key={x.ask}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '12px 14px',
+                  borderRadius: 20,
+                  background: 'rgba(255,255,255,0.9)',
+                  border: '2px solid var(--line)',
+                  boxShadow: '0 3px 0 var(--line)',
+                }}
+              >
+                <div style={{ flexGrow: 1, minWidth: 0 }}>
+                  <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#3D5A46' }}>
+                    {x.ask}
+                  </p>
+                  <p
+                    style={{
+                      margin: '2px 0 0',
+                      fontFamily: 'Fredoka, sans-serif',
+                      fontSize: 18,
+                      fontWeight: 600,
+                      overflowWrap: 'anywhere',
+                    }}
+                  >
+                    {answers[i]?.said || '—'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="tap-94"
+                  onClick={() => {
+                    if (listening) mic.stop();
+                    setReply('');
+                    setRedoing(i);
+                    setStep(i);
+                  }}
+                  style={{
+                    flexShrink: 0,
+                    minHeight: 40,
+                    padding: '0 14px',
+                    borderRadius: 999,
+                    border: '2px solid var(--line)',
+                    background: '#4CC160',
+                    color: '#0C2A14',
+                    fontFamily: 'Fredoka, sans-serif',
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  change
+                </button>
+              </div>
+            ))}
+
+            <button
+              type="button"
+              className="tap-94"
+              onClick={() => setChecked(true)}
+              style={{
+                marginTop: 2,
+                width: '100%',
+                minHeight: 54,
+                borderRadius: 999,
+                border: '2px solid var(--line)',
+                background: '#12301A',
+                color: '#FFFFFF',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 18,
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: '0 4px 0 var(--line)',
+              }}
+            >
+              looks good
+            </button>
+          </div>
+        ) : null}
+
+        {!reviewing && (
+          <>
         {/* the question, on its own */}
         <p
           key={line}
@@ -583,6 +704,8 @@ export default function Talk({
             </button>
           )}
         </div>
+          </>
+        )}
 
       </div>
     </div>
