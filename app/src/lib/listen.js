@@ -292,12 +292,13 @@ function editDistance(a, b) {
   return d[a.length][b.length];
 }
 
-/* one typo in a short word, two in a longer one */
+/* One mistake in most words, two only in long ones. Looser than this and
+   near-misses start colliding — "fishing" was being read as "filming". */
 function near(word, target) {
   if (word === target) return true;
+  if (target.length < 5) return false;
   if (Math.abs(word.length - target.length) > 2) return false;
-  if (target.length < 4) return false;
-  return editDistance(word, target) <= (target.length <= 5 ? 1 : 2);
+  return editDistance(word, target) <= (target.length <= 7 ? 1 : 2);
 }
 
 function words(text) {
@@ -318,7 +319,7 @@ function matches(text, table) {
 /* the words worth fuzzy-matching for each hobby / goal */
 const HOBBY_NEAR = {
   basketball: ['basketball', 'basket', 'hoops', 'hooping'],
-  soccer: ['soccer', 'football', 'futbol'],
+  soccer: ['soccer', 'futbol'],
   football: ['football'],
   golf: ['golf', 'golfing'],
   gym: ['gym', 'lifting', 'workout', 'weights'],
@@ -411,6 +412,27 @@ export function nameIn(text) {
     if (got) return got;
   }
   return '';
+}
+
+/* Strip the lead-in off a free answer so an unknown hobby can be kept in
+   their own words: "i like fishing with my dad" -> "fishing with my dad". */
+const ANSWER_LEAD_IN =
+  /^(?:(?:o+h+|a+h+|u+m+|u+h+|h+m+|well|so|yeah|like|just|actually|i)\s+)*(?:i\s+)?(?:really\s+)?(?:like|love|enjoy|do|play|am into|into|prefer|usually|mostly|mainly|try to|wanna|want to|my hobby is|my hobbies are|its|it's)?\s*/;
+
+export function freeTopic(text) {
+  const cleaned = text
+    .toLowerCase()
+    .replace(/[.!?,]/g, '')
+    .trim()
+    .replace(ANSWER_LEAD_IN, '')
+    .replace(/^(a|an|the)\s+/, '')
+    .trim();
+
+  if (!cleaned) return '';
+  /* keep it short enough to read as a chip */
+  const kept = cleaned.split(/\s+/).slice(0, 3).join(' ');
+  if (kept.length < 3 || kept.length > 24) return '';
+  return kept;
 }
 
 /* what you said on the pop-up → which screen */

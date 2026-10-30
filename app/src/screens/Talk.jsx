@@ -10,7 +10,15 @@
 import { useEffect, useRef, useState } from 'react';
 import Sky from '../components/Sky';
 import { RiloStage, WaveBars } from '../components/TalkBits';
-import { useListen, hobbiesIn, goalsIn, nameIn, joinNice, saidAny } from '../lib/listen';
+import {
+  useListen,
+  hobbiesIn,
+  goalsIn,
+  nameIn,
+  joinNice,
+  saidAny,
+  freeTopic,
+} from '../lib/listen';
 import { HOBBIES, GOALS } from '../lib/profile';
 import { track } from '../lib/track';
 
@@ -229,23 +237,29 @@ export default function Talk({
       value = n;
       said = n ? `nice to meet you, ${n.toLowerCase()}.` : "cool, i'll call you friend for now.";
     } else if (q.id === 'hobby') {
+      /* something he's never heard of still counts — keep their words */
       const found = hobbiesIn(text);
-      setAbout((a) => applyPicks(a, found, HOBBIES));
-      value = joinNice(found);
-      said = found.length
-        ? `${joinNice(found)}? love that.`
+      const picks = found.length ? found : [freeTopic(text)].filter(Boolean);
+      setAbout((a) => applyPicks(a, picks, HOBBIES));
+      value = joinNice(picks);
+      said = picks.length
+        ? `${joinNice(picks)}? love that.`
         : "ooh okay. i'll learn more as we go.";
     } else if (q.id === 'goal') {
       const found = goalsIn(text);
-      setAbout((a) => applyPicks(a, found, GOALS));
-      value = joinNice(found);
-      said = found.length ? `${joinNice(found)}. i'm locked in on that.` : "got it. we'll work on it.";
+      const picks = found.length ? found : [freeTopic(text)].filter(Boolean);
+      setAbout((a) => applyPicks(a, picks, GOALS));
+      value = joinNice(picks);
+      said = picks.length
+        ? `${joinNice(picks)}. i'm locked in on that.`
+        : "got it. we'll work on it.";
     } else if (q.id === 'when') {
       const hits = whenHits(text);
       value = joinNice(hits);
       said = whenReply(hits);
     } else {
-      const picks = [...hobbiesIn(text), ...goalsIn(text)];
+      const known = [...hobbiesIn(text), ...goalsIn(text)];
+      const picks = known.length ? known : [freeTopic(text)].filter(Boolean);
       setAbout((a) => applyPicks(a, picks));
       value = joinNice(picks);
       said = picks.length ? `added ${joinNice(picks)}.` : "got it. i'll keep that in mind.";
