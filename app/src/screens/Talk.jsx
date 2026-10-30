@@ -104,6 +104,10 @@ export default function Talk({
   const [reply, setReply] = useState('');
   const [mood, setMood] = useState(qs[0].mood);
   const timer = useRef(null);
+  /* `take` and `mic` are rebuilt every render; the auto-listen effect reads
+     them through this ref so it can key off the question alone — depending
+     on them directly would restart the mic mid-sentence. */
+  const latest = useRef({ mic: null, take: null });
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -161,7 +165,12 @@ export default function Talk({
     }, 1500);
   };
 
-  latest.current.take = take;
+  /* refreshed after every render, so the effect below always calls the
+     current handler without depending on it */
+  useEffect(() => {
+    latest.current.mic = mic;
+    latest.current.take = take;
+  });
 
   const tapRilo = async () => {
     if (done) return;
@@ -181,12 +190,6 @@ export default function Talk({
     setAutoTalk(true);
     mic.start(take);
   };
-
-  /* `take` and `mic` are rebuilt every render; the effect below reads them
-     through a ref so it can key off the question alone — depending on them
-     directly would restart the mic mid-sentence. */
-  const latest = useRef({ mic, take: null });
-  latest.current.mic = mic;
 
   /* next question, mic still on — no tapping between answers */
   useEffect(() => {
