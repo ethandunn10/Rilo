@@ -283,10 +283,12 @@ export const goalsIn = (text) => matches(text, GOAL_WORDS);
 const EXPLICIT =
   /(?:my name is|my name's|names|name's|the name is|i am|i'm|im|call me|they call me|you can call me|everyone calls me|people call me|this is|it's|its)\s+([a-z][a-z'-]*)/;
 
-const LEAD_IN =
-  /^(oh|ah|uh+|um+|er+|hi|hii+|hey+|hello|yo|sup|so|well|ok|okay|alright|like|its|it's|this is|my name is|my name's|name's|the name is|i am|i'm|im|call me|they call me|you can call me|everyone calls me|people call me)\b[\s,]*/;
+/* Filler people actually say before getting to the point. Repeated letters
+   are allowed, because "ohhh" and "ummm" come through exactly like that. */
+const FILLER =
+  /^(o+h+|a+h+|h+m+|u+m+|u+h+|e+r+|y+e+a+h?|yep|yup|yes|no|ok|okay|alright|right|well|so|like|just|actually|i|its|it's|is|and|then|hi+|hey+|hello+|yo+|sup|wait|sorry|my|name|call|me|am|a|the)$/;
 
-/* words that are never the answer, even first in the sentence */
+/* words that are never the answer, even on their own */
 const NOT_A_NAME = new Set([
   'the', 'a', 'an', 'and', 'but', 'is', 'am', 'are', 'my', 'me', 'you', 'your',
   'what', 'who', 'thats', "that's", 'nice', 'good', 'hello', 'there', 'name',
@@ -295,7 +297,7 @@ const NOT_A_NAME = new Set([
 function tidyName(word) {
   if (!word || word.length > 16) return '';
   if (!/^[a-z][a-z'-]*$/.test(word)) return '';
-  if (NOT_A_NAME.has(word)) return '';
+  if (NOT_A_NAME.has(word) || FILLER.test(word)) return '';
   return word
     .split('-')
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
@@ -312,15 +314,14 @@ export function nameIn(text) {
     if (got) return got;
   }
 
-  /* otherwise peel greetings off the front: "hi, hey, ethan" */
-  let t = clean;
-  let before;
-  do {
-    before = t;
-    t = t.replace(LEAD_IN, '').trim();
-  } while (t !== before && t);
-
-  return tidyName(t.split(/\s+/)[0] ?? '');
+  /* otherwise walk past the filler and take the first real word:
+     "ohhh umm yeah ethan" -> Ethan */
+  const words = clean.split(/\s+/).filter(Boolean);
+  for (const w of words) {
+    const got = tidyName(w);
+    if (got) return got;
+  }
+  return '';
 }
 
 /* what you said on the pop-up → which screen */
