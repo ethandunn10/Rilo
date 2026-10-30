@@ -49,7 +49,7 @@ function applyPicks(about, picks, list) {
   return { on, extra };
 }
 
-function whenReply(t) {
+function whenHits(t) {
   const s = t.toLowerCase();
   const hits = [];
 
@@ -63,6 +63,10 @@ function whenReply(t) {
   if (/work|job|office/.test(s)) hits.push('at work');
   if (/bored|nothing to do/.test(s)) hits.push("when you're bored");
 
+  return hits;
+}
+
+function whenReply(hits) {
   if (!hits.length) return "got it. i'll watch for that.";
   if (hits.length === 1) return `${hits[0]}. that's the one i'll guard.`;
   return `${joinNice(hits)}. i'll watch ${hits.length === 2 ? 'both' : 'all'} of those.`;
@@ -210,32 +214,41 @@ export default function Talk({
     track('talk', q.id);
 
     let said = '';
+    /* what Rilo actually took from it — this is what the check-over shows */
+    let value = '';
+
     if (q.id === 'name') {
       const n = nameIn(text);
       if (n) setName(n);
+      value = n;
       said = n ? `nice to meet you, ${n.toLowerCase()}.` : "cool, i'll call you friend for now.";
     } else if (q.id === 'hobby') {
       const found = hobbiesIn(text);
       setAbout((a) => applyPicks(a, found, HOBBIES));
+      value = joinNice(found);
       said = found.length
         ? `${joinNice(found)}? love that.`
         : "ooh okay. i'll learn more as we go.";
     } else if (q.id === 'goal') {
       const found = goalsIn(text);
       setAbout((a) => applyPicks(a, found, GOALS));
+      value = joinNice(found);
       said = found.length ? `${joinNice(found)}. i'm locked in on that.` : "got it. we'll work on it.";
     } else if (q.id === 'when') {
-      said = whenReply(text);
+      const hits = whenHits(text);
+      value = joinNice(hits);
+      said = whenReply(hits);
     } else {
       const picks = [...hobbiesIn(text), ...goalsIn(text)];
       setAbout((a) => applyPicks(a, picks));
+      value = joinNice(picks);
       said = picks.length ? `added ${joinNice(picks)}.` : "got it. i'll keep that in mind.";
     }
 
     /* they answered after "anything else?" — take it and wind up */
     if (done) setWrapUp(true);
 
-    setAnswers((a) => ({ ...a, [step]: { ask: q.ask, said: text } }));
+    setAnswers((a) => ({ ...a, [step]: { ask: q.ask, value, said: text } }));
 
     setReply(said);
     setMood('proud');
@@ -463,7 +476,7 @@ export default function Talk({
                       overflowWrap: 'anywhere',
                     }}
                   >
-                    {answers[i]?.said || '—'}
+                    {answers[i]?.value || answers[i]?.said || '—'}
                   </p>
                 </div>
                 <button
