@@ -52,6 +52,55 @@ function whenReply(t) {
   return "got it. i'll watch for that.";
 }
 
+/* a long arrow pointing up at Rilo, so it's obvious he's the button */
+function PointUp({ label, live }) {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 2,
+        animation: 'point-up 1.1s ease-in-out infinite',
+      }}
+    >
+      <svg width="26" height="58" viewBox="0 0 26 58" aria-hidden="true">
+        <path
+          d="M13 56 L13 10"
+          fill="none"
+          stroke={live ? '#1F6B2E' : '#12301A'}
+          strokeWidth="4"
+          strokeLinecap="round"
+        />
+        <path
+          d="M4 18 L13 6 L22 18"
+          fill="none"
+          stroke={live ? '#1F6B2E' : '#12301A'}
+          strokeWidth="4"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <span
+        style={{
+          padding: '9px 20px',
+          borderRadius: 999,
+          background: live ? '#DCF3DF' : '#12301A',
+          color: live ? '#12301A' : '#FFFFFF',
+          border: '2px solid var(--line)',
+          boxShadow: '0 3px 0 var(--line)',
+          fontFamily: 'Fredoka, sans-serif',
+          fontSize: 17,
+          fontWeight: 600,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {label}
+      </span>
+    </div>
+  );
+}
+
 /* the two ways out of a question — both real buttons, not faint links */
 const footBtn = {
   flex: 1,
@@ -163,7 +212,7 @@ export default function Talk({
         setMood(qs[Math.min(next, qs.length - 1)].mood);
         return next;
       });
-    }, 1500);
+    }, 850);
   };
 
   /* refreshed after every render, so the effect below always calls the
@@ -365,38 +414,40 @@ export default function Talk({
 
         <WaveBars on={listening} />
 
-        {/* click to talk / what he's hearing */}
-        <p
-          style={{
-            margin: '2px 0 0',
-            minHeight: 24,
-            padding: heard || done ? 0 : '9px 18px',
-            borderRadius: 999,
-            background: heard || done ? 'transparent' : listening ? '#DCF3DF' : '#12301A',
-            border: heard || done ? 0 : '2px solid var(--line)',
-            boxShadow: heard || done ? 'none' : '0 3px 0 var(--line)',
-            fontFamily: 'Fredoka, sans-serif',
-            fontSize: 17,
-            fontWeight: 600,
-            color: heard || done ? '#2C4A36' : listening ? '#12301A' : '#FFFFFF',
-            textAlign: 'center',
-            transition: 'background .2s ease, color .2s ease',
-          }}
-        >
-          {heard
-            ? `“${heard}”`
-            : mic.asking
-              ? 'tap allow when your browser asks ☝️'
-              : listening
-                ? 'listening… just stop talking when you’re done'
-                : done
-                  ? ''
-                  : !mic.usable
-                    ? 'type your answer below'
-                    : mic.granted
-                      ? 'tap the panda to talk'
-                      : 'tap the panda to start'}
-        </p>
+        {/* arrow + label pointing back up at Rilo */}
+        {heard ? (
+          <p
+            style={{
+              margin: '2px 0 0',
+              minHeight: 24,
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 17,
+              fontWeight: 600,
+              color: '#1F6B2E',
+              textAlign: 'center',
+            }}
+          >
+            “{heard}”
+          </p>
+        ) : mic.asking ? (
+          <PointUp label="tap allow when your browser asks" />
+        ) : listening ? (
+          <PointUp label="tap to stop" live />
+        ) : done ? null : !mic.usable ? (
+          <p
+            style={{
+              margin: '2px 0 0',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 17,
+              fontWeight: 600,
+              color: '#2C4A36',
+            }}
+          >
+            type your answer below
+          </p>
+        ) : (
+          <PointUp label="tap to start" />
+        )}
 
         {mic.problem && !listening && (
           <p
