@@ -610,30 +610,6 @@ export default function Talk({
           </p>
         )}
 
-        {listening && (
-          <button
-            type="button"
-            className="tap-94"
-            onClick={mic.stop}
-            style={{
-              minHeight: 44,
-              marginTop: 2,
-              padding: '0 20px',
-              borderRadius: 999,
-              border: '2px solid var(--line)',
-              background: '#FFFFFF',
-              color: '#12301A',
-              fontFamily: 'Fredoka, sans-serif',
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: '0 3px 0 var(--line)',
-            }}
-          >
-            done talking
-          </button>
-        )}
-
         {typing && !done && (
           <div style={{ width: '100%', display: 'flex', gap: 8, marginTop: 4 }}>
             <input

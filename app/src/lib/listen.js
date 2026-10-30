@@ -276,37 +276,51 @@ function matches(text, table) {
 export const hobbiesIn = (text) => matches(text, HOBBY_WORDS);
 export const goalsIn = (text) => matches(text, GOAL_WORDS);
 
-/* Pull a first name out of whatever they said: "hi ethan", "hey i'm ethan",
-   "my name is ethan nice to meet you" all give "Ethan". Greetings and
-   lead-ins are stripped, then the first real word is the name. */
+/* Pull a first name out of whatever they said. An explicit "my name is X"
+   anywhere in the sentence wins, so "oh my name is ethan" gives Ethan and
+   not "oh". Otherwise greetings are peeled off the front and the first
+   real word is taken. */
+const EXPLICIT =
+  /(?:my name is|my name's|names|name's|the name is|i am|i'm|im|call me|they call me|you can call me|everyone calls me|people call me|this is|it's|its)\s+([a-z][a-z'-]*)/;
+
 const LEAD_IN =
-  /^(hi|hii+|hey+|hello|yo|sup|um+|uh+|so|well|ok|okay|its|it's|this is|my name is|my name's|name's|the name is|i am|i'm|im|call me|they call me|you can call me|everyone calls me|people call me)\b[\s,]*/;
+  /^(oh|ah|uh+|um+|er+|hi|hii+|hey+|hello|yo|sup|so|well|ok|okay|alright|like|its|it's|this is|my name is|my name's|name's|the name is|i am|i'm|im|call me|they call me|you can call me|everyone calls me|people call me)\b[\s,]*/;
 
 /* words that are never the answer, even first in the sentence */
 const NOT_A_NAME = new Set([
   'the', 'a', 'an', 'and', 'but', 'is', 'am', 'are', 'my', 'me', 'you', 'your',
-  'what', 'who', 'thats', "that's", 'nice', 'good', 'hello', 'there',
+  'what', 'who', 'thats', "that's", 'nice', 'good', 'hello', 'there', 'name',
 ]);
 
-export function nameIn(text) {
-  let t = text.trim().toLowerCase().replace(/[.!?,]/g, '');
+function tidyName(word) {
+  if (!word || word.length > 16) return '';
+  if (!/^[a-z][a-z'-]*$/.test(word)) return '';
+  if (NOT_A_NAME.has(word)) return '';
+  return word
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join('-');
+}
 
-  /* peel off any number of lead-ins: "hi, hey, i'm ethan" */
+export function nameIn(text) {
+  const clean = text.trim().toLowerCase().replace(/[.!?,]/g, '');
+
+  /* "oh my name is ethan", "hey i'm ethan" — take what follows the lead-in */
+  const explicit = clean.match(EXPLICIT);
+  if (explicit) {
+    const got = tidyName(explicit[1]);
+    if (got) return got;
+  }
+
+  /* otherwise peel greetings off the front: "hi, hey, ethan" */
+  let t = clean;
   let before;
   do {
     before = t;
     t = t.replace(LEAD_IN, '').trim();
   } while (t !== before && t);
 
-  const word = t.split(/\s+/)[0] ?? '';
-  if (!word || word.length > 16) return '';
-  if (!/^[a-z][a-z'-]*$/.test(word)) return '';
-  if (NOT_A_NAME.has(word)) return '';
-
-  return word
-    .split('-')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join('-');
+  return tidyName(t.split(/\s+/)[0] ?? '');
 }
 
 /* what you said on the pop-up → which screen */
