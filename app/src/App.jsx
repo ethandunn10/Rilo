@@ -60,6 +60,21 @@ const BLOCK_MINUTES = 15;
 /* The Rilo who walks you through onboarding: always the original. */
 const OG_SKIN = 'original';
 
+/* Onboarding always looks the same for every tester: original Rilo, grass
+   sky. Whatever theme they picked last time kicks in once they reach Home. */
+const OG_THEME = 'grass';
+
+const ONBOARDING = new Set([
+  'welcome',
+  'howitworks',
+  'instead',
+  'aboutyou',
+  'pickapps',
+  'timeback',
+  'talk',
+  'paywall',
+]);
+
 export default function App() {
   const [showResults, setShowResults] = useState(wantsResults);
 
@@ -557,9 +572,11 @@ export default function App() {
   };
 
   const sliding = nav.entries.length === 2;
+  /* the screen being shown (the incoming one mid-transition) */
+  const onboarding = ONBOARDING.has(nav.entries[nav.entries.length - 1]);
 
   return (
-    <ThemeContext.Provider value={themeInfo(theme)}>
+    <ThemeContext.Provider value={themeInfo(onboarding ? OG_THEME : theme)}>
     <PhoneFrame>
       {nav.entries.map((screen, i) => {
         const incoming = sliding && i === 1;
