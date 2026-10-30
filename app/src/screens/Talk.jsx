@@ -45,12 +45,23 @@ function applyPicks(about, picks, list) {
 
 function whenReply(t) {
   const s = t.toLowerCase();
-  if (/night|bed|late|2 ?am|midnight/.test(s)) return "late at night. that's the one i'll guard.";
-  if (/morning|wake|breakfast/.test(s)) return "mornings. i'll catch you before you spiral.";
-  if (/school|class|lunch/.test(s)) return "during school. noted.";
-  if (/bored|nothing/.test(s)) return 'when you’re bored. that’s exactly when i’ll step in.';
-  return "got it. i'll watch for that.";
+  const hits = [];
+
+  /* someone can scroll at more than one time of day — catch all of them */
+  if (/night|bed|late|2 ?am|midnight/.test(s)) hits.push('late at night');
+  if (/morning|wake|breakfast/.test(s)) hits.push('in the mornings');
+  if (/after ?school|afternoon/.test(s)) hits.push('after school');
+  else if (/school|class|lunch/.test(s)) hits.push('during school');
+  if (/evening|dinner/.test(s)) hits.push('in the evening');
+  if (/weekend|saturday|sunday/.test(s)) hits.push('on weekends');
+  if (/work|job|office/.test(s)) hits.push('at work');
+  if (/bored|nothing to do/.test(s)) hits.push("when you're bored");
+
+  if (!hits.length) return "got it. i'll watch for that.";
+  if (hits.length === 1) return `${hits[0]}. that's the one i'll guard.`;
+  return `${joinNice(hits)}. i'll watch ${hits.length === 2 ? 'both' : 'all'} of those.`;
 }
+
 
 /* a long arrow pointing up at Rilo, so it's obvious he's the button */
 function PointUp({ label, live }) {
@@ -61,6 +72,9 @@ function PointUp({ label, live }) {
         flexDirection: 'column',
         alignItems: 'center',
         gap: 2,
+        /* the Rilo stage carries padding around the panda — pull back up
+           through it so the arrow sits just under his feet */
+        marginTop: -34,
         animation: 'point-up 1.1s ease-in-out infinite',
       }}
     >
