@@ -185,6 +185,9 @@ export default function Talk({
 
   const typing = typingPick || !mic.usable;
   const done = step >= qs.length;
+  /* saying thanks and heading out — immediate in onboarding, after the
+     3s pause in the Home chat */
+  const winding = wrapUp || (done && !chat);
   const q = qs[Math.min(step, qs.length - 1)];
   const listening = mic.listening;
 
@@ -221,6 +224,9 @@ export default function Talk({
       setAbout((a) => applyPicks(a, picks));
       said = picks.length ? `added ${joinNice(picks)}.` : "got it. i'll keep that in mind.";
     }
+
+    /* they answered after "anything else?" — take it and wind up */
+    if (done) setWrapUp(true);
 
     setReply(said);
     setMood('proud');
@@ -266,31 +272,31 @@ export default function Talk({
 
   /* next question, mic still on — no tapping between answers */
   useEffect(() => {
-    if (!autoTalk || typing || wrapUp || reply) return;
+    if (!autoTalk || typing || winding || reply) return;
     const m = latest.current.mic;
     if (!m.granted || m.listening) return;
     const t = setTimeout(() => latest.current.mic.start(latest.current.take), 350);
     return () => clearTimeout(t);
-  }, [step, autoTalk, typing, wrapUp, reply]);
+  }, [step, autoTalk, typing, winding, reply]);
 
   /* Out of questions. Hold for 3s in case they're still mid-thought — if
      they start talking or typing the clock stops — then say thanks, and
      2s later hand off (to the paywall in onboarding, home from the chat). */
   useEffect(() => {
-    if (!done || wrapUp) return;
+    if (!chat || !done || wrapUp) return;
     if (listening || draft.trim()) return;
     const t = setTimeout(() => setWrapUp(true), 3000);
     return () => clearTimeout(t);
-  }, [done, wrapUp, listening, draft]);
+  }, [chat, done, wrapUp, listening, draft]);
 
   useEffect(() => {
-    if (!wrapUp) return;
+    if (!winding) return;
     const t = setTimeout(() => latest.current.finish(), 2000);
     return () => clearTimeout(t);
-  }, [wrapUp]);
+  }, [winding]);
 
   /* what sits above Rilo: his question, or his reply to it */
-  const line = wrapUp
+  const line = winding
     ? "that's everything — thanks!"
     : done
       ? 'anything else?'
@@ -308,34 +314,6 @@ export default function Talk({
       }}
     >
       <Sky hills="mid" />
-
-      {/* points at the browser's own permission bubble, which appears
-          top-left on desktop and as a dialog on a phone */}
-      {mic.asking && (
-        <div
-          style={{
-            position: 'absolute',
-            left: 16,
-            top: 10,
-            zIndex: 5,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '8px 14px 8px 10px',
-            borderRadius: 999,
-            background: '#12301A',
-            color: '#FFFFFF',
-            border: '2px solid var(--line)',
-            boxShadow: '0 4px 0 var(--line)',
-            animation: 'point-up 1s ease-in-out infinite',
-          }}
-        >
-          <span style={{ fontSize: 20, lineHeight: 1 }}>☝️</span>
-          <span style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 14, fontWeight: 600 }}>
-            hit allow up there
-          </span>
-        </div>
-      )}
 
       <div
         style={{
@@ -441,7 +419,7 @@ export default function Talk({
         {/* the panda */}
         <RiloStage
           skin={skin}
-          mood={wrapUp ? 'proud' : listening ? 'coach' : mood}
+          mood={winding ? 'proud' : listening ? 'coach' : mood}
           size={215}
           state={listening ? 'listening' : 'idle'}
           onTap={mic.usable ? tapRilo : undefined}
@@ -575,7 +553,7 @@ export default function Talk({
         {/* while he's still asking: only the typing toggle.
             once he's done: only the way forward. */}
         <div style={{ width: '100%', display: 'flex', gap: 10 }}>
-          {!wrapUp && mic.usable && (
+          {!winding && mic.usable && (
             <button
               type="button"
               className="tap-94"
