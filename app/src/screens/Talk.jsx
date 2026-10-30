@@ -26,8 +26,14 @@ const QS = [
 ];
 
 /* nothing to ask — they just describe themselves */
+/* The Home chat works through its own short run of questions, so he isn't
+   asking the same thing every time. */
 const OPEN = [
-  { id: 'chat', ask: 'tell me anything. a hobby, a goal, what you’re into.', mood: 'curious' },
+  { id: 'chat', ask: 'what’s new? tell me anything.', mood: 'wave' },
+  { id: 'chat', ask: 'what have you been up to today?', mood: 'curious' },
+  { id: 'chat', ask: 'anything you’re working on right now?', mood: 'curious' },
+  { id: 'chat', ask: 'what’s been eating your time lately?', mood: 'curious' },
+  { id: 'chat', ask: 'anything you want me to push you on?', mood: 'coach' },
 ];
 
 function applyPicks(about, picks, list) {
@@ -164,6 +170,8 @@ export default function Talk({
   /* once they've talked, Rilo keeps listening for the next question
      instead of making them tap him again */
   const [autoTalk, setAutoTalk] = useState(false);
+  /* out of questions: wait a beat, then say thanks, then leave */
+  const [wrapUp, setWrapUp] = useState(false);
   const [draft, setDraft] = useState('');
   const [reply, setReply] = useState('');
   const [mood, setMood] = useState(qs[0].mood);
@@ -221,12 +229,6 @@ export default function Talk({
 
     timer.current = setTimeout(() => {
       setReply('');
-      if (chat) {
-        /* the Home chat has no list to get through — stay on it and keep
-           listening until they tap "that's it" */
-        setMood('curious');
-        return;
-      }
       setStep((n) => {
         const next = n + 1;
         setMood(qs[Math.min(next, qs.length - 1)].mood);
@@ -264,24 +266,35 @@ export default function Talk({
 
   /* next question, mic still on — no tapping between answers */
   useEffect(() => {
-    if (!autoTalk || typing || done || reply) return;
+    if (!autoTalk || typing || wrapUp || reply) return;
     const m = latest.current.mic;
     if (!m.granted || m.listening) return;
     const t = setTimeout(() => latest.current.mic.start(latest.current.take), 350);
     return () => clearTimeout(t);
-  }, [step, autoTalk, typing, done, reply]);
+  }, [step, autoTalk, typing, wrapUp, reply]);
 
-  /* finished asking → let it sit for a beat, then move on by itself */
+  /* Out of questions. Hold for 3s in case they're still mid-thought — if
+     they start talking or typing the clock stops — then say thanks, and
+     2s later hand off (to the paywall in onboarding, home from the chat). */
   useEffect(() => {
-    if (!done) return;
+    if (!done || wrapUp) return;
+    if (listening || draft.trim()) return;
+    const t = setTimeout(() => setWrapUp(true), 3000);
+    return () => clearTimeout(t);
+  }, [done, wrapUp, listening, draft]);
+
+  useEffect(() => {
+    if (!wrapUp) return;
     const t = setTimeout(() => latest.current.finish(), 2000);
     return () => clearTimeout(t);
-  }, [done]);
+  }, [wrapUp]);
 
   /* what sits above Rilo: his question, or his reply to it */
-  const line = done
+  const line = wrapUp
     ? "that's everything — thanks!"
-    : reply || (chat && autoTalk ? 'anything else?' : q.ask);
+    : done
+      ? 'anything else?'
+      : reply || q.ask;
   const heard = listening ? mic.text : '';
 
   return (
@@ -428,7 +441,7 @@ export default function Talk({
         {/* the panda */}
         <RiloStage
           skin={skin}
-          mood={done ? 'proud' : listening ? 'coach' : mood}
+          mood={wrapUp ? 'proud' : listening ? 'coach' : mood}
           size={215}
           state={listening ? 'listening' : 'idle'}
           onTap={mic.usable ? tapRilo : undefined}
@@ -562,7 +575,7 @@ export default function Talk({
         {/* while he's still asking: only the typing toggle.
             once he's done: only the way forward. */}
         <div style={{ width: '100%', display: 'flex', gap: 10 }}>
-          {!done && mic.usable && (
+          {!wrapUp && mic.usable && (
             <button
               type="button"
               className="tap-94"

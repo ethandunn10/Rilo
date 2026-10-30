@@ -95,6 +95,20 @@ export function useListen() {
       setGranted(true);
       return true;
     }
+    /* Check a mic actually exists before prompting. Safari will happily put
+       up a permission dialog on a machine with no input device, which is
+       the one thing worse than not offering voice at all. */
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices?.();
+      if (devices && devices.length && !devices.some((d) => d.kind === 'audioinput')) {
+        setBlocked(true);
+        setProblem('no mic found — you can type instead.');
+        return false;
+      }
+    } catch {
+      /* can't enumerate — fall through and let the prompt decide */
+    }
+
     setAsking(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
