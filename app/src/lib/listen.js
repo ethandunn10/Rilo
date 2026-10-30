@@ -268,13 +268,102 @@ const GOAL_WORDS = {
   'spend time with family': /family|parents|siblings|brother|sister/,
 };
 
+/* ---------- near-enough matching ----------
+   People mistype, and speech-to-text mishears. "noght" should still be
+   night and "basketbal" still basketball, so every matcher below falls
+   back to an edit-distance check before giving up. */
+
+function editDistance(a, b) {
+  /* full matrix, because swapped letters ("tierd" for "tired") need the
+     row before last to be counted as a single mistake */
+  const d = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
+  );
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return d[a.length][b.length];
+}
+
+/* one typo in a short word, two in a longer one */
+function near(word, target) {
+  if (word === target) return true;
+  if (Math.abs(word.length - target.length) > 2) return false;
+  if (target.length < 4) return false;
+  return editDistance(word, target) <= (target.length <= 5 ? 1 : 2);
+}
+
+function words(text) {
+  return text.toLowerCase().split(/[^a-z']+/).filter(Boolean);
+}
+
+/* does anything they said come close to one of these? */
+export function saidAny(text, list) {
+  const toks = words(text);
+  return list.some((target) => toks.some((t) => near(t, target)));
+}
+
 function matches(text, table) {
   const t = ` ${text.toLowerCase()} `;
   return Object.keys(table).filter((k) => table[k].test(t));
 }
 
-export const hobbiesIn = (text) => matches(text, HOBBY_WORDS);
-export const goalsIn = (text) => matches(text, GOAL_WORDS);
+/* the words worth fuzzy-matching for each hobby / goal */
+const HOBBY_NEAR = {
+  basketball: ['basketball', 'basket', 'hoops', 'hooping'],
+  soccer: ['soccer', 'football', 'futbol'],
+  football: ['football'],
+  golf: ['golf', 'golfing'],
+  gym: ['gym', 'lifting', 'workout', 'weights'],
+  running: ['running', 'runner', 'track', 'jogging'],
+  skating: ['skating', 'skateboard', 'skateboarding'],
+  swimming: ['swimming', 'swim'],
+  gaming: ['gaming', 'games', 'xbox', 'playstation', 'fortnite', 'minecraft'],
+  'making videos': ['videos', 'filming', 'editing', 'youtube', 'content'],
+  photography: ['photography', 'photos', 'camera', 'pictures'],
+  drawing: ['drawing', 'sketching', 'painting'],
+  music: ['music', 'singing', 'beats'],
+  guitar: ['guitar'],
+  piano: ['piano'],
+  reading: ['reading', 'books'],
+  writing: ['writing'],
+  coding: ['coding', 'programming', 'computer'],
+  cooking: ['cooking', 'baking'],
+  'hanging with friends': ['friends', 'hanging'],
+};
+
+const GOAL_NEAR = {
+  'better grades': ['grades', 'school', 'studying', 'gpa'],
+  'get fit': ['fit', 'fitness', 'shape', 'muscle', 'stronger'],
+  'grow my content': ['followers', 'content', 'audience', 'views'],
+  'build something': ['build', 'business', 'startup', 'company'],
+  'sleep more': ['sleep', 'sleeping'],
+  'read more': ['reading', 'books'],
+  'learn an instrument': ['instrument', 'guitar', 'piano', 'drums'],
+  'make a team': ['varsity', 'tryouts', 'team'],
+  'less phone': ['phone', 'screentime', 'scrolling'],
+  'save money': ['money', 'saving', 'savings'],
+  'learn to code': ['coding', 'programming'],
+  'spend time with family': ['family', 'parents', 'siblings'],
+};
+
+function matchesNear(text, table, nearTable) {
+  const hit = new Set(matches(text, table));
+  Object.keys(nearTable).forEach((key) => {
+    if (!hit.has(key) && saidAny(text, nearTable[key])) hit.add(key);
+  });
+  return Object.keys(table).filter((k) => hit.has(k));
+}
+
+export const hobbiesIn = (text) => matchesNear(text, HOBBY_WORDS, HOBBY_NEAR);
+export const goalsIn = (text) => matchesNear(text, GOAL_WORDS, GOAL_NEAR);
 
 /* Pull a first name out of whatever they said. An explicit "my name is X"
    anywhere in the sentence wins, so "oh my name is ethan" gives Ethan and
@@ -327,12 +416,21 @@ export function nameIn(text) {
 /* what you said on the pop-up → which screen */
 export function reasonIn(text) {
   const t = text.toLowerCase();
+  const has = (re, near) => re.test(t) || saidAny(t, near);
   /* "nothing to do" is the bored answer, so don't let plain "nothing" eat it */
-  if (/never ?mind|nah|nothing(?! to do)|no reason|close it/.test(t)) return 'never mind';
-  if (/tired|sleepy|exhausted|fried|can't think/.test(t)) return 'just tired';
-  if (/bored|nothing to do|boring/.test(t)) return "i'm bored";
-  if (/break|earned|rest|chill/.test(t)) return 'taking a break';
-  if (/need|homework|school|message|text|dm|reply|post|upload|work|look up|check/.test(t))
+  if (has(/never ?mind|nah|nothing(?! to do)|no reason|close it/, ['nevermind'])) return 'never mind';
+  if (has(/tired|sleepy|exhausted|fried|can't think/, ['tired', 'sleepy', 'exhausted']))
+    return 'just tired';
+  if (has(/bored|nothing to do|boring/, ['bored', 'boring', 'boredom'])) return "i'm bored";
+  if (has(/break|earned|rest|chill/, ['break', 'resting', 'chilling'])) return 'taking a break';
+  if (
+    has(/need|homework|school|message|text|dm|reply|post|upload|work|look up|check/, [
+      'homework',
+      'school',
+      'message',
+      'reply',
+    ])
+  )
     return 'need it';
   return null;
 }
@@ -356,7 +454,13 @@ const APP_ALIASES = {
 };
 export function appsIn(text, labels) {
   const t = ` ${text.toLowerCase()} `;
-  return labels.filter((l) => (APP_ALIASES[l] ? APP_ALIASES[l].test(t) : t.includes(` ${l} `) || t.includes(` ${l}s `)));
+  return labels.filter((l) => {
+    if (APP_ALIASES[l] ? APP_ALIASES[l].test(t) : t.includes(` ${l} `) || t.includes(` ${l}s `)) {
+      return true;
+    }
+    /* "snpchat" is still snapchat */
+    return saidAny(text, [l.replace(/\s+/g, '')]);
+  });
 }
 
 /* "like five hours, i want two" → [5, 2]  ("half" adds .5) */

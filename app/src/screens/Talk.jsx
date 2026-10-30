@@ -10,7 +10,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Sky from '../components/Sky';
 import { RiloStage, WaveBars } from '../components/TalkBits';
-import { useListen, hobbiesIn, goalsIn, nameIn, joinNice } from '../lib/listen';
+import { useListen, hobbiesIn, goalsIn, nameIn, joinNice, saidAny } from '../lib/listen';
 import { HOBBIES, GOALS } from '../lib/profile';
 import { track } from '../lib/track';
 
@@ -54,14 +54,20 @@ function whenHits(t) {
   const hits = [];
 
   /* someone can scroll at more than one time of day — catch all of them */
-  if (/night|bed|late|2 ?am|midnight/.test(s)) hits.push('late at night');
-  if (/morning|wake|breakfast/.test(s)) hits.push('in the mornings');
-  if (/after ?school|afternoon/.test(s)) hits.push('after school');
-  else if (/school|class|lunch/.test(s)) hits.push('during school');
-  if (/evening|dinner/.test(s)) hits.push('in the evening');
-  if (/weekend|saturday|sunday/.test(s)) hits.push('on weekends');
-  if (/work|job|office/.test(s)) hits.push('at work');
-  if (/bored|nothing to do/.test(s)) hits.push("when you're bored");
+  const has = (re, near) => re.test(s) || saidAny(s, near);
+
+  if (has(/night|bed|late|2 ?am|midnight/, ['night', 'tonight', 'midnight', 'bedtime']))
+    hits.push('late at night');
+  if (has(/morning|wake|breakfast/, ['morning', 'mornings', 'breakfast']))
+    hits.push('in the mornings');
+  if (has(/after ?school|afternoon/, ['afternoon', 'afterschool'])) hits.push('after school');
+  else if (has(/school|class|lunch/, ['school', 'class', 'classes', 'lunch']))
+    hits.push('during school');
+  if (has(/evening|dinner/, ['evening', 'evenings', 'dinner'])) hits.push('in the evening');
+  if (has(/weekend|saturday|sunday/, ['weekend', 'weekends', 'saturday', 'sunday']))
+    hits.push('on weekends');
+  if (has(/work|job|office/, ['work', 'office'])) hits.push('at work');
+  if (has(/bored|nothing to do/, ['bored', 'boring', 'boredom'])) hits.push("when you're bored");
 
   return hits;
 }
