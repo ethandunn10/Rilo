@@ -207,12 +207,18 @@ export default function Talk({
 
     timer.current = setTimeout(() => {
       setReply('');
+      if (chat) {
+        /* the Home chat has no list to get through — stay on it and keep
+           listening until they tap "that's it" */
+        setMood('curious');
+        return;
+      }
       setStep((n) => {
         const next = n + 1;
         setMood(qs[Math.min(next, qs.length - 1)].mood);
         return next;
       });
-    }, 850);
+    }, 2000);
   };
 
   /* refreshed after every render, so the effect below always calls the
@@ -254,12 +260,14 @@ export default function Talk({
   /* finished asking → let it sit for a beat, then move on by itself */
   useEffect(() => {
     if (!done) return;
-    const t = setTimeout(() => latest.current.finish(), 1500);
+    const t = setTimeout(() => latest.current.finish(), 2000);
     return () => clearTimeout(t);
   }, [done]);
 
   /* what sits above Rilo: his question, or his reply to it */
-  const line = done ? "that's everything — thanks!" : reply || q.ask;
+  const line = done
+    ? "that's everything — thanks!"
+    : reply || (chat && autoTalk ? 'anything else?' : q.ask);
   const heard = listening ? mic.text : '';
 
   return (
@@ -555,7 +563,7 @@ export default function Talk({
             </button>
           )}
 
-          {done && (
+          {(done || chat) && (
             <button
               type="button"
               className="tap-94"
@@ -566,7 +574,7 @@ export default function Talk({
                 color: '#FFFFFF',
               }}
             >
-              next step
+              {chat ? "that's it" : 'next step'}
             </button>
           )}
         </div>
