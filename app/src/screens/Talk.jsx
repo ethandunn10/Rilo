@@ -69,7 +69,6 @@ export default function Talk({
   go,
   mode = 'onboarding',
   skin,
-  name,
   about,
   setName,
   setAbout,
@@ -84,7 +83,9 @@ export default function Talk({
     const picked = (list) => list.some((x) => about?.on?.[x]);
     const extras = (kind) => (about?.extra?.[kind] ?? []).length > 0;
     const knows = {
-      name: Boolean(name),
+      /* About you no longer asks for a name, so Rilo always does — even if
+         a previous tester left one saved. */
+      name: false,
       hobby: picked(HOBBIES) || extras('hobby'),
       goal: picked(GOALS) || extras('goal'),
     };
@@ -204,7 +205,7 @@ export default function Talk({
   /* finished asking → let it sit for a beat, then move on by itself */
   useEffect(() => {
     if (!done) return;
-    const t = setTimeout(() => latest.current.finish(), 3000);
+    const t = setTimeout(() => latest.current.finish(), 2500);
     return () => clearTimeout(t);
   }, [done]);
 

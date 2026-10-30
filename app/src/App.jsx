@@ -313,7 +313,6 @@ export default function App() {
             onTalked={() => setTalked(true)}
             mode={screen === 'talk' ? 'onboarding' : 'chat'}
             skin={screen === 'talk' ? OG_SKIN : chosenRilo}
-            name={name}
             setName={setName}
             about={about}
             setAbout={setAbout}
