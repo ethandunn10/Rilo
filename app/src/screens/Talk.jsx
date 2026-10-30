@@ -205,7 +205,7 @@ export default function Talk({
   /* finished asking → let it sit for a beat, then move on by itself */
   useEffect(() => {
     if (!done) return;
-    const t = setTimeout(() => latest.current.finish(), 2500);
+    const t = setTimeout(() => latest.current.finish(), 2000);
     return () => clearTimeout(t);
   }, [done]);
 
