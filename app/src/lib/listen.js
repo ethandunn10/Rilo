@@ -36,7 +36,7 @@ function rememberBlocked() {
 }
 
 /* stop listening after this much quiet — a pause means they're done */
-const SILENCE_MS = 2500;
+const SILENCE_MS = 2000;
 /* and never hang on indefinitely if nothing is said at all */
 const NOTHING_MS = 7000;
 

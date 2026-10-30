@@ -78,6 +78,7 @@ function fmtSaved(mins) {
 export default function You({
   go,
   name,
+  setName,
   about,
   setAbout,
   apps,
@@ -202,6 +203,36 @@ export default function You({
                 {skinInfo(chosenRilo).name} rilo
               </p>
             </div>
+          </div>
+
+          {/* what rilo calls you */}
+          <div style={card('.06s')}>
+            <p
+              style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}
+            >
+              what rilo calls you
+            </p>
+            <input
+              type="text"
+              value={name}
+              placeholder="your first name"
+              onChange={(e) => setName(e.target.value)}
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="words"
+              style={{
+                height: 46,
+                boxSizing: 'border-box',
+                padding: '0 16px',
+                borderRadius: 999,
+                border: '2px solid var(--line)',
+                background: '#FFFFFF',
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontSize: 16,
+                fontWeight: 600,
+                color: '#12301A',
+              }}
+            />
           </div>
 
           {/* stats */}

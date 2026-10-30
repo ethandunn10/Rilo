@@ -486,6 +486,7 @@ export default function App() {
           <You
             go={go}
             name={name}
+            setName={setName}
             about={about}
             setAbout={setAbout}
             apps={apps}

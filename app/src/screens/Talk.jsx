@@ -97,6 +97,9 @@ export default function Talk({
   /* no speech support (Firefox, locked-down Safari) → typing from the start */
   /* typing is forced on whenever there's no usable mic */
   const [typingPick, setTyping] = useState(false);
+  /* once they've talked, Rilo keeps listening for the next question
+     instead of making them tap him again */
+  const [autoTalk, setAutoTalk] = useState(false);
   const [draft, setDraft] = useState('');
   const [reply, setReply] = useState('');
   const [mood, setMood] = useState(qs[0].mood);
@@ -158,6 +161,8 @@ export default function Talk({
     }, 1500);
   };
 
+  latest.current.take = take;
+
   const tapRilo = async () => {
     if (done) return;
     if (listening) {
@@ -173,8 +178,24 @@ export default function Talk({
       const ok = await mic.request();
       if (!ok) return;
     }
+    setAutoTalk(true);
     mic.start(take);
   };
+
+  /* `take` and `mic` are rebuilt every render; the effect below reads them
+     through a ref so it can key off the question alone — depending on them
+     directly would restart the mic mid-sentence. */
+  const latest = useRef({ mic, take: null });
+  latest.current.mic = mic;
+
+  /* next question, mic still on — no tapping between answers */
+  useEffect(() => {
+    if (!autoTalk || typing || done || reply) return;
+    const m = latest.current.mic;
+    if (!m.granted || m.listening) return;
+    const t = setTimeout(() => latest.current.mic.start(latest.current.take), 350);
+    return () => clearTimeout(t);
+  }, [step, autoTalk, typing, done, reply]);
 
   /* what sits above Rilo: his question, or his reply to it */
   const line = done ? "that's everything. thanks." : reply || q.ask;
@@ -232,6 +253,47 @@ export default function Talk({
           gap: 8,
         }}
       >
+        {/* back a step */}
+        <button
+          type="button"
+          className="tap"
+          aria-label="back a step"
+          onClick={() => {
+            if (listening) mic.stop();
+            if (step > 0) {
+              setReply('');
+              setStep((n) => n - 1);
+            } else {
+              go('timeback', 'back');
+            }
+          }}
+          style={{
+            position: 'absolute',
+            left: 18,
+            top: 46,
+            width: 44,
+            height: 44,
+            borderRadius: 999,
+            border: '2px solid var(--line)',
+            background: 'rgba(255,255,255,0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M15 5 L8 12 L15 19"
+              fill="none"
+              stroke="#12301A"
+              strokeWidth="2.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+
         {/* which question we're on */}
         {qs.length > 1 && !done && (
           <div style={{ display: 'flex', gap: 6, marginBottom: 2 }}>
