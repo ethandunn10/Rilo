@@ -587,3 +587,14 @@ body {
 .screen::-webkit-scrollbar {
   display: none;
 }
+
+/* the "hit allow" nudge while the browser's mic prompt is open */
+@keyframes point-up {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}

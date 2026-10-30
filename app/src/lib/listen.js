@@ -35,6 +35,11 @@ function rememberBlocked() {
   }
 }
 
+/* stop listening after this much quiet — a pause means they're done */
+const SILENCE_MS = 2500;
+/* and never hang on indefinitely if nothing is said at all */
+const NOTHING_MS = 7000;
+
 export function useListen() {
   const [supported] = useState(Boolean(SR));
   /* mic refused or missing — the whole app hides its voice bits when true */
@@ -45,6 +50,9 @@ export function useListen() {
     if (v) rememberBlocked();
   };
   const [listening, setListening] = useState(false);
+  /* has the mic actually been granted, and are we mid-request? */
+  const [granted, setGranted] = useState(false);
+  const [asking, setAsking] = useState(false);
   const [text, setText] = useState('');
   /* a human-readable reason the last attempt failed, '' when fine */
   const [problem, setProblem] = useState('');
@@ -53,8 +61,15 @@ export function useListen() {
   const lastText = useRef('');
   const onDone = useRef(null);
   const gotAudio = useRef(false);
+  const hush = useRef(null);
 
-  useEffect(() => () => rec.current?.abort?.(), []);
+  useEffect(
+    () => () => {
+      clearTimeout(hush.current);
+      rec.current?.abort?.();
+    },
+    [],
+  );
 
   /* Ask the browser up front whether the mic is already refused, so screens
      can hide their talk buttons instead of offering something that fails. */
@@ -76,13 +91,20 @@ export function useListen() {
      reported properly instead of the recogniser dying half a second later. */
   const permission = async () => {
     if (gotAudio.current) return true;
-    if (!navigator.mediaDevices?.getUserMedia) return true;
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setGranted(true);
+      return true;
+    }
+    setAsking(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((t) => t.stop());
       gotAudio.current = true;
+      setGranted(true);
+      setAsking(false);
       return true;
     } catch {
+      setAsking(false);
       setBlocked(true);
       setProblem('no mic access — you can type instead.');
       return false;
@@ -105,7 +127,13 @@ export function useListen() {
       r.interimResults = true;
       r.continuous = true;
 
+      const quiet = (ms) => {
+        clearTimeout(hush.current);
+        hush.current = setTimeout(() => r.stop(), ms);
+      };
+
       r.onresult = (e) => {
+        quiet(SILENCE_MS);
         let interim = '';
         let fin = '';
         for (let i = 0; i < e.results.length; i++) {
@@ -122,6 +150,7 @@ export function useListen() {
          disables the mic for good — they can always tap again. */
       r.onerror = (e) => {
         /* an error can fire without onend — never leave it stuck "listening" */
+        clearTimeout(hush.current);
         setListening(false);
         rec.current = null;
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
@@ -139,6 +168,7 @@ export function useListen() {
       };
 
       r.onend = () => {
+        clearTimeout(hush.current);
         setListening(false);
         rec.current = null;
         const out = (finalText.current || '').trim() || lastText.current;
@@ -151,6 +181,7 @@ export function useListen() {
       rec.current = r;
       r.start();
       setListening(true);
+      quiet(NOTHING_MS);
     } catch {
       setProblem("couldn't start the mic. type instead.");
     }
@@ -172,7 +203,22 @@ export function useListen() {
   /* the only flag screens should check: can we actually offer talking? */
   const usable = supported && !blocked;
 
-  return { supported, usable, blocked, listening, text, setText, start, stop, problem, setProblem };
+  return {
+    supported,
+    usable,
+    blocked,
+    granted,
+    asking,
+    listening,
+    text,
+    setText,
+    start,
+    stop,
+    /* ask for the mic on its own, so the screen can explain itself first */
+    request: permission,
+    problem,
+    setProblem,
+  };
 }
 
 /* Rilo talking out loud (optional, off by default) */

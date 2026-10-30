@@ -158,7 +158,7 @@ export default function Talk({
     }, 1500);
   };
 
-  const tapRilo = () => {
+  const tapRilo = async () => {
     if (done) return;
     if (listening) {
       mic.stop();
@@ -167,6 +167,11 @@ export default function Talk({
     if (!mic.usable) {
       setTyping(true);
       return;
+    }
+    /* first time: ask in Rilo's own words, then let the browser ask */
+    if (!mic.granted) {
+      const ok = await mic.request();
+      if (!ok) return;
     }
     mic.start(take);
   };
@@ -186,6 +191,34 @@ export default function Talk({
       }}
     >
       <Sky hills="mid" />
+
+      {/* points at the browser's own permission bubble, which appears
+          top-left on desktop and as a dialog on a phone */}
+      {mic.asking && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 16,
+            top: 10,
+            zIndex: 5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '8px 14px 8px 10px',
+            borderRadius: 999,
+            background: '#12301A',
+            color: '#FFFFFF',
+            border: '2px solid var(--line)',
+            boxShadow: '0 4px 0 var(--line)',
+            animation: 'point-up 1s ease-in-out infinite',
+          }}
+        >
+          <span style={{ fontSize: 20, lineHeight: 1 }}>☝️</span>
+          <span style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 14, fontWeight: 600 }}>
+            hit allow up there
+          </span>
+        </div>
+      )}
 
       <div
         style={{
@@ -259,13 +292,17 @@ export default function Talk({
         >
           {heard
             ? `“${heard}”`
-            : listening
-              ? 'listening…'
-              : done
-                ? ''
-                : mic.usable
-                  ? 'click to talk'
-                  : 'type your answer below'}
+            : mic.asking
+              ? 'tap allow when your browser asks ☝️'
+              : listening
+                ? 'listening… just stop talking when you’re done'
+                : done
+                  ? ''
+                  : !mic.usable
+                    ? 'type your answer below'
+                    : mic.granted
+                      ? 'click to talk'
+                      : 'click me — can i listen?'}
         </p>
 
         {mic.problem && !listening && (
@@ -280,6 +317,30 @@ export default function Talk({
           >
             {mic.problem}
           </p>
+        )}
+
+        {listening && (
+          <button
+            type="button"
+            className="tap-94"
+            onClick={mic.stop}
+            style={{
+              minHeight: 44,
+              marginTop: 2,
+              padding: '0 20px',
+              borderRadius: 999,
+              border: '2px solid var(--line)',
+              background: '#FFFFFF',
+              color: '#12301A',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 16,
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 3px 0 var(--line)',
+            }}
+          >
+            done talking
+          </button>
         )}
 
         {typing && !done && (
