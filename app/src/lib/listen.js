@@ -14,10 +14,36 @@ import { useEffect, useRef, useState } from 'react';
 const SR =
   typeof window !== 'undefined' ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 
+/* Remember a refusal. iOS Safari has no permissions API to ask up front, so
+   the only way to know is to try once — after that the app must stop
+   offering voice entirely rather than asking again every screen. */
+const BLOCKED_KEY = 'rilo.micBlocked';
+
+function wasBlocked() {
+  try {
+    return localStorage.getItem(BLOCKED_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function rememberBlocked() {
+  try {
+    localStorage.setItem(BLOCKED_KEY, '1');
+  } catch {
+    /* storage off — it just asks again next session */
+  }
+}
+
 export function useListen() {
   const [supported] = useState(Boolean(SR));
   /* mic refused or missing — the whole app hides its voice bits when true */
-  const [blocked, setBlocked] = useState(false);
+  const [blocked, setBlockedState] = useState(wasBlocked);
+
+  const setBlocked = (v) => {
+    setBlockedState(v);
+    if (v) rememberBlocked();
+  };
   const [listening, setListening] = useState(false);
   const [text, setText] = useState('');
   /* a human-readable reason the last attempt failed, '' when fine */
@@ -58,7 +84,7 @@ export function useListen() {
       return true;
     } catch {
       setBlocked(true);
-      setProblem('no mic. allow it in the address bar, or type instead.');
+      setProblem('no mic access — you can type instead.');
       return false;
     }
   };
@@ -101,14 +127,14 @@ export function useListen() {
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
           gotAudio.current = false;
           setBlocked(true);
-          setProblem('mic is blocked. allow it in the address bar, or type instead.');
+          setProblem('no mic access — you can type instead.');
         } else if (e.error === 'network') {
           setProblem("couldn't reach the speech service. check wifi, or type instead.");
         } else if (e.error === 'no-speech') {
           setProblem("didn't catch that. try again, or type instead.");
         } else if (e.error === 'audio-capture') {
           setBlocked(true);
-          setProblem('no microphone found. type instead.');
+          setProblem('no mic found — you can type instead.');
         }
       };
 

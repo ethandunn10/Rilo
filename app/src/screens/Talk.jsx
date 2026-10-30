@@ -95,7 +95,8 @@ export default function Talk({
   const mic = useListen();
   const [step, setStep] = useState(0);
   /* no speech support (Firefox, locked-down Safari) → typing from the start */
-  const [typing, setTyping] = useState(() => !mic.usable);
+  /* typing is forced on whenever there's no usable mic */
+  const [typingPick, setTyping] = useState(false);
   const [draft, setDraft] = useState('');
   const [reply, setReply] = useState('');
   const [mood, setMood] = useState(qs[0].mood);
@@ -103,6 +104,7 @@ export default function Talk({
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
+  const typing = typingPick || !mic.usable;
   const done = step >= qs.length;
   const q = qs[Math.min(step, qs.length - 1)];
   const listening = mic.listening;
@@ -342,7 +344,7 @@ export default function Talk({
               color: '#12301A',
             }}
           >
-            {typing && mic.usable ? 'talk instead' : 'type instead'}
+            {typingPick && mic.usable ? 'talk instead' : 'type instead'}
           </button>
           <button
             type="button"
