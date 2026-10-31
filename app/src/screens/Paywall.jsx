@@ -21,10 +21,16 @@ const PLANS = [
   {
     id: 'year',
     name: 'yearly · best value',
-    sub: '$2.50 a month, billed yearly',
-    price: '$29.99/yr',
+    sub: '$3.33 a month, billed yearly',
+    price: '$39.99/yr',
   },
   { id: 'month', name: 'monthly', sub: 'billed every month', price: '$4.99/mo' },
+  {
+    id: 'free',
+    name: 'free',
+    sub: '2 apps, one daily limit, no plan',
+    price: '$0',
+  },
 ];
 
 const planBase = {
@@ -63,7 +69,10 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
+          overflowY: 'auto',
+          overscrollBehavior: 'contain',
         }}
+        className="scroll-y"
       >
         <div
           style={{
@@ -71,18 +80,19 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
             justifyContent: 'center',
             alignItems: 'flex-end',
             gap: 0,
-            height: 120,
+            height: 104,
+            flexShrink: 0,
             animation: 'rise .5s ease-out both',
           }}
         >
           <div style={{ marginRight: -18, marginBottom: 4 }}>
-            <Rilo skin="redpanda" mood="coach" size={100} />
+            <Rilo skin="redpanda" mood="coach" size={88} />
           </div>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <Rilo skin="gold" mood="coach" size={128} />
+            <Rilo skin="gold" mood="coach" size={112} />
           </div>
           <div style={{ marginLeft: -18, marginBottom: 4 }}>
-            <Rilo skin="pinkpanda" mood="coach" size={100} />
+            <Rilo skin="pinkpanda" mood="coach" size={88} />
           </div>
         </div>
 
@@ -227,14 +237,17 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
           })}
         </div>
 
-        <div style={{ flexGrow: 1 }} />
+        <div style={{ flexGrow: 1, flexShrink: 1, minHeight: 8 }} />
 
+        {/* one button, and it does whatever row is selected */}
         <button
           type="button"
           className="tap-pw"
           onClick={() => {
-            if (onChoose) onChoose('start free trial');
-            go('home');
+            const free = plan === 'free';
+            if (onChoose) onChoose(free ? 'continue with free' : 'start free trial');
+            /* free skips the pro-only onboarding screens */
+            go(free ? 'timeback' : 'timegoes');
           }}
           style={{
             width: '100%',
@@ -254,28 +267,23 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
             boxShadow: '0 4px 0 var(--line)',
           }}
         >
-          start 7-day free trial
+          {plan === 'free' ? 'continue with free' : 'start 7-day free trial'}
         </button>
-        <button
-          type="button"
-          onClick={() => {
-            if (onChoose) onChoose('continue with free');
-            go('home');
-          }}
+
+        <p
           style={{
-            border: 0,
-            background: 'transparent',
-            fontFamily: 'Fredoka, sans-serif',
-            fontSize: 16,
+            margin: 0,
+            fontSize: 12,
             fontWeight: 600,
-            padding: 6,
-            textAlign: 'center',
             color: '#FFFFFF',
-            cursor: 'pointer',
+            textAlign: 'center',
+            opacity: 0.85,
           }}
         >
-          continue with free
-        </button>
+          {plan === 'free'
+            ? 'you can upgrade any time from the you tab.'
+            : 'free for 7 days, then it bills. cancel whenever.'}
+        </p>
       </div>
     </div>
   );

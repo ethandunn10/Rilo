@@ -574,7 +574,7 @@ export default function App() {
             }}
             onSkip={() => {
               makeBreakdown(false);
-              go('timegoes');
+              go('paywall');
             }}
           />
         );
@@ -585,7 +585,8 @@ export default function App() {
             skin={OG_SKIN}
             onDone={() => {
               makeBreakdown(true);
-              go('timegoes');
+              /* the paywall comes first — "where your time goes" is pro */
+              go('paywall');
             }}
           />
         );
@@ -607,6 +608,7 @@ export default function App() {
             setPace={choosePace}
             sessionMins={sessionMins}
             setSessionMins={chooseSession}
+            isPro={isPro}
           />
         );
       case 'paywall':

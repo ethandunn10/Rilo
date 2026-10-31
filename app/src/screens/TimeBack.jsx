@@ -5,14 +5,7 @@ import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import PlanPicker from '../components/PlanPicker';
-import AppPicker from '../components/AppPicker';
-import {
-  weekGoals,
-  blockedGoalFor,
-  planNeedsMoreApps,
-  hoursToMins,
-  fmtMins,
-} from '../lib/plan';
+import { weekGoals, blockedGoalFor, goalFloorHours, hoursToMins, fmtMins } from '../lib/plan';
 
 const MAX = 10;
 
@@ -70,6 +63,7 @@ export default function TimeBack({
   setPace,
   sessionMins,
   setSessionMins,
+  isPro = false,
 }) {
   const { now, goal } = time;
   const saved = Math.max(0, now - goal);
@@ -79,16 +73,16 @@ export default function TimeBack({
   const startMins = hoursToMins(now);
   const blockedBase = breakdown?.blocked ?? startMins;
   const goals = weekGoals(startMins, hoursToMins(goal), pace);
-  const tooTight = planNeedsMoreApps(startMins, hoursToMins(goal), blockedBase, pace);
+  /* they can't aim below the time Rilo doesn't control */
+  const floor = goalFloorHours(startMins, blockedBase);
+  const atFloor = goal <= floor;
 
   const [editing, setEditing] = useState(false);
-  /* adding apps happens here, not on a screen they'd have to walk back to */
-  const [addingApps, setAddingApps] = useState(false);
 
   const nowUp = () => setTime({ ...time, now: Math.min(MAX, now + 0.5) });
   const nowDown = () => setTime({ ...time, now: Math.max(goal + 0.5, now - 0.5) });
   const goalUp = () => setTime({ ...time, goal: Math.min(now - 0.5, goal + 0.5) });
-  const goalDown = () => setTime({ ...time, goal: Math.max(0.5, goal - 0.5) });
+  const goalDown = () => setTime({ ...time, goal: Math.max(floor, goal - 0.5) });
 
   return (
     <div
@@ -255,193 +249,134 @@ export default function TimeBack({
             <div style={trackStyle}>
               <div style={bar(goal, 'linear-gradient(90deg, #4CC160, #2E8B3E)')} />
             </div>
-          </div>
-        </div>
 
-        <div
-          style={{
-            padding: 20,
-            borderRadius: 26,
-            background: '#12301A',
-            color: '#FFFFFF',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-            boxShadow: '0 14px 34px rgba(10,40,20,0.25)',
-            animation: 'rise .5s .2s ease-out both',
-          }}
-        >
-          <p
-            style={{
-              margin: 0,
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: '#9FD8A9',
-            }}
-          >
-            your {goals.length === 1 ? '1-week' : `${goals.length}-week`} plan
-          </p>
-
-          <button
-            type="button"
-            className="tap"
-            onClick={() => setEditing((v) => !v)}
-            style={{
-              alignSelf: 'flex-start',
-              minHeight: 36,
-              padding: '0 14px',
-              borderRadius: 999,
-              border: '2px solid rgba(255,255,255,0.55)',
-              background: editing ? '#FFFFFF' : 'transparent',
-              color: editing ? '#12301A' : '#FFFFFF',
-              fontFamily: 'Fredoka, sans-serif',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            {editing ? 'done' : 'change my plan'}
-          </button>
-
-          {editing && (
-            <PlanPicker
-              pace={pace}
-              setPace={setPace}
-              sessionMins={sessionMins}
-              setSessionMins={setSessionMins}
-              breakdown={breakdown}
-              startMins={startMins}
-              weekGoal={goals[0]}
-              dark
-            />
-          )}
-
-          {goals.map((g, i) => (
-            <div
-              key={g + '-' + i}
+            {/* Rilo only controls the apps they blocked, so say where the
+                floor is instead of sending them off to block more. */}
+            <p
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
-                padding: '7px 0',
-                borderBottom:
-                  i === goals.length - 1 ? 0 : '1px solid rgba(255,255,255,0.14)',
+                margin: 0,
+                fontSize: 13,
+                fontWeight: 600,
+                color: atFloor ? '#FFD9A8' : '#C9E6CE',
+                lineHeight: 1.3,
               }}
             >
-              <span
-                style={{
-                  width: 58,
-                  flexShrink: 0,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  color: '#9FD8A9',
-                }}
-              >
-                week {i + 1}
-              </span>
-              <span
-                style={{
-                  flexGrow: 1,
-                  fontFamily: 'Fredoka, sans-serif',
-                  fontSize: 20,
-                  fontWeight: 600,
-                }}
-              >
-                {fmtMins(g)} a day
-              </span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#C9E6CE' }}>
-                {fmtMins(Math.max(0, blockedGoalFor(g, startMins, blockedBase)))} on apps
-              </span>
-            </div>
-          ))}
-
-          <p style={{ margin: '4px 0 0', fontSize: 15, fontWeight: 600, color: '#C9E6CE' }}>
-            {goals.length === 1
-              ? "straight in at your goal. no easing in."
-              : `you hit your goal in ${goals.length * 7} days.`}
-          </p>
+              {atFloor
+                ? `that's as low as it goes with these apps. block another to aim lower.`
+                : `lowest you can go with these apps: ${fmt(floor)}.`}
+            </p>
+          </div>
         </div>
 
-        {tooTight && (
+        {/* the 30-day plan is rilo pro; free just has the limit above */}
+        {isPro && (
           <div
             style={{
-              padding: '14px 16px',
-              borderRadius: 24,
-              background: 'rgba(255,255,255,0.9)',
-              border: '2px solid var(--line, #12301A)',
+              padding: 20,
+              borderRadius: 26,
+              background: '#12301A',
+              color: '#FFFFFF',
               display: 'flex',
               flexDirection: 'column',
-              gap: 10,
-              animation: 'rise .5s .25s ease-out both',
+              gap: 4,
+              boxShadow: '0 14px 34px rgba(10,40,20,0.25)',
+              animation: 'rise .5s .2s ease-out both',
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Rilo skin={skin} mood="letdown" size={64} />
-              <p
-                style={{
-                  margin: 0,
-                  flexGrow: 1,
-                  fontFamily: 'Fredoka, sans-serif',
-                  fontSize: 18,
-                  fontWeight: 600,
-                  lineHeight: 1.25,
-                }}
-              >
-                your goal needs you to block more apps.
-              </p>
-            </div>
-            {addingApps && (
-              <AppPicker
-                apps={apps}
-                setApps={setApps}
-                style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+            <p
+              style={{
+                margin: 0,
+                fontSize: 12,
+                fontWeight: 700,
+                letterSpacing: '0.08em',
+                textTransform: 'uppercase',
+                color: '#9FD8A9',
+              }}
+            >
+              your {goals.length === 1 ? '1-week' : `${goals.length}-week`} plan
+            </p>
+  
+            <button
+              type="button"
+              className="tap"
+              onClick={() => setEditing((v) => !v)}
+              style={{
+                alignSelf: 'flex-start',
+                minHeight: 36,
+                padding: '0 14px',
+                borderRadius: 999,
+                border: '2px solid rgba(255,255,255,0.55)',
+                background: editing ? '#FFFFFF' : 'transparent',
+                color: editing ? '#12301A' : '#FFFFFF',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {editing ? 'done' : 'change my plan'}
+            </button>
+  
+            {editing && (
+              <PlanPicker
+                pace={pace}
+                setPace={setPace}
+                sessionMins={sessionMins}
+                setSessionMins={setSessionMins}
+                breakdown={breakdown}
+                startMins={startMins}
+                weekGoal={goals[0]}
+                dark
               />
             )}
-
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                type="button"
-                className="tap"
-                onClick={() => setAddingApps((v) => !v)}
+  
+            {goals.map((g, i) => (
+              <div
+                key={g + '-' + i}
                 style={{
-                  flex: 1,
-                  minHeight: 46,
-                  borderRadius: 999,
-                  border: 0,
-                  background: '#12301A',
-                  color: '#FFFFFF',
-                  fontFamily: 'Fredoka, sans-serif',
-                  fontSize: 16,
-                  fontWeight: 600,
-                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '7px 0',
+                  borderBottom:
+                    i === goals.length - 1 ? 0 : '1px solid rgba(255,255,255,0.14)',
                 }}
               >
-                {addingApps ? 'done' : 'pick more apps'}
-              </button>
-              <button
-                type="button"
-                className="tap"
-                onClick={() => setTime({ ...time, goal: Math.min(now - 0.5, goal + 0.5) })}
-                style={{
-                  flex: 1,
-                  minHeight: 46,
-                  borderRadius: 999,
-                  border: '2px solid #12301A',
-                  background: 'transparent',
-                  color: '#12301A',
-                  fontFamily: 'Fredoka, sans-serif',
-                  fontSize: 16,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                change my goal
-              </button>
-            </div>
+                <span
+                  style={{
+                    width: 58,
+                    flexShrink: 0,
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: '#9FD8A9',
+                  }}
+                >
+                  week {i + 1}
+                </span>
+                <span
+                  style={{
+                    flexGrow: 1,
+                    fontFamily: 'Fredoka, sans-serif',
+                    fontSize: 20,
+                    fontWeight: 600,
+                  }}
+                >
+                  {fmtMins(g)} a day
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#C9E6CE' }}>
+                  {fmtMins(Math.max(0, blockedGoalFor(g, startMins, blockedBase)))} on apps
+                </span>
+              </div>
+            ))}
+  
+            <p style={{ margin: '4px 0 0', fontSize: 15, fontWeight: 600, color: '#C9E6CE' }}>
+              {goals.length === 1
+                ? "straight in at your goal. no easing in."
+                : `you hit your goal in ${goals.length * 7} days.`}
+            </p>
           </div>
         )}
+
 
         <div
           style={{
@@ -489,7 +424,7 @@ export default function TimeBack({
           <button
           type="button"
           className="tap-92"
-          onClick={() => go('paywall')}
+          onClick={() => go('home')}
           style={{
             flexGrow: 1,
             minWidth: 0,

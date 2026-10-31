@@ -22,7 +22,12 @@ function fmtHours(h) {
   return mins ? `${whole}h ${mins}m` : `${whole}h`;
 }
 
-export default function GoalStepper({ time, setTime, label = 'daily screen time goal' }) {
+export default function GoalStepper({
+  time,
+  setTime,
+  label = 'daily screen time goal',
+  floor = 0.5,
+}) {
   const { now, goal } = time;
 
   return (
@@ -44,7 +49,7 @@ export default function GoalStepper({ time, setTime, label = 'daily screen time 
             type="button"
             className="tap-92"
             aria-label="Lower goal"
-            onClick={() => setTime({ ...time, goal: Math.max(0.5, goal - 0.5) })}
+            onClick={() => setTime({ ...time, goal: Math.max(floor, goal - 0.5) })}
             style={stepBtn}
           >
             −

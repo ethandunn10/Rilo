@@ -14,7 +14,7 @@ import AppPicker from '../components/AppPicker';
 import GoalStepper from '../components/GoalStepper';
 import StrictCard from '../components/StrictCard';
 import ProLock from '../components/ProLock';
-import { FREE_MAX_APPS } from '../lib/plan';
+import { FREE_MAX_APPS, goalFloorHours, hoursToMins } from '../lib/plan';
 import PlanPicker from '../components/PlanPicker';
 import { levelProgress, skinInfo, UNLOCK_ALL } from '../lib/levels';
 import { THEMES } from '../lib/themes';
@@ -129,6 +129,11 @@ export default function You({
 }) {
   const prog = levelProgress(xp, level);
   const planLabel = isPro ? 'rilo pro (trial)' : 'free';
+  /* same floor as onboarding: Rilo can't cut what he doesn't watch */
+  const goalFloor = goalFloorHours(
+    hoursToMins(time.now || 5),
+    breakdown?.blocked ?? hoursToMins(time.now || 5),
+  );
 
   return (
     <div
@@ -373,14 +378,14 @@ export default function You({
             <ProLock
               style={card('.2s')}
               title="strict mode"
-              sub="half the opens, no &quot;5 more&quot;, 24 hours to switch off."
+              sub={'half the opens, no "5 more", 24 hours to switch off.'}
               onTap={() => go('paywall')}
             />
           )}
 
           {/* daily goal */}
           <div style={card('.28s')}>
-            <GoalStepper time={time} setTime={setTime} />
+            <GoalStepper time={time} setTime={setTime} floor={goalFloor} />
           </div>
 
           {/* how hard the plan pushes, and how long a sitting is — pro */}

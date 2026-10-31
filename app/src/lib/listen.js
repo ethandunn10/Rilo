@@ -412,6 +412,11 @@ const FILLER =
 const NOT_A_NAME = new Set([
   'the', 'a', 'an', 'and', 'but', 'is', 'am', 'are', 'my', 'me', 'you', 'your',
   'what', 'who', 'thats', "that's", 'nice', 'good', 'hello', 'there', 'name',
+  /* shrugs and hedges — people say these before giving a name, or instead
+     of giving one, and neither case makes them the name */
+  'maybe', 'idk', 'idc', 'dunno', 'nothing', 'none', 'nope', 'nah', 'sure',
+  'whatever', 'anything', 'something', 'stuff', 'things', 'guess', 'dont',
+  "don't", 'know', 'not', 'uhh', 'umm', 'erm', 'eh',
 ]);
 
 function tidyName(word) {

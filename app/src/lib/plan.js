@@ -154,11 +154,17 @@ export function blockedGoalFor(totalGoal, startMins, blockedBaseline) {
   return Math.round(blockedBaseline - (startMins - totalGoal));
 }
 
-/* Would the plan need them to block more than they actually use? */
-export function planNeedsMoreApps(startMins, targetMins, blockedBaseline, pace = 'steady') {
-  const goals = weekGoals(startMins, targetMins, pace);
-  const last = goals[goals.length - 1];
-  return blockedGoalFor(last, startMins, blockedBaseline) <= 0;
+/* The lowest goal that's actually reachable. Rilo can only cut time on the
+   apps they blocked, so whatever's left on the phone is the floor — asking
+   them to block more apps to "fix" their goal was backwards. */
+export function goalFloorMins(startMins, blockedBaseline) {
+  const untouchable = Math.max(0, startMins - blockedBaseline);
+  /* round up to a clean half hour, and never offer less than 30 min */
+  return Math.max(30, Math.ceil(untouchable / 30) * 30);
+}
+
+export function goalFloorHours(startMins, blockedBaseline) {
+  return goalFloorMins(startMins, blockedBaseline) / 60;
 }
 
 /* ---------- what Rilo offers once he knows the goal ----------
