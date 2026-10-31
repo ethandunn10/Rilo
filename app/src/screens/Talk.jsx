@@ -98,6 +98,9 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
   /* the pending auto-start, so a manual tap can cancel it and they don't
      race each other into two recognisers */
   const autoStart = useRef(null);
+  /* they tapped him after he'd finished — if they then say nothing, put
+     the finished screen back rather than stranding them without it */
+  const reopened = useRef(false);
   /* The live question number. setStep is async, so a mic callback created
      before it lands would otherwise answer the previous question — and
      re-ask the same one forever. */
@@ -240,7 +243,6 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
   };
 
   const startMic = () => {
-    if (done) return;
     if (!mic.supported) {
       keyboardMode.current = true;
       setTyping(true);
@@ -254,11 +256,32 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
     }
     clearAutoStart();
     window.speechSynthesis?.cancel?.();
-    setSpeaking(false);
-    setMood('coach');
+
+    /* He'd finished and the panda went dead, with no way back in if they
+       cut themselves off on the last answer. Tapping him re-opens it. */
+    if (done) {
+      reopened.current = true;
+      setDone(false);
+      setConfirm(null);
+      stepRef.current = qs.length - 1;
+      setStep(qs.length - 1);
+      riloSays('go on, i’m listening.', 'curious');
+    } else {
+      setSpeaking(false);
+      setMood('coach');
+    }
+
     usedMic.current = true;
     resumeWanted.current = false;
-    mic.start((said) => answer(said));
+    mic.start((said) => {
+      if (!(said || '').trim() && reopened.current) {
+        reopened.current = false;
+        setDone(true);
+        return;
+      }
+      reopened.current = false;
+      answer(said);
+    });
   };
 
   /* Next question. Whichever way they chose last — keyboard or mic — is
