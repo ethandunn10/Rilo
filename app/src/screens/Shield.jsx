@@ -82,9 +82,11 @@ export default function Shield({ app, skin, left, sessionMins = 15, onTalk, onCl
         >
           {locked
             ? 'locked till tomorrow'
-            : `${left.opens} open${left.opens === 1 ? '' : 's'} left · ${fmtMins(
-                Math.min(sessionMins, left.minutes),
-              )}${left.opens === 1 ? '' : ' each'}`}
+            : left.shared
+              ? `${fmtMins(left.minutes)} left today`
+              : `${left.opens} open${left.opens === 1 ? '' : 's'} left · ${fmtMins(
+                  Math.min(sessionMins, left.minutes),
+                )}${left.opens === 1 ? '' : ' each'}`}
         </p>
 
         <div style={{ flexGrow: 1 }} />

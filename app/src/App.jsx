@@ -48,7 +48,6 @@ import {
   hoursToMins,
   weekGoals,
   limitsFor,
-  PASSES_PER_DAY,
   PASS_MINUTES,
   BREAK_EARNED_AFTER,
   dayXp,
@@ -56,6 +55,8 @@ import {
   PLAN_BONUS,
   shouldSuggestStrict,
   weeksFor,
+  passesFor,
+  watchedFor,
 } from './lib/plan';
 import { levelFor, skinsUnlockedBetween, XP, UNLOCK_ALL } from './lib/levels';
 import { ThemeContext, themeInfo } from './lib/themes';
@@ -160,27 +161,31 @@ export default function App() {
   /* The web can't read real Screen Time, so the baseline comes from the
      hours they gave on Your time back (5h if they never said). */
   const makeBreakdown = (allowed) => {
-    const picked = pickedApps(apps);
+    const picked = watchedFor(pickedApps(apps), isPro);
     const total = hoursToMins(time.now || 5);
     setBreakdown(buildBreakdown(picked, total, allowed));
   };
 
   /* Blocking another app, or changing their hours, changes where the time
      goes — so the breakdown is rebuilt instead of going stale. */
-  const pickedKey = pickedApps(apps).join(',');
+  const pickedKey = watchedFor(pickedApps(apps), isPro).join(',');
   useEffect(() => {
     if (screenTime === null || screenTime === undefined) return;
     makeBreakdown(screenTime === true);
     /* makeBreakdown reads the same values these deps track */
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pickedKey, time.now, screenTime]);
+  }, [pickedKey, time.now, screenTime, isPro]);
 
   /* ---------- this week's numbers ----------
      Everything the shield and the pop-up need: the goal for the week they're
      on, the per-app time and open limits, and what's left of each today. */
   const startMins = hoursToMins(time.now || 5);
-  const planWeeks = weeksFor(pace);
-  const goalsByWeek = weekGoals(startMins, hoursToMins(time.goal), pace);
+  /* Free is one flat daily limit, so there's no plan to step down and
+     only one week. Pro gets the 30-day plan. */
+  const planWeeks = isPro ? weeksFor(pace) : 1;
+  const goalsByWeek = isPro
+    ? weekGoals(startMins, hoursToMins(time.goal), pace)
+    : [hoursToMins(time.goal)];
   const weekGoal = goalsByWeek[Math.min(program.week, planWeeks) - 1];
 
   const limits = breakdown
@@ -189,7 +194,15 @@ export default function App() {
 
   const limitFor = (app) => limits.find((l) => l.app === app) ?? null;
 
+  const usedTotalToday = Object.values(day.used).reduce((n, m) => n + m, 0);
+
   const leftFor = (app) => {
+    /* Free has no per-app allowance — the whole day is one pot, shared by
+       every app they block, and nothing counts opens. */
+    if (!isPro) {
+      const minsLeft = Math.max(0, weekGoal - usedTotalToday);
+      return { opens: Infinity, minutes: minsLeft, locked: minsLeft <= 0, shared: true };
+    }
     const lim = limitFor(app);
     if (!lim) return { opens: 0, minutes: 0, locked: true };
     const opensUsed = day.opens[app] ?? 0;
@@ -203,8 +216,6 @@ export default function App() {
       locked: opensLeft <= 0 || minsLeft <= 0,
     };
   };
-
-  const usedTotalToday = Object.values(day.used).reduce((n, m) => n + m, 0);
 
   /* Spending an open: the session runs, then the minutes land on the day. */
   const startSessionFor = (appName, minutes) => {
@@ -628,7 +639,9 @@ export default function App() {
             leftFor={leftFor}
             savedNote={savedNote}
             onClearSavedNote={() => setSavedNote(null)}
+            isPro={isPro}
             suggestStrict={
+              isPro &&
               !strict.on &&
               strict.suggestedOn !== today() &&
               shouldSuggestStrict(history, fiveMoreDays)
@@ -689,6 +702,7 @@ export default function App() {
             opensToday={day.opens[currentApp] ?? 0}
             left={leftFor(currentApp)}
             sessionMins={sessionMins}
+            passesPerDay={passesFor(isPro)}
             day={day}
             strictOn={strict.on}
             breakEarned={
@@ -793,6 +807,8 @@ export default function App() {
         );
 
       case 'plan':
+        /* today's plan is rilo pro */
+        if (!isPro) return <Plan go={go} skin={chosenRilo} locked onUpgrade={() => go('paywall')} />;
         return <Plan go={go} skin={chosenRilo} />;
       case 'progress':
         return (
@@ -805,6 +821,7 @@ export default function App() {
             program={program}
             weekGoal={weekGoal}
             planWeeks={planWeeks}
+            isPro={isPro}
           />
         );
       case 'pickrilo':

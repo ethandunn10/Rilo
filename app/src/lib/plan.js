@@ -31,9 +31,22 @@ export const SESSION_CHOICES = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
 export const MAX_OPENS = 15;
 export const SESSION_MINUTES = 10;
 
-/* the emergency pass: one a day, across every app */
-export const PASSES_PER_DAY = 1;
+/* the emergency pass: one a day on free, two on pro */
+export const FREE_PASSES = 1;
+export const PRO_PASSES = 2;
+export const PASSES_PER_DAY = FREE_PASSES;
 export const PASS_MINUTES = 5;
+
+export function passesFor(isPro) {
+  return isPro ? PRO_PASSES : FREE_PASSES;
+}
+
+/* free blocks two apps; pro blocks as many as they like */
+export const FREE_MAX_APPS = 2;
+
+export function watchedFor(appList, isPro) {
+  return isPro ? appList : appList.slice(0, FREE_MAX_APPS);
+}
 
 /* how long off the blocked apps earns a break */
 export const BREAK_EARNED_AFTER = 60;

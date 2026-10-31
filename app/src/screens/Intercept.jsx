@@ -10,7 +10,7 @@ import Rilo from '../components/Rilo';
 import AppLogo from '../components/AppLogo';
 import { MicButton, WaveBars } from '../components/TalkBits';
 import { useListen, reasonIn } from '../lib/listen';
-import { fmtMins, PASSES_PER_DAY, PASS_MINUTES } from '../lib/plan';
+import { fmtMins, PASS_MINUTES } from '../lib/plan';
 
 /* Every way through costs the same five seconds — long enough to think,
    short enough that nobody rage-quits. The emergency pass included. */
@@ -56,6 +56,7 @@ export default function Intercept({
   onReason,
   onUnlock,
   sessionMins = 15,
+  passesPerDay = 1,
   onPass,
   onFiveMore,
 }) {
@@ -69,7 +70,7 @@ export default function Intercept({
   const timer = useRef(null);
 
   const outOfRoom = left?.locked;
-  const passesLeft = Math.max(0, PASSES_PER_DAY - (day?.passes ?? 0));
+  const passesLeft = Math.max(0, passesPerDay - (day?.passes ?? 0));
   const fiveMoreUsed = (day?.fiveMore ?? 0) >= 1;
 
   useEffect(() => {
@@ -180,9 +181,11 @@ export default function Intercept({
           {openCount === 1 ? 'st' : openCount === 2 ? 'nd' : openCount === 3 ? 'rd' : 'th'} time
           today
           {!outOfRoom && left
-            ? ` · ${left.opens} open${left.opens === 1 ? '' : 's'} left, ${fmtMins(
-                Math.min(sessionMins, left.minutes),
-              )}${left.opens === 1 ? '' : ' each'}`
+            ? left.shared
+              ? ` · ${fmtMins(left.minutes)} left today`
+              : ` · ${left.opens} open${left.opens === 1 ? '' : 's'} left, ${fmtMins(
+                  Math.min(sessionMins, left.minutes),
+                )}${left.opens === 1 ? '' : ' each'}`
             : ''}
         </p>
 
@@ -241,7 +244,9 @@ export default function Intercept({
                 >
                   emergency pass · {PASS_MINUTES} min
                   <span style={{ display: 'block', fontSize: 12, fontWeight: 600, opacity: 0.8 }}>
-                    {PASSES_PER_DAY === 1 ? 'one a day. this is it.' : `${passesLeft} left today`}
+                    {passesPerDay === 1
+                      ? 'one a day. this is it.'
+                      : `${passesLeft} of ${passesPerDay} left today`}
                   </span>
                 </button>
               ) : (

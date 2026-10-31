@@ -14,6 +14,7 @@ import TabBar from '../components/TabBar';
 import AppLogo from '../components/AppLogo';
 import { suggestion } from '../lib/profile';
 import { pickedApps } from '../lib/apps';
+import { watchedFor } from '../lib/plan';
 import { fmtMins } from '../lib/plan';
 
 /* no clouds — the theme's sky things instead (see ThemeDecor) */
@@ -86,10 +87,12 @@ export default function Home({
   onStrictNo,
   savedNote,
   onClearSavedNote,
+  isPro = false,
 }) {
   const theme = useTheme();
   const upNext = suggestion(about).task;
-  const watched = pickedApps(apps);
+  /* free blocks two apps, so that's all Rilo is actually watching */
+  const watched = watchedFor(pickedApps(apps), isPro);
 
   return (
     <div

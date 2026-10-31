@@ -151,7 +151,17 @@ function Stat({ value, label }) {
   );
 }
 
-export default function Progress({ go, xp, skin, level, breakdown, program, weekGoal, planWeeks = 4 }) {
+export default function Progress({
+  go,
+  xp,
+  skin,
+  level,
+  breakdown,
+  program,
+  weekGoal,
+  planWeeks = 4,
+  isPro = false,
+}) {
   const theme = useTheme();
   const prog = levelProgress(xp, level);
   const nextSkin = prog.atMax ? null : nextSkinAfter(level);
@@ -280,7 +290,9 @@ export default function Progress({ go, xp, skin, level, breakdown, program, week
             <p
               style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}
             >
-              week {Math.min(program?.week ?? 1, planWeeks)} of {planWeeks} ·{' '}
+              {isPro
+                ? `week ${Math.min(program?.week ?? 1, planWeeks)} of ${planWeeks} · `
+                : 'your daily limit · '}
               {fmtMins(weekGoal ?? 0)} a day
             </p>
             <p
@@ -362,7 +374,12 @@ export default function Progress({ go, xp, skin, level, breakdown, program, week
             >
               where your time goes
             </p>
-            <Breakdown breakdown={breakdown} compact />
+            <Breakdown
+              breakdown={breakdown}
+              compact
+              isPro={isPro}
+              onUpgrade={() => go('paywall')}
+            />
           </div>
         )}
 

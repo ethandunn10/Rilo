@@ -6,16 +6,24 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 
 const PERKS = [
-  { title: 'your daily plan', sub: 'built around your goals' },
-  { title: 'unlimited apps', sub: 'free covers 3' },
-  { title: 'every rilo look', sub: 'red panda, pink panda, gold + more' },
-  { title: 'app themes', sub: 'bamboo, sakura, sunset, snow' },
-  { title: 'creator mode', sub: 'turn scroll urges into posting' },
-  { title: 'unlock 9 more rilos', sub: 'as you level up' },
+  { title: 'unlimited apps', sub: 'free blocks 2' },
+  { title: 'where your time goes', sub: 'the per-app breakdown, unblurred' },
+  { title: 'your 30-day plan', sub: '25% closer to your goal every week' },
+  { title: 'opens + time limits per app', sub: 'free is one daily total' },
+  { title: 'strict mode', sub: 'half the opens, 24 hours to switch off' },
+  { title: '2 emergency passes a day', sub: 'free gets 1' },
+  { title: 'all 23 rilos', sub: 'a new one every level' },
+  { title: 'all app themes', sub: 'bamboo, sakura, sunset, snow' },
+  { title: "today's plan + full history", sub: 'every day you have logged' },
 ];
 
 const PLANS = [
-  { id: 'year', name: 'yearly · best value', sub: '$2.50 a month, billed yearly', price: '$29.99/yr' },
+  {
+    id: 'year',
+    name: 'yearly · best value',
+    sub: '$2.50 a month, billed yearly',
+    price: '$29.99/yr',
+  },
   { id: 'month', name: 'monthly', sub: 'billed every month', price: '$4.99/mo' },
 ];
 
@@ -246,7 +254,7 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
             boxShadow: '0 4px 0 var(--line)',
           }}
         >
-          start 3-day free trial
+          start 7-day free trial
         </button>
         <button
           type="button"

@@ -63,7 +63,7 @@ const rowStyle = (status, i) => {
   };
 };
 
-export default function Plan({ go, skin }) {
+export default function Plan({ go, skin, locked = false, onUpgrade }) {
   return (
     <div
       style={{
@@ -170,6 +170,58 @@ export default function Plan({ go, skin }) {
           ))}
         </div>
       </div>
+
+      {/* today's plan is rilo pro — free sees it, blurred, with the way in */}
+      {locked && (
+        <button
+          type="button"
+          className="tap"
+          onClick={onUpgrade}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 5,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
+            border: 0,
+            background: 'rgba(255,255,255,0.45)',
+            backdropFilter: 'blur(8px)',
+            cursor: 'pointer',
+          }}
+        >
+          <Rilo skin="gold" mood="coach" size={140} />
+          <span
+            style={{
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 26,
+              fontWeight: 600,
+              color: '#12301A',
+            }}
+          >
+            today&apos;s plan
+          </span>
+          <span style={{ fontSize: 15, fontWeight: 600, color: '#2C4A36' }}>
+            your day, built around your goals
+          </span>
+          <span
+            style={{
+              marginTop: 4,
+              padding: '9px 18px',
+              borderRadius: 999,
+              background: '#12301A',
+              color: '#FFFFFF',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 16,
+              fontWeight: 600,
+            }}
+          >
+            try rilo pro free
+          </span>
+        </button>
+      )}
 
       <TabBar active="plan" go={go} variant="plan" skin={skin} />
     </div>

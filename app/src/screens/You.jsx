@@ -13,6 +13,8 @@ import ChipPicker from '../components/ChipPicker';
 import AppPicker from '../components/AppPicker';
 import GoalStepper from '../components/GoalStepper';
 import StrictCard from '../components/StrictCard';
+import ProLock from '../components/ProLock';
+import { FREE_MAX_APPS } from '../lib/plan';
 import PlanPicker from '../components/PlanPicker';
 import { levelProgress, skinInfo, UNLOCK_ALL } from '../lib/levels';
 import { THEMES } from '../lib/themes';
@@ -346,26 +348,50 @@ export default function You({
             <AppPicker
               apps={apps}
               setApps={setApps}
+              maxApps={isPro ? Infinity : FREE_MAX_APPS}
+              onMaxed={() => go('paywall')}
               style={{ display: 'flex', flexDirection: 'column' }}
             />
+            {!isPro && (
+              <p style={{ margin: 0, fontSize: 12, fontWeight: 700, color: '#2C4A36' }}>
+                free blocks {FREE_MAX_APPS} apps. pro blocks as many as you like.
+              </p>
+            )}
           </div>
 
-          {/* strict mode — free */}
-          <StrictCard
-            style={card('.2s')}
-            skin={chosenRilo}
-            strict={strict}
-            onTurnOn={onStrictOn}
-            onAskOff={onStrictAskOff}
-            onKeepOn={onStrictKeepOn}
-          />
+          {/* strict mode — rilo pro */}
+          {isPro ? (
+            <StrictCard
+              style={card('.2s')}
+              skin={chosenRilo}
+              strict={strict}
+              onTurnOn={onStrictOn}
+              onAskOff={onStrictAskOff}
+              onKeepOn={onStrictKeepOn}
+            />
+          ) : (
+            <ProLock
+              style={card('.2s')}
+              title="strict mode"
+              sub="half the opens, no &quot;5 more&quot;, 24 hours to switch off."
+              onTap={() => go('paywall')}
+            />
+          )}
 
           {/* daily goal */}
           <div style={card('.28s')}>
             <GoalStepper time={time} setTime={setTime} />
           </div>
 
-          {/* how hard the plan pushes, and how long a sitting is */}
+          {/* how hard the plan pushes, and how long a sitting is — pro */}
+          {!isPro ? (
+            <ProLock
+              style={card('.32s')}
+              title="your 30-day plan"
+              sub="25% closer to your goal every week, with opens and time limits per app."
+              onTap={() => go('paywall')}
+            />
+          ) : (
           <div style={card('.32s')}>
             <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}>
               your plan
@@ -380,6 +406,7 @@ export default function You({
               weekGoal={weekGoal}
             />
           </div>
+          )}
 
           {/* plan */}
           <div style={{ ...card('.32s'), flexDirection: 'row', alignItems: 'center', gap: 10 }}>

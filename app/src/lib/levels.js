@@ -116,7 +116,7 @@ export function levelProgress(xp, level) {
    skins still carry their "pro" / level labels so testers can see what's
    coming, but nothing is actually blocked. Flip this to false to turn the
    real Pro + level gating back on; the rules below are already written. */
-export const UNLOCK_ALL = true;
+export const UNLOCK_ALL = false;
 
 /* What tier a skin WILL be once the paid plan is real. */
 export function skinTier(skin) {

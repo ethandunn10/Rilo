@@ -79,13 +79,15 @@ function AppRow({ label, on, onPick }) {
   );
 }
 
-export default function AppPicker({ apps, setApps, style }) {
+export default function AppPicker({ apps, setApps, style, maxApps = Infinity, onMaxed }) {
   const [sheet, setSheet] = useState(false);
   /* Rilo won't block the apps you need to reach people */
   const [refused, setRefused] = useState('');
 
   const { on, extra } = apps;
   const rows = STARTING_APPS.concat(extra);
+  const onCount = Object.keys(on).filter((k) => on[k]).length;
+  const full = onCount >= maxApps;
 
   const addApp = (label) => {
     const t = label.trim().toLowerCase();
@@ -93,6 +95,12 @@ export default function AppPicker({ apps, setApps, style }) {
     if (NEVER_BLOCK.some((n) => t.includes(n))) {
       setRefused(t);
       setSheet(false);
+      return;
+    }
+    /* free blocks two; a third means the trial */
+    if (full && !on[t]) {
+      setSheet(false);
+      onMaxed?.();
       return;
     }
     setApps({
@@ -109,7 +117,14 @@ export default function AppPicker({ apps, setApps, style }) {
             key={label}
             label={label}
             on={!!on[label]}
-            onPick={() => setApps({ ...apps, on: { ...on, [label]: !on[label] } })}
+            onPick={() => {
+              /* turning one off is always allowed; turning a third on isn't */
+              if (!on[label] && full) {
+                onMaxed?.();
+                return;
+              }
+              setApps({ ...apps, on: { ...on, [label]: !on[label] } });
+            }}
           />
         ))}
 

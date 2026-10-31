@@ -5,7 +5,7 @@ import AppLogo from './AppLogo';
 import { fmtMins } from '../lib/plan';
 import { useTheme } from '../lib/themes';
 
-export default function Breakdown({ breakdown, compact = false }) {
+export default function Breakdown({ breakdown, compact = false, isPro = true, onUpgrade }) {
   const theme = useTheme();
   if (!breakdown) return null;
 
@@ -52,7 +52,58 @@ export default function Breakdown({ breakdown, compact = false }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? 10 : 13 }}>
-      {rows.map((r) => row(r.app, r.app, r.mins, r.pct, true, false))}
+      {/* free sees the total, not the split — that's the pro bit */}
+      <div style={{ position: 'relative' }}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: compact ? 10 : 13,
+            filter: isPro ? 'none' : 'blur(7px)',
+            opacity: isPro ? 1 : 0.65,
+            pointerEvents: isPro ? 'auto' : 'none',
+            userSelect: isPro ? 'auto' : 'none',
+          }}
+          aria-hidden={!isPro}
+        >
+          {rows.map((r) => row(r.app, r.app, r.mins, r.pct, true, false))}
+        </div>
+
+        {!isPro && (
+          <button
+            type="button"
+            className="tap"
+            onClick={onUpgrade}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 4,
+              border: 0,
+              borderRadius: 18,
+              background: 'rgba(255,255,255,0.35)',
+              cursor: 'pointer',
+            }}
+          >
+            <span
+              style={{
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: compact ? 15 : 17,
+                fontWeight: 600,
+                color: '#12301A',
+              }}
+            >
+              see where your time goes
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: '#2C4A36' }}>
+              rilo pro
+            </span>
+          </button>
+        )}
+      </div>
 
       {breakdown.other > 0 &&
         row(
