@@ -14,6 +14,7 @@ import TabBar from '../components/TabBar';
 import AppLogo from '../components/AppLogo';
 import { suggestion } from '../lib/profile';
 import { pickedApps } from '../lib/apps';
+import { fmtMins } from '../lib/plan';
 
 /* no clouds — the theme's sky things instead (see ThemeDecor) */
 const CLOUD = null;
@@ -71,7 +72,21 @@ function Ring({ dashoffset, color, delay, big, label, value }) {
   );
 }
 
-export default function Home({ go, name, about, apps, xp, skin, strictMode, strictStreak, onOpenApp }) {
+export default function Home({
+  go,
+  name,
+  about,
+  apps,
+  xp,
+  skin,
+  onOpenApp,
+  leftFor,
+  suggestStrict,
+  onStrictYes,
+  onStrictNo,
+  savedNote,
+  onClearSavedNote,
+}) {
   const theme = useTheme();
   const upNext = suggestion(about).task;
   const watched = pickedApps(apps);
@@ -97,22 +112,10 @@ export default function Home({ go, name, about, apps, xp, skin, strictMode, stri
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          gap: 10,
           animation: 'rise14 .5s ease-out both',
         }}
       >
-        <p
-          style={{
-            margin: 0,
-            minWidth: 0,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            fontFamily: 'Fredoka, sans-serif',
-            fontSize: 26,
-            fontWeight: 700,
-          }}
-        >
+        <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 26, fontWeight: 700 }}>
           {name ? `hey ${name.toLowerCase()}` : 'hey there'}
         </p>
         <p
@@ -131,7 +134,6 @@ export default function Home({ go, name, about, apps, xp, skin, strictMode, stri
         >
           lvl 4 · {xp} xp
         </p>
-
       </div>
 
       <div
@@ -175,28 +177,6 @@ export default function Home({ go, name, about, apps, xp, skin, strictMode, stri
           <path d="M0 40 C90 10 220 14 350 36 L350 90 L0 90 Z" fill={theme.hills[1]} />
           <path d="M0 70 C120 54 230 56 350 70 L350 90 L0 90 Z" fill={theme.hills[2]} />
         </svg>
-                {strictMode && (
-          <p
-            style={{
-              position: 'absolute',
-              right: 14,
-              bottom: 12,
-              margin: 0,
-              padding: '6px 12px',
-              borderRadius: 999,
-              background: '#12301A',
-              color: '#FFFFFF',
-              border: '2px solid var(--line)',
-              fontFamily: 'Fredoka, sans-serif',
-              fontSize: 13,
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-            }}
-          >
-            🔥 strict streak: {strictStreak} {strictStreak === 1 ? 'day' : 'days'}
-          </p>
-        )}
-
         <button
           type="button"
           className="tap-94"
@@ -373,6 +353,125 @@ export default function Home({ go, name, about, apps, xp, skin, strictMode, stri
         <span style={{ fontSize: 13, fontWeight: 700, color: '#1F6B2E' }}>test it</span>
       </button>
 
+      {/* closed it early — the minutes they didn't spend are still theirs */}
+      {savedNote && !suggestStrict && (
+        <button
+          type="button"
+          className="tap"
+          onClick={onClearSavedNote}
+          style={{
+            position: 'absolute',
+            left: 20,
+            right: 20,
+            top: 568,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            textAlign: 'left',
+            padding: '12px 14px',
+            borderRadius: 24,
+            background: 'rgba(255,255,255,0.9)',
+            border: '2px solid var(--line, #12301A)',
+            cursor: 'pointer',
+            animation: 'rise .4s ease-out both',
+          }}
+        >
+          <Rilo skin={skin} mood="proud" size={58} />
+          <span style={{ flexGrow: 1, minWidth: 0 }}>
+            <span
+              style={{
+                display: 'block',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 17,
+                fontWeight: 600,
+                lineHeight: 1.2,
+              }}
+            >
+              you shut {savedNote.app} {savedNote.mins} min early.
+            </span>
+            <span style={{ display: 'block', marginTop: 2, fontSize: 13, fontWeight: 600, color: '#2C4A36' }}>
+              that time&apos;s still yours today.
+            </span>
+          </span>
+        </button>
+      )}
+
+      {suggestStrict && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 20,
+            right: 20,
+            top: 568,
+            zIndex: 4,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            padding: '12px 14px',
+            borderRadius: 24,
+            background: 'rgba(255,255,255,0.95)',
+            border: '2px solid #12301A',
+            boxShadow: '0 8px 22px rgba(20,60,40,0.18)',
+            animation: 'rise14 .5s ease-out both',
+          }}
+        >
+          <Rilo skin={skin} mood="letdown" size={62} />
+          <div style={{ flexGrow: 1, minWidth: 0 }}>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 16,
+                fontWeight: 600,
+                lineHeight: 1.2,
+              }}
+            >
+              want me to get strict for a week?
+            </p>
+            <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+              <button
+                type="button"
+                className="tap"
+                onClick={onStrictYes}
+                style={{
+                  minHeight: 36,
+                  padding: '0 14px',
+                  borderRadius: 999,
+                  border: 0,
+                  background: '#12301A',
+                  color: '#FFFFFF',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                turn it on
+              </button>
+              <button
+                type="button"
+                className="tap"
+                onClick={onStrictNo}
+                style={{
+                  minHeight: 36,
+                  padding: '0 14px',
+                  borderRadius: 999,
+                  border: '2px solid #12301A',
+                  background: 'transparent',
+                  color: '#12301A',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 14,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                not now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* spec addition: trigger the pop-up with one of THEIR apps */}
       <div
         style={{
@@ -401,36 +500,54 @@ export default function Home({ go, name, about, apps, xp, skin, strictMode, stri
           className="scroll-x"
           style={{ display: 'flex', gap: 8, paddingBottom: 2 }}
         >
-          {watched.map((label) => (
-            <button
-              key={label}
-              type="button"
-              className="tap"
-              aria-label={`Pretend you opened ${label}`}
-              onClick={() => onOpenApp(label)}
-              style={{
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                height: 52,
-                padding: '0 14px 0 8px',
-                borderRadius: 999,
-                background: '#12301A',
-                border: 0,
-                color: '#FFFFFF',
-                cursor: 'pointer',
-                boxShadow: '0 8px 20px rgba(10,40,20,0.22)',
-              }}
-            >
-              <span style={{ display: 'flex', background: '#FFFFFF', borderRadius: 10 }}>
-                <AppLogo label={label} size={36} radius={10} />
-              </span>
-              <span style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 17, fontWeight: 600 }}>
-                {label}
-              </span>
-            </button>
-          ))}
+          {watched.map((label) => {
+            const left = leftFor ? leftFor(label) : null;
+            const locked = left?.locked;
+            return (
+              <button
+                key={label}
+                type="button"
+                className="tap"
+                aria-label={`Pretend you opened ${label}`}
+                onClick={() => onOpenApp(label)}
+                style={{
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  minHeight: 52,
+                  padding: '6px 14px 6px 8px',
+                  borderRadius: 999,
+                  background: locked ? 'rgba(18,48,26,0.45)' : '#12301A',
+                  border: 0,
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  boxShadow: '0 8px 20px rgba(10,40,20,0.22)',
+                }}
+              >
+                <span style={{ display: 'flex', background: '#FFFFFF', borderRadius: 10 }}>
+                  <AppLogo label={label} size={36} radius={10} />
+                </span>
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <span
+                    style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 17, fontWeight: 600 }}
+                  >
+                    {label}
+                  </span>
+                  {left && (
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#C9E6CE' }}>
+                      {locked
+                        ? 'locked till tomorrow'
+                        : `${left.opens} open${left.opens === 1 ? '' : 's'} · ${fmtMins(
+                            left.minutes,
+                          )} left`}
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import AppLogo from './AppLogo';
 import AppSheet from './AppSheet';
 import { STARTING_APPS } from '../lib/apps';
+import { NEVER_BLOCK } from '../lib/plan';
 
 const CHECK = (
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -80,6 +81,8 @@ function AppRow({ label, on, onPick }) {
 
 export default function AppPicker({ apps, setApps, style }) {
   const [sheet, setSheet] = useState(false);
+  /* Rilo won't block the apps you need to reach people */
+  const [refused, setRefused] = useState('');
 
   const { on, extra } = apps;
   const rows = STARTING_APPS.concat(extra);
@@ -87,6 +90,11 @@ export default function AppPicker({ apps, setApps, style }) {
   const addApp = (label) => {
     const t = label.trim().toLowerCase();
     if (!t) return;
+    if (NEVER_BLOCK.some((n) => t.includes(n))) {
+      setRefused(t);
+      setSheet(false);
+      return;
+    }
     setApps({
       on: { ...on, [t]: true },
       extra: rows.includes(t) ? extra : extra.concat([t]),
@@ -144,6 +152,24 @@ export default function AppPicker({ apps, setApps, style }) {
           add another app
         </button>
       </div>
+
+      {refused && (
+        <p
+          style={{
+            margin: '8px 0 0',
+            padding: '10px 14px',
+            borderRadius: 18,
+            background: 'rgba(255,255,255,0.9)',
+            border: '2px solid #12301A',
+            fontFamily: 'Fredoka, sans-serif',
+            fontSize: 15,
+            fontWeight: 600,
+            color: '#12301A',
+          }}
+        >
+          keep texting open. you&apos;ll need it.
+        </p>
+      )}
 
       {sheet && <AppSheet already={on} onPick={addApp} onClose={() => setSheet(false)} />}
     </>

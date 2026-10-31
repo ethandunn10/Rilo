@@ -162,7 +162,7 @@ export default function Instead({ go, skin }) {
         <button
           type="button"
           className="tap"
-          onClick={() => go('aboutyou')}
+          onClick={() => go('talk')}
           style={{
             width: '100%',
             height: 58,

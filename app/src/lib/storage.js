@@ -12,10 +12,15 @@ export function today() {
 export const DEFAULT_STATE = {
   /* optional, asked for on About you */
   name: '',
-  /* Nothing pre-picked: the designs showed chips already selected, but a
-     tester should choose their own rather than deselect someone else's. */
+  /* defaults copied from the design files */
   about: {
-    on: {},
+    on: {
+      basketball: true,
+      golf: true,
+      'making videos': true,
+      'better grades': true,
+      'grow my content': true,
+    },
     extra: { hobby: [], goal: [] },
   },
   apps: {
@@ -23,6 +28,10 @@ export const DEFAULT_STATE = {
     extra: [],
   },
   time: { now: 4, goal: 2 },
+  /* how hard the plan pushes: easy | steady | straight (lib/plan) */
+  pace: 'steady',
+  /* how long one sitting on a blocked app lasts; opens follow from it */
+  sessionMins: 15,
   /* which price they had selected on the paywall */
   plan: 'year',
   /* which button they actually tapped: null until they choose */
@@ -40,23 +49,62 @@ export const DEFAULT_STATE = {
   /* how many times they took "5 more minutes" today — the 2nd+ makes Rilo angry */
   extras: { date: today(), count: 0 },
   stats: { savedMinutes: 0, saidNo: 0 },
-  /* minutes of watched-app time used today (drives the strict lock) */
-  used: { date: today(), minutes: 0 },
-  /* strict mode — see lib/strict */
-  strictMode: false,
+
+  /* ---------- screen time + the 30-day plan (lib/plan) ---------- */
+
+  /* null = not asked yet, true = allowed, false = carried on without it */
+  screenTime: null,
+  /* whether they ever tapped "try again" on the deny screen */
+  triedAgain: false,
+  /* the generated baseline: where their time goes today */
+  breakdown: null,
+
+  /* which week of the plan they're on, and how it's going */
+  program: {
+    week: 1,
+    /* days finished in the current week, and how many went over */
+    daysDone: 0,
+    daysOver: 0,
+    /* weeks that had to be run again */
+    repeats: 0,
+    done: false,
+  },
+
+  /* everything that resets at midnight */
+  day: {
+    date: today(),
+    /* minutes spent in each blocked app today */
+    used: {},
+    /* opens spent per app */
+    opens: {},
+    /* emergency passes used today, and what for */
+    passes: 0,
+    /* "5 more minutes" is once a day, across every app */
+    fiveMore: 0,
+    /* minutes since they last had a blocked app open, for "taking a break" */
+    sinceBlocked: 999,
+    /* when a blocked app was last open (ms), for "taking a break" */
+    lastBlockedAt: null,
+  },
+
+  /* one entry per finished day: { date, used, goal, hit } */
+  history: [],
+  streak: 0,
+  /* days this week where they used "5 more" twice */
+  fiveMoreDays: 0,
+
+  /* strict mode */
   strict: {
-    streak: 0,
-    /* last day the streak was counted */
-    streakOn: '',
-    /* need-its used today */
-    needIt: { date: today(), count: 0 },
-    /* "not yet"s to the recommendation, and the 7-day snooze after 3 */
-    notYetCount: 0,
-    snoozedUntil: '',
-    /* last day Rilo offered strict — at most once a day */
-    askedOn: '',
-    /* recent days that went over the goal */
-    overGoalOn: [],
+    on: false,
+    /* 1 | 3 | 7 days */
+    days: 7,
+    /* 'all' | 'school' | 'night' */
+    when: 'all',
+    /* set when they ask to turn it off: it runs for another 24h */
+    endingAt: null,
+    /* days they've asked and been told no */
+    declined: 0,
+    suggestedOn: '',
   },
 };
 
@@ -108,6 +156,14 @@ export function loadState() {
         goal: typeof saved.time?.goal === 'number' ? saved.time.goal : DEFAULT_STATE.time.goal,
       },
       plan: saved.plan === 'month' ? 'month' : 'year',
+      pace: ['straight', 'two', 'steady'].includes(saved.pace) ? saved.pace : 'steady',
+      sessionMins:
+        Number.isInteger(saved.sessionMins) &&
+        saved.sessionMins % 5 === 0 &&
+        saved.sessionMins >= 5 &&
+        saved.sessionMins <= 60
+          ? saved.sessionMins
+          : 15,
       planChoice:
         saved.planChoice === 'trial' || saved.planChoice === 'free' ? saved.planChoice : null,
       isPro: saved.isPro === true,
@@ -123,24 +179,18 @@ export function loadState() {
         saved.extras?.date === today()
           ? { date: saved.extras.date, count: saved.extras.count ?? 0 }
           : { date: today(), count: 0 },
-      used:
-        saved.used?.date === today()
-          ? { date: saved.used.date, minutes: saved.used.minutes ?? 0 }
-          : { date: today(), minutes: 0 },
-      strictMode: saved.strictMode === true,
-      strict: {
-        streak: typeof saved.strict?.streak === 'number' ? saved.strict.streak : 0,
-        streakOn: saved.strict?.streakOn ?? '',
-        needIt:
-          saved.strict?.needIt?.date === today()
-            ? { date: saved.strict.needIt.date, count: saved.strict.needIt.count ?? 0 }
-            : { date: today(), count: 0 },
-        notYetCount:
-          typeof saved.strict?.notYetCount === 'number' ? saved.strict.notYetCount : 0,
-        snoozedUntil: saved.strict?.snoozedUntil ?? '',
-        askedOn: saved.strict?.askedOn ?? '',
-        overGoalOn: Array.isArray(saved.strict?.overGoalOn) ? saved.strict.overGoalOn : [],
-      },
+      screenTime: saved.screenTime === true || saved.screenTime === false ? saved.screenTime : null,
+      triedAgain: saved.triedAgain === true,
+      breakdown: saved.breakdown ?? null,
+      program: { ...DEFAULT_STATE.program, ...(saved.program ?? {}) },
+      day:
+        saved.day?.date === today()
+          ? { ...DEFAULT_STATE.day, ...saved.day }
+          : { ...DEFAULT_STATE.day, date: today() },
+      history: Array.isArray(saved.history) ? saved.history : [],
+      streak: typeof saved.streak === 'number' ? saved.streak : 0,
+      fiveMoreDays: typeof saved.fiveMoreDays === 'number' ? saved.fiveMoreDays : 0,
+      strict: { ...DEFAULT_STATE.strict, ...(saved.strict ?? {}) },
       stats: {
         savedMinutes:
           typeof saved.stats?.savedMinutes === 'number' ? saved.stats.savedMinutes : 0,
@@ -163,6 +213,8 @@ export function saveState(state) {
 export function clearState() {
   try {
     localStorage.removeItem(KEY);
+    /* starting over forgets a mic refusal too, or voice stays dead */
+    localStorage.removeItem('rilo.micBlocked');
   } catch {
     /* nothing to do */
   }

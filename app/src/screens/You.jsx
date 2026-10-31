@@ -13,6 +13,7 @@ import ChipPicker from '../components/ChipPicker';
 import AppPicker from '../components/AppPicker';
 import GoalStepper from '../components/GoalStepper';
 import StrictCard from '../components/StrictCard';
+import PlanPicker from '../components/PlanPicker';
 import { levelProgress, skinInfo, UNLOCK_ALL } from '../lib/levels';
 import { THEMES } from '../lib/themes';
 
@@ -35,6 +36,21 @@ const card = (delay) => ({
 
 /* ChipPicker and AppPicker take the same card shape */
 const chipCard = (delay) => ({ ...card(delay), background: 'rgba(255,255,255,0.55)' });
+
+/* the grey demo-only buttons at the bottom */
+const demoBtn = {
+  width: '100%',
+  height: 44,
+  flexShrink: 0,
+  borderRadius: 999,
+  background: 'rgba(18,48,26,0.07)',
+  border: '1px solid rgba(18,48,26,0.18)',
+  color: '#4F6B58',
+  fontFamily: 'Inter, system-ui, sans-serif',
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: 'pointer',
+};
 
 function Stat({ value, label }) {
   return (
@@ -78,13 +94,19 @@ function fmtSaved(mins) {
 export default function You({
   go,
   name,
-  setName,
   about,
   setAbout,
   apps,
   setApps,
   time,
   setTime,
+  pace,
+  setPace,
+  sessionMins,
+  setSessionMins,
+  breakdown,
+  startMins,
+  weekGoal,
   xp,
   level,
   isPro,
@@ -94,12 +116,13 @@ export default function You({
   onLockedTheme,
   stats,
   onStartOver,
-  strictMode,
   strict,
   onStrictOn,
-  onStrictOff,
-  onDemoStrictAsk,
-  onDemoOverLimit,
+  onStrictAskOff,
+  onStrictKeepOn,
+  onNextDay,
+  onNextDayOver,
+  onNextWeek,
   onDemoXp,
 }) {
   const prog = levelProgress(xp, level);
@@ -203,36 +226,6 @@ export default function You({
                 {skinInfo(chosenRilo).name} rilo
               </p>
             </div>
-          </div>
-
-          {/* what rilo calls you */}
-          <div style={card('.06s')}>
-            <p
-              style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}
-            >
-              what rilo calls you
-            </p>
-            <input
-              type="text"
-              value={name}
-              placeholder="your first name"
-              onChange={(e) => setName(e.target.value)}
-              spellCheck={false}
-              autoCorrect="off"
-              autoCapitalize="words"
-              style={{
-                height: 46,
-                boxSizing: 'border-box',
-                padding: '0 16px',
-                borderRadius: 999,
-                border: '2px solid var(--line)',
-                background: '#FFFFFF',
-                fontFamily: 'Inter, system-ui, sans-serif',
-                fontSize: 16,
-                fontWeight: 600,
-                color: '#12301A',
-              }}
-            />
           </div>
 
           {/* stats */}
@@ -340,16 +333,6 @@ export default function You({
             </div>
           </div>
 
-          {/* strict mode */}
-          <StrictCard
-            style={card('.1s')}
-            on={strictMode}
-            streak={strict.streak}
-            skin={chosenRilo}
-            onTurnOn={onStrictOn}
-            onTurnOff={onStrictOff}
-          />
-
           {/* hobbies + goals, same chips as onboarding */}
           <ChipPicker about={about} setAbout={setAbout} cardStyle={chipCard} />
 
@@ -367,9 +350,35 @@ export default function You({
             />
           </div>
 
+          {/* strict mode — free */}
+          <StrictCard
+            style={card('.2s')}
+            skin={chosenRilo}
+            strict={strict}
+            onTurnOn={onStrictOn}
+            onAskOff={onStrictAskOff}
+            onKeepOn={onStrictKeepOn}
+          />
+
           {/* daily goal */}
           <div style={card('.28s')}>
             <GoalStepper time={time} setTime={setTime} />
+          </div>
+
+          {/* how hard the plan pushes, and how long a sitting is */}
+          <div style={card('.32s')}>
+            <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}>
+              your plan
+            </p>
+            <PlanPicker
+              pace={pace}
+              setPace={setPace}
+              sessionMins={sessionMins}
+              setSessionMins={setSessionMins}
+              breakdown={breakdown}
+              startMins={startMins}
+              weekGoal={weekGoal}
+            />
           </div>
 
           {/* plan */}
@@ -479,43 +488,28 @@ export default function You({
           <button
             type="button"
             className="tap"
-            onClick={onDemoStrictAsk}
-            style={{
-              width: '100%',
-              height: 44,
-              flexShrink: 0,
-              borderRadius: 999,
-              background: 'rgba(18,48,26,0.07)',
-              border: '1px solid rgba(18,48,26,0.18)',
-              color: '#4F6B58',
-              fontFamily: 'Inter, system-ui, sans-serif',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            onClick={onNextDay}
+            style={demoBtn}
           >
-            demo: trigger strict pop-up
+            demo: next day
           </button>
 
           <button
             type="button"
             className="tap"
-            onClick={onDemoOverLimit}
-            style={{
-              width: '100%',
-              height: 44,
-              flexShrink: 0,
-              borderRadius: 999,
-              background: 'rgba(18,48,26,0.07)',
-              border: '1px solid rgba(18,48,26,0.18)',
-              color: '#4F6B58',
-              fontFamily: 'Inter, system-ui, sans-serif',
-              fontSize: 14,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
+            onClick={onNextDayOver}
+            style={demoBtn}
           >
-            demo: go over limit
+            demo: next day (went over)
+          </button>
+
+          <button
+            type="button"
+            className="tap"
+            onClick={onNextWeek}
+            style={demoBtn}
+          >
+            demo: next week
           </button>
 
         </div>

@@ -9,9 +9,9 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
 import AppPicker from '../components/AppPicker';
+import { APP_CATALOG, STARTING_APPS } from '../lib/apps';
 
 export default function PickApps({ go, apps, setApps, skin }) {
-  /* say it instead: "tiktok, insta and snap" / "not youtube" */
   return (
     <div
       style={{
@@ -124,7 +124,7 @@ export default function PickApps({ go, apps, setApps, skin }) {
           <button
           type="button"
           className="tap-97"
-          onClick={() => go('timeback')}
+          onClick={() => go('permission')}
           style={{
             flexGrow: 1,
             minWidth: 0,

@@ -15,57 +15,6 @@
     />
   </head>
   <body>
-    <!-- Shown until React mounts. Inlined so it paints instantly, with no
-         second request — the panda waves while the app loads. -->
-    <style>
-      #splash {
-        position: fixed;
-        inset: 0;
-        z-index: 9999;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 18px;
-        background: linear-gradient(180deg, #7CC6EE 0%, #A9DCF3 38%, #DDF2F4 66%, #EEF8EE 100%);
-        font-family: Fredoka, system-ui, sans-serif;
-        transition: opacity 0.35s ease;
-      }
-      #splash.gone { opacity: 0; pointer-events: none; }
-      #splash .hop { animation: splash-hop 1.3s cubic-bezier(0.45, 0, 0.55, 1) infinite; }
-      #splash .shade {
-        width: 108px; height: 12px; margin-top: -6px;
-        border-radius: 50%; background: rgba(27, 31, 26, 0.16);
-        animation: splash-shade 1.3s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-      }
-      #splash .dots { display: flex; gap: 7px; }
-      #splash .dots i {
-        width: 9px; height: 9px; border-radius: 50%; background: #12301A;
-        animation: splash-dot 1.1s ease-in-out infinite;
-      }
-      #splash .dots i:nth-child(2) { animation-delay: 0.15s; }
-      #splash .dots i:nth-child(3) { animation-delay: 0.3s; }
-      @keyframes splash-hop {
-        0%, 100% { transform: translateY(0); }
-        45% { transform: translateY(-22px); }
-      }
-      @keyframes splash-shade {
-        0%, 100% { transform: scaleX(1); opacity: 0.16; }
-        45% { transform: scaleX(0.7); opacity: 0.09; }
-      }
-      @keyframes splash-dot {
-        0%, 100% { transform: translateY(0); opacity: 0.45; }
-        40% { transform: translateY(-6px); opacity: 1; }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        #splash .hop, #splash .shade, #splash .dots i { animation: none; }
-      }
-    </style>
-    <div id="splash">
-      <svg class="hop" width="190" height="166" viewBox="-4 0 208 182" role="img" aria-label="Rilo is waking up"><ellipse cx="76" cy="156" rx="11" ry="6.5" fill="#1B1F1A"></ellipse><ellipse cx="124" cy="156" rx="11" ry="6.5" fill="#1B1F1A"></ellipse><circle cx="52" cy="62" r="20" fill="#1B1F1A" stroke="#1B1F1A" stroke-width="3.5"></circle><circle cx="148" cy="62" r="20" fill="#1B1F1A" stroke="#1B1F1A" stroke-width="3.5"></circle><path d="M30 112 C30 64 66 40 100 40 C134 40 170 64 170 112 C170 143 145 153 100 153 C55 153 30 143 30 112 Z" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linejoin="round"></path><path d="M88 46 C88 32 98 24 106 27 C114 30 112 40 103 40" fill="#FFFFFF" stroke="#1B1F1A" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"></path><path d="M38 74 C24 62 10 62 2 54 C8 70 18 78 34 82 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path><path d="M38 86 C24 92 12 102 4 110 C18 108 28 100 36 92 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path><path d="M33 80 Q100 58 167 74 L169 94 Q100 78 32 100 Z" fill="#2E8B3E" stroke="#1B1F1A" stroke-width="3" stroke-linejoin="round"></path><text x="101" y="83" text-anchor="middle" transform="rotate(-4 101 83)" font-family="Fredoka, sans-serif" font-weight="700" font-size="16" letter-spacing="2" fill="#FFFFFF">RILO</text><ellipse cx="78" cy="113" rx="13" ry="15" transform="rotate(28 78 113)" fill="#1B1F1A"></ellipse><ellipse cx="122" cy="113" rx="13" ry="15" transform="rotate(-28 122 113)" fill="#1B1F1A"></ellipse><path d="M71 115 Q78 107 85 115" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"></path><path d="M115 115 Q122 107 129 115" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"></path><ellipse cx="101" cy="128" rx="5" ry="3.5" fill="#1B1F1A"></ellipse><path d="M91 133 Q101 146 111 133 Z" fill="#1B1F1A" stroke="#1B1F1A" stroke-width="2.5" stroke-linejoin="round"></path><path d="M33 122 L22 134" stroke="#1B1F1A" stroke-width="7" stroke-linecap="round"></path><g><animateTransform attributeName="transform" type="rotate" values="-12 168 106;14 168 106;-12 168 106" dur="0.9s" repeatCount="indefinite"></animateTransform><path d="M168 106 L184 82" stroke="#1B1F1A" stroke-width="7" stroke-linecap="round"></path></g></svg>
-      <div class="shade"></div>
-      <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
-    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

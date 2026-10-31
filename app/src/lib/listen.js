@@ -27,6 +27,14 @@ function wasBlocked() {
   }
 }
 
+function forgetBlocked() {
+  try {
+    localStorage.removeItem(BLOCKED_KEY);
+  } catch {
+    /* storage off — nothing was remembered anyway */
+  }
+}
+
 function rememberBlocked() {
   try {
     localStorage.setItem(BLOCKED_KEY, '1');
@@ -196,9 +204,39 @@ export function useListen() {
   /* the only flag screens should check: can we actually offer talking? */
   const usable = supported && !blocked;
 
+  /* A refusal is remembered, so there has to be a way to take it back. */
+  const retry = () => {
+    forgetBlocked();
+    gotAudio.current = false;
+    setBlockedState(false);
+    setProblem('');
+  };
+
+  /* Walk away without answering — reaching for the keyboard shouldn't
+     submit half a sentence. Clearing onDone first is what makes it a
+     cancel rather than a stop. */
+  const cancel = () => {
+    onDone.current = null;
+    finalText.current = '';
+    lastText.current = '';
+    const r = rec.current;
+    rec.current = null;
+    setListening(false);
+    setText('');
+    try {
+      r?.abort?.();
+    } catch {
+      /* already gone */
+    }
+  };
+
   return {
-    supported,
+    /* app-talk's screens read `supported` as "can we offer talking at all" */
+    supported: usable,
+    hasSpeech: supported,
     usable,
+    cancel,
+    retry,
     blocked,
     granted,
     asking,
@@ -269,9 +307,9 @@ const GOAL_WORDS = {
 };
 
 /* ---------- near-enough matching ----------
-   People mistype, and speech-to-text mishears. "noght" should still be
-   night and "basketbal" still basketball, so every matcher below falls
-   back to an edit-distance check before giving up. */
+   People mistype and speech-to-text mishears. "noght" should still get
+   you to night, so a typo that's one letter off a word Rilo knows turns
+   into a question rather than a shrug. */
 
 function editDistance(a, b) {
   /* full matrix, because swapped letters ("tierd" for "tired") need the
@@ -301,14 +339,56 @@ function near(word, target) {
   return editDistance(word, target) <= (target.length <= 7 ? 1 : 2);
 }
 
-function words(text) {
-  return text.toLowerCase().split(/[^a-z']+/).filter(Boolean);
+function tokens(text) {
+  return text
+    .toLowerCase()
+    .split(/[^a-z']+/)
+    .filter(Boolean);
 }
 
-/* does anything they said come close to one of these? */
-export function saidAny(text, list) {
-  const toks = words(text);
-  return list.some((target) => toks.some((t) => near(t, target)));
+/* The words worth correcting, per question. Only plain words — nothing
+   Rilo already catches with a pattern. */
+const VOCAB = {
+  when: [
+    'night', 'nights', 'late', 'bed', 'bedtime', 'sleep', 'school', 'class',
+    'classes', 'lunch', 'morning', 'mornings', 'homework', 'study', 'studying',
+    'bored', 'boring', 'evening', 'afternoon', 'weekend', 'weekends', 'dinner',
+    'breakfast', 'practice', 'work',
+  ],
+  hobby: [
+    'basketball', 'soccer', 'football', 'golf', 'gym', 'lifting', 'running',
+    'track', 'skating', 'skateboard', 'swimming', 'gaming', 'fortnite',
+    'minecraft', 'valorant', 'filming', 'editing', 'photography', 'camera',
+    'drawing', 'painting', 'sketching', 'music', 'singing', 'guitar', 'piano',
+    'drums', 'reading', 'books', 'writing', 'coding', 'programming', 'cooking',
+    'baking', 'friends', 'fishing', 'hunting', 'boxing', 'wrestling', 'tennis',
+    'volleyball', 'baseball', 'hockey', 'dancing', 'chess', 'karate',
+  ],
+  goal: [
+    'grades', 'school', 'college', 'study', 'fitness', 'muscle', 'stronger',
+    'followers', 'content', 'business', 'startup', 'sleep', 'reading', 'books',
+    'instrument', 'guitar', 'piano', 'varsity', 'tryouts', 'money', 'saving',
+    'coding', 'programming', 'family', 'parents', 'siblings',
+  ],
+};
+
+/* "noght" on the when question -> { typo: 'noght', meant: 'night' }.
+   Nothing is returned when they spelled it right, or when nothing in the
+   list is close, so Rilo only asks when he has a real guess. */
+export function didYouMean(text, which) {
+  /* the chat on Home takes hobbies and goals both */
+  const list = which === 'chat' ? [...VOCAB.hobby, ...VOCAB.goal] : VOCAB[which];
+  if (!list) return null;
+  const toks = tokens(text);
+  /* already said something he knows → no need to second-guess them */
+  if (toks.some((t) => list.includes(t))) return null;
+
+  for (const t of toks) {
+    if (t.length < 4) continue;
+    const hit = list.find((target) => target !== t && near(t, target));
+    if (hit) return { typo: t, meant: hit };
+  }
+  return null;
 }
 
 function matches(text, table) {
@@ -316,60 +396,10 @@ function matches(text, table) {
   return Object.keys(table).filter((k) => table[k].test(t));
 }
 
-/* the words worth fuzzy-matching for each hobby / goal */
-const HOBBY_NEAR = {
-  basketball: ['basketball', 'basket', 'hoops', 'hooping'],
-  soccer: ['soccer', 'futbol'],
-  football: ['football'],
-  golf: ['golf', 'golfing'],
-  gym: ['gym', 'lifting', 'workout', 'weights'],
-  running: ['running', 'runner', 'track', 'jogging'],
-  skating: ['skating', 'skateboard', 'skateboarding'],
-  swimming: ['swimming', 'swim'],
-  gaming: ['gaming', 'games', 'xbox', 'playstation', 'fortnite', 'minecraft'],
-  'making videos': ['videos', 'filming', 'editing', 'youtube', 'content'],
-  photography: ['photography', 'photos', 'camera', 'pictures'],
-  drawing: ['drawing', 'sketching', 'painting'],
-  music: ['music', 'singing', 'beats'],
-  guitar: ['guitar'],
-  piano: ['piano'],
-  reading: ['reading', 'books'],
-  writing: ['writing'],
-  coding: ['coding', 'programming', 'computer'],
-  cooking: ['cooking', 'baking'],
-  'hanging with friends': ['friends', 'hanging'],
-};
+export const hobbiesIn = (text) => matches(text, HOBBY_WORDS);
+export const goalsIn = (text) => matches(text, GOAL_WORDS);
 
-const GOAL_NEAR = {
-  'better grades': ['grades', 'school', 'studying', 'gpa'],
-  'get fit': ['fit', 'fitness', 'shape', 'muscle', 'stronger'],
-  'grow my content': ['followers', 'content', 'audience', 'views'],
-  'build something': ['build', 'business', 'startup', 'company'],
-  'sleep more': ['sleep', 'sleeping'],
-  'read more': ['reading', 'books'],
-  'learn an instrument': ['instrument', 'guitar', 'piano', 'drums'],
-  'make a team': ['varsity', 'tryouts', 'team'],
-  'less phone': ['phone', 'screentime', 'scrolling'],
-  'save money': ['money', 'saving', 'savings'],
-  'learn to code': ['coding', 'programming'],
-  'spend time with family': ['family', 'parents', 'siblings'],
-};
-
-function matchesNear(text, table, nearTable) {
-  const hit = new Set(matches(text, table));
-  Object.keys(nearTable).forEach((key) => {
-    if (!hit.has(key) && saidAny(text, nearTable[key])) hit.add(key);
-  });
-  return Object.keys(table).filter((k) => hit.has(k));
-}
-
-export const hobbiesIn = (text) => matchesNear(text, HOBBY_WORDS, HOBBY_NEAR);
-export const goalsIn = (text) => matchesNear(text, GOAL_WORDS, GOAL_NEAR);
-
-/* Pull a first name out of whatever they said. An explicit "my name is X"
-   anywhere in the sentence wins, so "oh my name is ethan" gives Ethan and
-   not "oh". Otherwise greetings are peeled off the front and the first
-   real word is taken. */
+/* "my name's ethan" / "i'm ethan" / "ethan" → "Ethan" */
 const EXPLICIT =
   /(?:my name is|my name's|names|name's|the name is|i am|i'm|im|call me|they call me|you can call me|everyone calls me|people call me|this is|it's|its)\s+([a-z][a-z'-]*)/;
 
@@ -414,45 +444,25 @@ export function nameIn(text) {
   return '';
 }
 
-/* Strip the lead-in off a free answer so an unknown hobby can be kept in
-   their own words: "i like fishing with my dad" -> "fishing with my dad". */
-const ANSWER_LEAD_IN =
-  /^(?:(?:o+h+|a+h+|u+m+|u+h+|h+m+|well|so|yeah|like|just|actually|i)\s+)*(?:i\s+)?(?:really\s+)?(?:like|love|enjoy|do|play|am into|into|prefer|usually|mostly|mainly|try to|wanna|want to|my hobby is|my hobbies are|its|it's)?\s*/;
+/* Hedges and shrugs. "maybe" is not a hobby and "idk" is not a goal, so
+   Rilo pushes once instead of writing it down. */
+const NON_ANSWER =
+  /^(?:(?:u+m+|u+h+|h+m+|o+h+|a+h+|e+h+|well|like|so|y+e+a+h?|idk|idc|maybe|dunno|nothing|none|nope|no|yes|yep|sure|not sure|i don'?t know|don'?t know|i guess|guess|whatever|anything|something|stuff|things|ok|okay|hi+|hey+)[\s,.!?]*)+$/i;
 
-export function freeTopic(text) {
-  const cleaned = text
-    .toLowerCase()
-    .replace(/[.!?,]/g, '')
-    .trim()
-    .replace(ANSWER_LEAD_IN, '')
-    .replace(/^(a|an|the)\s+/, '')
-    .trim();
-
-  if (!cleaned) return '';
-  /* keep it short enough to read as a chip */
-  const kept = cleaned.split(/\s+/).slice(0, 3).join(' ');
-  if (kept.length < 3 || kept.length > 24) return '';
-  return kept;
+export function isNonAnswer(text) {
+  const t = (text || '').trim();
+  if (!t) return true;
+  return NON_ANSWER.test(t);
 }
 
 /* what you said on the pop-up → which screen */
 export function reasonIn(text) {
   const t = text.toLowerCase();
-  const has = (re, near) => re.test(t) || saidAny(t, near);
-  /* "nothing to do" is the bored answer, so don't let plain "nothing" eat it */
-  if (has(/never ?mind|nah|nothing(?! to do)|no reason|close it/, ['nevermind'])) return 'never mind';
-  if (has(/tired|sleepy|exhausted|fried|can't think/, ['tired', 'sleepy', 'exhausted']))
-    return 'just tired';
-  if (has(/bored|nothing to do|boring/, ['bored', 'boring', 'boredom'])) return "i'm bored";
-  if (has(/break|earned|rest|chill/, ['break', 'resting', 'chilling'])) return 'taking a break';
-  if (
-    has(/need|homework|school|message|text|dm|reply|post|upload|work|look up|check/, [
-      'homework',
-      'school',
-      'message',
-      'reply',
-    ])
-  )
+  if (/never ?mind|nah|nothing|no reason|close it/.test(t)) return 'never mind';
+  if (/tired|sleepy|exhausted|fried|can't think/.test(t)) return 'just tired';
+  if (/bored|nothing to do|boring/.test(t)) return "i'm bored";
+  if (/break|earned|rest|chill/.test(t)) return 'taking a break';
+  if (/need|homework|school|message|text|dm|reply|post|upload|work|look up|check/.test(t))
     return 'need it';
   return null;
 }
@@ -476,13 +486,7 @@ const APP_ALIASES = {
 };
 export function appsIn(text, labels) {
   const t = ` ${text.toLowerCase()} `;
-  return labels.filter((l) => {
-    if (APP_ALIASES[l] ? APP_ALIASES[l].test(t) : t.includes(` ${l} `) || t.includes(` ${l}s `)) {
-      return true;
-    }
-    /* "snpchat" is still snapchat */
-    return saidAny(text, [l.replace(/\s+/g, '')]);
-  });
+  return labels.filter((l) => (APP_ALIASES[l] ? APP_ALIASES[l].test(t) : t.includes(` ${l} `) || t.includes(` ${l}s `)));
 }
 
 /* "like five hours, i want two" → [5, 2]  ("half" adds .5) */

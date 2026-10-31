@@ -1,8 +1,18 @@
 /* TimeBack — exact port of designs/TimeBack.dc.html
    The screen-time / goal numbers live in App so the choice survives the flow. */
 
+import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
+import PlanPicker from '../components/PlanPicker';
+import AppPicker from '../components/AppPicker';
+import {
+  weekGoals,
+  blockedGoalFor,
+  planNeedsMoreApps,
+  hoursToMins,
+  fmtMins,
+} from '../lib/plan';
 
 const MAX = 10;
 
@@ -48,16 +58,32 @@ const statCard = {
             boxShadow: '0 3px 0 var(--line)',
 };
 
-export default function TimeBack({ go, time, setTime, skin }) {
+export default function TimeBack({
+  go,
+  time,
+  setTime,
+  skin,
+  breakdown,
+  apps,
+  setApps,
+  pace,
+  setPace,
+  sessionMins,
+  setSessionMins,
+}) {
   const { now, goal } = time;
   const saved = Math.max(0, now - goal);
-
-  const yearHours = Math.round(saved * 365).toLocaleString('en-US');
-  const yearDays = Math.round((saved * 365) / 24);
   const weekHours = Math.round(saved * 7 * 10) / 10;
   const sessions = Math.round(saved * 365).toLocaleString('en-US');
 
-  /* say it instead: "like 5 hours, i want to get to 2" */
+  const startMins = hoursToMins(now);
+  const blockedBase = breakdown?.blocked ?? startMins;
+  const goals = weekGoals(startMins, hoursToMins(goal), pace);
+  const tooTight = planNeedsMoreApps(startMins, hoursToMins(goal), blockedBase, pace);
+
+  const [editing, setEditing] = useState(false);
+  /* adding apps happens here, not on a screen they'd have to walk back to */
+  const [addingApps, setAddingApps] = useState(false);
 
   const nowUp = () => setTime({ ...time, now: Math.min(MAX, now + 0.5) });
   const nowDown = () => setTime({ ...time, now: Math.max(goal + 0.5, now - 0.5) });
@@ -76,7 +102,9 @@ export default function TimeBack({ go, time, setTime, skin }) {
     >
       <Sky hills="low" />
 
+      {/* the plan card grows when they open it, so the screen scrolls */}
       <div
+        className="scroll-y"
         style={{
           position: 'relative',
           height: '100%',
@@ -253,23 +281,167 @@ export default function TimeBack({ go, time, setTime, skin }) {
               color: '#9FD8A9',
             }}
           >
-            time back every year
+            your {goals.length === 1 ? '1-week' : `${goals.length}-week`} plan
           </p>
-          <p
+
+          <button
+            type="button"
+            className="tap"
+            onClick={() => setEditing((v) => !v)}
             style={{
-              margin: 0,
+              alignSelf: 'flex-start',
+              minHeight: 36,
+              padding: '0 14px',
+              borderRadius: 999,
+              border: '2px solid rgba(255,255,255,0.55)',
+              background: editing ? '#FFFFFF' : 'transparent',
+              color: editing ? '#12301A' : '#FFFFFF',
               fontFamily: 'Fredoka, sans-serif',
-              fontSize: 54,
-              fontWeight: 700,
-              lineHeight: 1,
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
             }}
           >
-            {yearHours} hrs
-          </p>
-          <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: '#C9E6CE' }}>
-            that's {yearDays} full days. every single year.
+            {editing ? 'done' : 'change my plan'}
+          </button>
+
+          {editing && (
+            <PlanPicker
+              pace={pace}
+              setPace={setPace}
+              sessionMins={sessionMins}
+              setSessionMins={setSessionMins}
+              breakdown={breakdown}
+              startMins={startMins}
+              weekGoal={goals[0]}
+              dark
+            />
+          )}
+
+          {goals.map((g, i) => (
+            <div
+              key={g + '-' + i}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                padding: '7px 0',
+                borderBottom:
+                  i === goals.length - 1 ? 0 : '1px solid rgba(255,255,255,0.14)',
+              }}
+            >
+              <span
+                style={{
+                  width: 58,
+                  flexShrink: 0,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  color: '#9FD8A9',
+                }}
+              >
+                week {i + 1}
+              </span>
+              <span
+                style={{
+                  flexGrow: 1,
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 20,
+                  fontWeight: 600,
+                }}
+              >
+                {fmtMins(g)} a day
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#C9E6CE' }}>
+                {fmtMins(Math.max(0, blockedGoalFor(g, startMins, blockedBase)))} on apps
+              </span>
+            </div>
+          ))}
+
+          <p style={{ margin: '4px 0 0', fontSize: 15, fontWeight: 600, color: '#C9E6CE' }}>
+            {goals.length === 1
+              ? "straight in at your goal. no easing in."
+              : `you hit your goal in ${goals.length * 7} days.`}
           </p>
         </div>
+
+        {tooTight && (
+          <div
+            style={{
+              padding: '14px 16px',
+              borderRadius: 24,
+              background: 'rgba(255,255,255,0.9)',
+              border: '2px solid var(--line, #12301A)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+              animation: 'rise .5s .25s ease-out both',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Rilo skin={skin} mood="letdown" size={64} />
+              <p
+                style={{
+                  margin: 0,
+                  flexGrow: 1,
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 18,
+                  fontWeight: 600,
+                  lineHeight: 1.25,
+                }}
+              >
+                your goal needs you to block more apps.
+              </p>
+            </div>
+            {addingApps && (
+              <AppPicker
+                apps={apps}
+                setApps={setApps}
+                style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
+              />
+            )}
+
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className="tap"
+                onClick={() => setAddingApps((v) => !v)}
+                style={{
+                  flex: 1,
+                  minHeight: 46,
+                  borderRadius: 999,
+                  border: 0,
+                  background: '#12301A',
+                  color: '#FFFFFF',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                {addingApps ? 'done' : 'pick more apps'}
+              </button>
+              <button
+                type="button"
+                className="tap"
+                onClick={() => setTime({ ...time, goal: Math.min(now - 0.5, goal + 0.5) })}
+                style={{
+                  flex: 1,
+                  minHeight: 46,
+                  borderRadius: 999,
+                  border: '2px solid #12301A',
+                  background: 'transparent',
+                  color: '#12301A',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                change my goal
+              </button>
+            </div>
+          </div>
+        )}
 
         <div
           style={{
@@ -311,13 +483,13 @@ export default function TimeBack({ go, time, setTime, skin }) {
           </div>
         </div>
 
-        <div style={{ flexGrow: 1 }} />
+        <div style={{ flexGrow: 1, flexShrink: 1, minHeight: 0 }} />
 
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexShrink: 0 }}>
           <button
           type="button"
           className="tap-92"
-          onClick={() => go('talk')}
+          onClick={() => go('paywall')}
           style={{
             flexGrow: 1,
             minWidth: 0,

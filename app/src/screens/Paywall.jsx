@@ -33,7 +33,7 @@ const planBase = {
   cursor: 'pointer',
 };
 
-export default function Paywall({ go, plan, setPlan, onChoose, nextAfter = 'home' }) {
+export default function Paywall({ go, plan, setPlan, onChoose }) {
   return (
     <div
       style={{
@@ -226,7 +226,7 @@ export default function Paywall({ go, plan, setPlan, onChoose, nextAfter = 'home
           className="tap-pw"
           onClick={() => {
             if (onChoose) onChoose('start free trial');
-            go(nextAfter);
+            go('home');
           }}
           style={{
             width: '100%',
@@ -252,7 +252,7 @@ export default function Paywall({ go, plan, setPlan, onChoose, nextAfter = 'home
           type="button"
           onClick={() => {
             if (onChoose) onChoose('continue with free');
-            go(nextAfter);
+            go('home');
           }}
           style={{
             border: 0,

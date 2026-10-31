@@ -9,7 +9,7 @@ import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 
-export default function CheckIn({ go, app, minutes, angry, skin, strict, onDone, onMore, onExtra }) {
+export default function CheckIn({ go, app, minutes, angry, skin, onDone, onMore, onExtra }) {
   const [step, setStep] = useState('ask');
 
   return (
@@ -146,8 +146,7 @@ export default function CheckIn({ go, app, minutes, angry, skin, strict, onDone,
             >
               i'm done · +10 xp
             </button>
-            {!strict && (
-              <button
+            <button
               type="button"
               className="tap"
               onClick={() => {
@@ -169,7 +168,6 @@ export default function CheckIn({ go, app, minutes, angry, skin, strict, onDone,
             >
               5 more minutes · costs 15 xp
             </button>
-            )}
             <button
               type="button"
               onClick={() => go('suggestion')}

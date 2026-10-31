@@ -7,6 +7,8 @@ import Rilo from '../components/Rilo';
 import TabBar from '../components/TabBar';
 import { levelProgress, nextSkinAfter } from '../lib/levels';
 import { useTheme } from '../lib/themes';
+import Breakdown from '../components/Breakdown';
+import { fmtMins } from '../lib/plan';
 
 /* ---------- this week's bars ----------
    Same plain bars as the original design. Only the colour of a "good" day
@@ -149,7 +151,7 @@ function Stat({ value, label }) {
   );
 }
 
-export default function Progress({ go, xp, skin, level }) {
+export default function Progress({ go, xp, skin, level, breakdown, program, weekGoal, planWeeks = 4 }) {
   const theme = useTheme();
   const prog = levelProgress(xp, level);
   const nextSkin = prog.atMax ? null : nextSkinAfter(level);
@@ -278,7 +280,8 @@ export default function Progress({ go, xp, skin, level }) {
             <p
               style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}
             >
-              this week
+              week {Math.min(program?.week ?? 1, planWeeks)} of {planWeeks} ·{' '}
+              {fmtMins(weekGoal ?? 0)} a day
             </p>
             <p
               style={{
@@ -337,6 +340,31 @@ export default function Progress({ go, xp, skin, level }) {
             {(BAR_COLOR[theme.id] ?? BAR_COLOR.grass).name} bars hit your 2h goal
           </p>
         </div>
+
+        {breakdown && (
+          <div
+            style={{
+              padding: '14px 16px',
+              borderRadius: 26,
+              background: 'var(--card, rgba(255,255,255,0.65))',
+              border: '2px solid var(--line)',
+              boxShadow: '0 4px 0 var(--line)',
+              animation: 'rise14 .4s .15s ease-out both',
+            }}
+          >
+            <p
+              style={{
+                margin: '0 0 10px',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 18,
+                fontWeight: 600,
+              }}
+            >
+              where your time goes
+            </p>
+            <Breakdown breakdown={breakdown} compact />
+          </div>
+        )}
 
         <div
           style={{

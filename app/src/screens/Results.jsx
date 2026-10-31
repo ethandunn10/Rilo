@@ -24,6 +24,15 @@ const GROUPS = [
   },
   /* free users tapping a locked skin = a would-you-pay signal */
   { key: 'locked', title: 'locked skin tapped (free users)', order: [] },
+  { key: 'screentime', title: 'screen time permission', order: ['allowed', 'denied', 'tried again'] },
+  { key: 'strict', title: 'strict mode', order: ['not now', 'countdown started', 'countdown cancelled'] },
+  { key: 'pass', title: 'emergency passes (and what for)', order: [] },
+  { key: 'fivemore', title: '"5 more minutes"', order: ['used', 'blocked (second time)'] },
+  { key: 'unlock', title: 'what unlocked an app', order: [] },
+  { key: 'early', title: 'closed an app early', order: [] },
+  { key: 'plan', title: 'plan changes', order: [] },
+  { key: 'day', title: 'days', order: ['goal hit', 'went over'] },
+  { key: 'week', title: 'weeks', order: ['week cleared', 'repeated', 'plan finished'] },
   { key: 'levelup', title: 'level ups', order: [] },
 ];
 

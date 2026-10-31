@@ -1,10 +1,10 @@
 /* ChipPicker — the hobbies + goals chip cards.
    Shared by About you (onboarding) and the You screen, so editing works the
-   same in both places: tap to toggle, a green "+ add your own",
+   same in both places: tap to toggle, "show more" to expand the rest,
    "+ add your own" with type-ahead, and a × on chips you added yourself. */
 
 import { useState } from 'react';
-import { HOBBIES, GOALS } from '../lib/profile';
+import { HOBBIES, GOALS, HOBBIES_SHOWN, GOALS_SHOWN } from '../lib/profile';
 
 const chipBase = {
   minHeight: 44,
@@ -95,9 +95,7 @@ function CustomChip({ label, on, onPick, onRemove }) {
   );
 }
 
-/* "+ add your own" — green so it reads as the way to add something, not
-   just another option to tap */
-function GhostChip({ label, onClick }) {
+function GhostChip({ label, onClick, dashed }) {
   return (
     <button
       type="button"
@@ -105,10 +103,9 @@ function GhostChip({ label, onClick }) {
       onClick={onClick}
       style={{
         ...chipBase,
-        background: '#4CC160',
-        color: '#0C2A14',
-        border: '2px solid var(--line)',
-        boxShadow: '0 3px 0 var(--line)',
+        background: 'transparent',
+        color: '#12301A',
+        border: dashed ? '2px dashed #12301A' : '2px solid rgba(18,48,26,0.35)',
       }}
     >
       {label}
@@ -202,6 +199,7 @@ function AddRow({ id, label, placeholder, draft, setDraft, commit, matches, onSu
 export default function ChipPicker({ about, setAbout, cardStyle }) {
   const [adding, setAdding] = useState(null);
   const [draft, setDraft] = useState('');
+  const [expanded, setExpanded] = useState({ hobby: false, goal: false });
 
   const { on, extra } = about;
 
@@ -234,6 +232,9 @@ export default function ChipPicker({ about, setAbout, cardStyle }) {
 
     const builtIn = adding === 'hobby' ? HOBBIES : GOALS;
     if (builtIn.includes(text) || extra[adding].includes(text)) {
+      if (builtIn.indexOf(text) >= (adding === 'hobby' ? HOBBIES_SHOWN : GOALS_SHOWN)) {
+        setExpanded((e) => ({ ...e, [adding]: true }));
+      }
       turnOn(text);
       return;
     }
@@ -253,11 +254,25 @@ export default function ChipPicker({ about, setAbout, cardStyle }) {
     return list.filter((x) => x.includes(q) && !on[x]).slice(0, 6);
   };
 
-  /* tapping a type-ahead match just switches that chip on */
-  const pickSuggestion = () => turnOn;
+  const pickSuggestion = (kind) => (label) => {
+    const list = kind === 'hobby' ? HOBBIES : GOALS;
+    if (list.indexOf(label) >= (kind === 'hobby' ? HOBBIES_SHOWN : GOALS_SHOWN)) {
+      setExpanded((e) => ({ ...e, [kind]: true }));
+    }
+    turnOn(label);
+  };
+
+  const section = (kind) => {
+    const list = kind === 'hobby' ? HOBBIES : GOALS;
+    const shown = kind === 'hobby' ? HOBBIES_SHOWN : GOALS_SHOWN;
+    const isOpen = expanded[kind];
+    /* always show anything switched on, even if it lives behind "show more" */
+    const visible = isOpen ? list : list.filter((x, i) => i < shown || on[x]);
+    return { list, visible, hiddenCount: list.length - visible.length, isOpen };
+  };
 
   const card = (kind, title, delay, placeholder, inputId, inputLabel) => {
-    const list = kind === 'hobby' ? HOBBIES : GOALS;
+    const sec = section(kind);
     const customs = extra[kind];
 
     return (
@@ -266,7 +281,7 @@ export default function ChipPicker({ about, setAbout, cardStyle }) {
           {title}
         </p>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
-          {list.map((x) => (
+          {sec.visible.map((x) => (
             <Chip key={x} label={x} on={!!on[x]} onPick={() => toggle(x)} />
           ))}
           {customs.map((x) => (
@@ -278,7 +293,20 @@ export default function ChipPicker({ about, setAbout, cardStyle }) {
               onRemove={() => removeCustom(kind, x)}
             />
           ))}
+          {sec.hiddenCount > 0 && (
+            <GhostChip
+              label={`show more (${sec.hiddenCount})`}
+              onClick={() => setExpanded((e) => ({ ...e, [kind]: true }))}
+            />
+          )}
+          {sec.isOpen && (
+            <GhostChip
+              label="show less"
+              onClick={() => setExpanded((e) => ({ ...e, [kind]: false }))}
+            />
+          )}
           <GhostChip
+            dashed
             label="+ add your own"
             onClick={() => {
               setAdding(kind);
