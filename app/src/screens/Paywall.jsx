@@ -17,6 +17,16 @@ const PERKS = [
   { title: "today's plan + full history", sub: 'every day you have logged' },
 ];
 
+/* exactly what the free tier does, in the same words as the free row */
+const FREE_BITS = [
+  'blocks 2 apps',
+  'the wait timer and the rilo pop-up',
+  'one daily time limit across those apps',
+  'your total screen time',
+  '1 emergency pass a day',
+  'original rilo and the grass theme',
+];
+
 const PLANS = [
   {
     id: 'year',
@@ -138,15 +148,27 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
           style={{
             padding: '14px 16px',
             borderRadius: 24,
-            background: 'var(--card)',
+            background: '#12301A',
             border: '2px solid var(--line)',
-            boxShadow: '0 3px 0 var(--line)',
+            boxShadow: '0 14px 30px rgba(10,40,20,0.22)',
+            color: '#FFFFFF',
             display: 'flex',
             flexDirection: 'column',
             gap: 10,
+            flexShrink: 0,
             animation: 'rise .5s .16s ease-out both',
           }}
         >
+          <p
+            style={{
+              margin: '0 0 2px',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 17,
+              fontWeight: 600,
+            }}
+          >
+            pro adds
+          </p>
           {PERKS.map((p) => (
             <div key={p.title} style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
               <span
@@ -154,7 +176,7 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
                   width: 26,
                   height: 26,
                   borderRadius: 13,
-                  background: '#12301A',
+                  background: '#4CC160',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -165,17 +187,72 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
                   <path
                     d="M3 8.5 L6.5 12 L13 4.5"
                     fill="none"
-                    stroke="#FFFFFF"
+                    stroke="#12301A"
                     strokeWidth="2.6"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />
                 </svg>
               </span>
-              <p style={{ margin: 0, fontSize: 15, fontWeight: 600, lineHeight: 1.3 }}>
-                <span style={{ fontWeight: 700 }}>{p.title}</span> · {p.sub}
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 15,
+                  fontWeight: 600,
+                  lineHeight: 1.3,
+                  color: '#C9E6CE',
+                }}
+              >
+                <span style={{ fontWeight: 700, color: '#FFFFFF' }}>{p.title}</span> · {p.sub}
               </p>
             </div>
+          ))}
+        </div>
+
+        {/* free deserves a description too, not just a price */}
+        <div
+          style={{
+            padding: '14px 16px',
+            borderRadius: 24,
+            background: 'var(--card)',
+            border: '2px solid var(--line)',
+            boxShadow: '0 3px 0 var(--line)',
+            color: '#12301A',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 6,
+            flexShrink: 0,
+            animation: 'rise .5s .2s ease-out both',
+          }}
+        >
+          <p
+            style={{
+              margin: 0,
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 17,
+              fontWeight: 600,
+            }}
+          >
+            free does the basics
+          </p>
+          {FREE_BITS.map((t) => (
+            <p
+              key={t}
+              style={{
+                margin: 0,
+                display: 'flex',
+                gap: 8,
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#2C4A36',
+                lineHeight: 1.3,
+              }}
+            >
+              <span aria-hidden="true" style={{ color: '#7FA38A' }}>
+                ·
+              </span>
+              {t}
+            </p>
           ))}
         </div>
 
@@ -184,6 +261,7 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
             display: 'flex',
             flexDirection: 'column',
             gap: 8,
+            flexShrink: 0,
             animation: 'rise .5s .24s ease-out both',
           }}
         >

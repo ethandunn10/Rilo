@@ -9,9 +9,12 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
 import AppPicker from '../components/AppPicker';
-import { APP_CATALOG, STARTING_APPS } from '../lib/apps';
+import { APP_CATALOG, STARTING_APPS, pickedApps } from '../lib/apps';
 
 export default function PickApps({ go, apps, setApps, skin }) {
+  /* nothing is pre-checked, so there's nothing to turn on until they pick */
+  const picked = pickedApps(apps).length > 0;
+
   return (
     <div
       style={{
@@ -116,7 +119,9 @@ export default function PickApps({ go, apps, setApps, skin }) {
               flexShrink: 0,
             }}
           >
-            rilo uses apple's screen time to see when you open these.
+            {picked
+              ? "rilo uses apple's screen time to see when you open these."
+              : 'pick at least one for rilo to watch.'}
           </p>
         </div>
 
@@ -124,6 +129,7 @@ export default function PickApps({ go, apps, setApps, skin }) {
           <button
           type="button"
           className="tap-97"
+          disabled={!picked}
           onClick={() => go('permission')}
           style={{
             flexGrow: 1,
@@ -132,12 +138,12 @@ export default function PickApps({ go, apps, setApps, skin }) {
             flexShrink: 0,
             border: '2px solid var(--line)',
             borderRadius: 999,
-            background: '#FFFFFF',
-            color: '#12301A',
+            background: picked ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
+            color: picked ? '#12301A' : 'rgba(18,48,26,0.45)',
             fontFamily: 'Fredoka, sans-serif',
             fontSize: 20,
             fontWeight: 600,
-            cursor: 'pointer',
+            cursor: picked ? 'pointer' : 'default',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

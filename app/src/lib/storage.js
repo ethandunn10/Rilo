@@ -24,7 +24,8 @@ export const DEFAULT_STATE = {
     extra: { hobby: [], goal: [] },
   },
   apps: {
-    on: { tiktok: true, instagram: true, youtube: true },
+    /* nothing pre-checked — they pick what Rilo blocks */
+    on: {},
     extra: [],
   },
   time: { now: 4, goal: 2 },
@@ -138,65 +139,17 @@ export function loadState() {
     const opens = saved.opens ?? {};
     const freshDay = opens.date !== today();
 
+    /* The app always opens on Welcome, so every visit re-runs onboarding.
+       That means the onboarding answers must always go back to the
+       defaults — otherwise the next tester walks through it carrying the
+       last one's apps, goal and name. Only the demo's own counters stay. */
     return {
-      name: typeof saved.name === 'string' ? saved.name : '',
-      about: {
-        on: { ...DEFAULT_STATE.about.on, ...(saved.about?.on ?? {}) },
-        extra: {
-          hobby: saved.about?.extra?.hobby ?? [],
-          goal: saved.about?.extra?.goal ?? [],
-        },
-      },
-      apps: {
-        on: { ...DEFAULT_STATE.apps.on, ...(saved.apps?.on ?? {}) },
-        extra: saved.apps?.extra ?? [],
-      },
-      time: {
-        now: typeof saved.time?.now === 'number' ? saved.time.now : DEFAULT_STATE.time.now,
-        goal: typeof saved.time?.goal === 'number' ? saved.time.goal : DEFAULT_STATE.time.goal,
-      },
-      plan: saved.plan === 'month' ? 'month' : 'year',
-      pace: ['straight', 'two', 'steady'].includes(saved.pace) ? saved.pace : 'steady',
-      sessionMins:
-        Number.isInteger(saved.sessionMins) &&
-        saved.sessionMins % 5 === 0 &&
-        saved.sessionMins >= 5 &&
-        saved.sessionMins <= 60
-          ? saved.sessionMins
-          : 15,
-      planChoice:
-        saved.planChoice === 'trial' || saved.planChoice === 'free' ? saved.planChoice : null,
-      isPro: saved.isPro === true,
-      xp: typeof saved.xp === 'number' ? Math.max(0, saved.xp) : DEFAULT_STATE.xp,
+      ...DEFAULT_STATE,
+      xp: typeof saved.xp === 'number' ? saved.xp : DEFAULT_STATE.xp,
       level: typeof saved.level === 'number' ? saved.level : DEFAULT_STATE.level,
-      chosenRilo: resolveRilo(saved.chosenRilo),
-      theme: typeof saved.theme === 'string' ? saved.theme : DEFAULT_STATE.theme,
-      /* a new day starts the per-app counts over */
-      opens: freshDay
-        ? { date: today(), counts: {} }
-        : { date: opens.date, counts: opens.counts ?? {} },
-      extras:
-        saved.extras?.date === today()
-          ? { date: saved.extras.date, count: saved.extras.count ?? 0 }
-          : { date: today(), count: 0 },
-      screenTime: saved.screenTime === true || saved.screenTime === false ? saved.screenTime : null,
-      triedAgain: saved.triedAgain === true,
-      breakdown: saved.breakdown ?? null,
-      program: { ...DEFAULT_STATE.program, ...(saved.program ?? {}) },
-      day:
-        saved.day?.date === today()
-          ? { ...DEFAULT_STATE.day, ...saved.day }
-          : { ...DEFAULT_STATE.day, date: today() },
-      history: Array.isArray(saved.history) ? saved.history : [],
-      streak: typeof saved.streak === 'number' ? saved.streak : 0,
-      fiveMoreDays: typeof saved.fiveMoreDays === 'number' ? saved.fiveMoreDays : 0,
-      strict: { ...DEFAULT_STATE.strict, ...(saved.strict ?? {}) },
-      stats: {
-        savedMinutes:
-          typeof saved.stats?.savedMinutes === 'number' ? saved.stats.savedMinutes : 0,
-        saidNo: typeof saved.stats?.saidNo === 'number' ? saved.stats.saidNo : 0,
-      },
+      opens: freshDay ? DEFAULT_STATE.opens : { date: opens.date, counts: opens.counts ?? {} },
     };
+
   } catch {
     return DEFAULT_STATE;
   }
