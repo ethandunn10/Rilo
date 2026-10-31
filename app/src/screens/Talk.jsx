@@ -92,6 +92,12 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
   /* The mode they chose on purpose, as opposed to a one-off keyboard for
      fixing a name. Sticky: picked once, it holds for the rest. */
   const keyboardMode = useRef(false);
+  /* they tapped the panda while Rilo was still replying — start as soon
+     as he's finished instead of swallowing the tap */
+  const resumeWanted = useRef(false);
+  /* the pending auto-start, so a manual tap can cancel it and they don't
+     race each other into two recognisers */
+  const autoStart = useRef(null);
   /* The live question number. setStep is async, so a mic callback created
      before it lands would otherwise answer the previous question — and
      re-ask the same one forever. */
@@ -226,17 +232,32 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
   const showText = listening ? mic.text : mic.text || draft;
   const finish = () => go(mode === 'chat' ? 'home' : 'aboutyou', mode === 'chat' ? 'back' : 'forward');
 
+  const clearAutoStart = () => {
+    if (autoStart.current) {
+      clearTimeout(autoStart.current);
+      autoStart.current = null;
+    }
+  };
+
   const startMic = () => {
-    if (done || thinking) return;
+    if (done) return;
     if (!mic.supported) {
       keyboardMode.current = true;
       setTyping(true);
       return;
     }
+    /* Rilo is still talking or thinking: remember the tap and pick it up
+       the moment he's done, rather than doing nothing. */
+    if (thinking) {
+      resumeWanted.current = true;
+      return;
+    }
+    clearAutoStart();
     window.speechSynthesis?.cancel?.();
     setSpeaking(false);
     setMood('coach');
     usedMic.current = true;
+    resumeWanted.current = false;
     mic.start((said) => answer(said));
   };
 
@@ -251,10 +272,13 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
     setStep(next);
     const line = qs[next].ask;
     riloSays(line, qs[next].mood);
-    if (usedMic.current && !keyboardMode.current) {
-      later(() => {
+    if ((usedMic.current || resumeWanted.current) && !keyboardMode.current) {
+      clearAutoStart();
+      autoStart.current = setTimeout(() => {
+        autoStart.current = null;
         if (!keyboardMode.current) startMic();
       }, speakMs(line) + 80);
+      timers.current.push(autoStart.current);
     }
   };
 
@@ -354,7 +378,15 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
             mood={listening ? 'coach' : mood}
             size={235}
             state={stageState}
-            onTap={() => (listening ? mic.stop() : startMic())}
+            onTap={() => {
+              if (listening) {
+                /* tapping him is how you say you're done talking */
+                clearAutoStart();
+                mic.stop();
+              } else {
+                startMic();
+              }
+            }}
           />
         </div>
 

@@ -64,6 +64,10 @@ export function useListen() {
   const lastText = useRef('');
   const onDone = useRef(null);
   const gotAudio = useRef(false);
+  /* start() awaits the permission prompt, so two quick taps could both
+     get past the `listening` check and build two recognisers — one of
+     which immediately aborts the other. */
+  const starting = useRef(false);
 
   useEffect(() => () => rec.current?.abort?.(), []);
 
@@ -122,9 +126,13 @@ export function useListen() {
   };
 
   const start = async (done) => {
-    if (!SR || listening) return;
+    if (!SR || listening || starting.current) return;
+    starting.current = true;
     setProblem('');
-    if (!(await permission())) return;
+    if (!(await permission())) {
+      starting.current = false;
+      return;
+    }
 
     onDone.current = done;
     finalText.current = '';
@@ -185,6 +193,8 @@ export function useListen() {
       setListening(true);
     } catch {
       setProblem("couldn't start the mic. type instead.");
+    } finally {
+      starting.current = false;
     }
   };
 
@@ -216,6 +226,7 @@ export function useListen() {
      submit half a sentence. Clearing onDone first is what makes it a
      cancel rather than a stop. */
   const cancel = () => {
+    starting.current = false;
     onDone.current = null;
     finalText.current = '';
     lastText.current = '';
