@@ -77,13 +77,60 @@ function clock(mins) {
   return `${h12}:${m}`;
 }
 
-export function riloSchedule({ hobbies = [], goals = [], school, bedtime, scrollMins = 60 }) {
+/* The few things Rilo asks before he builds anything. Tap answers, not
+   typing — it should take fifteen seconds. */
+export const SCHEDULE_QUESTIONS = [
+  {
+    id: 'free',
+    ask: 'when are you free from?',
+    options: [
+      { id: '15:00', label: 'after school' },
+      { id: '16:30', label: 'after practice' },
+      { id: '18:00', label: 'after dinner' },
+      { id: '09:00', label: 'all day' },
+    ],
+  },
+  {
+    id: 'needs',
+    ask: 'what has to happen today?',
+    multi: true,
+    options: [
+      { id: 'homework', label: 'homework' },
+      { id: 'study', label: 'studying' },
+      { id: 'practice', label: 'practice' },
+      { id: 'work', label: 'a shift' },
+      { id: 'hobby', label: 'my thing' },
+    ],
+  },
+  {
+    id: 'bed',
+    ask: "when's bed?",
+    options: [
+      { id: '21:30', label: '9:30' },
+      { id: '22:30', label: '10:30' },
+      { id: '23:30', label: '11:30' },
+      { id: '00:30', label: 'late' },
+    ],
+  },
+];
+
+export function riloSchedule({
+  hobbies = [],
+  goals = [],
+  school,
+  bedtime,
+  scrollMins = 60,
+  answers = null,
+}) {
   const rows = [];
   const add = (at, title, note) => rows.push({ at, title, note });
 
-  /* the day starts when school lets out, or mid-afternoon if there's none */
-  const [eh, em] = String(school?.on ? school.to : '15:00').split(':').map(Number);
+  /* what they just told him wins; otherwise their settings do */
+  const from = answers?.free || (school?.on ? school.to : '15:00');
+  const [eh, em] = String(from).split(':').map(Number);
   let t = eh * 60 + (em || 0);
+  const needs = answers?.needs ?? null;
+  const wants = (k) => (needs ? needs.includes(k) : true);
 
   const free1 = Math.max(10, Math.round(scrollMins * 0.25));
   const free2 = Math.max(10, Math.round(scrollMins * 0.5));
@@ -92,16 +139,28 @@ export function riloSchedule({ hobbies = [], goals = [], school, bedtime, scroll
   t += 30;
 
   const studyGoal = goals.find((g) => /grade|school|college|read|code|learn/.test(g));
-  add(clock(t), studyGoal ? `work on ${studyGoal}` : 'homework', 'apps locked for 45 min');
-  t += 75;
+  if (wants('homework') || wants('study')) {
+    add(clock(t), studyGoal ? `work on ${studyGoal}` : 'homework', 'apps locked for 45 min');
+    t += 75;
+  }
 
-  if (hobbies[0]) {
+  if (needs?.includes('practice')) {
+    add(clock(t), 'practice', 'phone stays in the bag');
+    t += 90;
+  }
+
+  if (needs?.includes('work')) {
+    add(clock(t), 'work shift', 'phone away');
+    t += 180;
+  }
+
+  if (hobbies[0] && wants('hobby')) {
     add(clock(t), hobbies[0], 'the thing you said you wanted time for');
     t += 60;
   }
 
   const fitGoal = goals.find((g) => /fit|team|gym|strong/.test(g));
-  if (fitGoal && hobbies[1]) {
+  if (fitGoal && hobbies[1] && wants('hobby')) {
     add(clock(t), hobbies[1], `counts toward ${fitGoal}`);
     t += 45;
   }
@@ -112,7 +171,7 @@ export function riloSchedule({ hobbies = [], goals = [], school, bedtime, scroll
   add(clock(t), 'free time', `${free2} min scroll allowed`);
   t += 60;
 
-  const [bh, bm] = String(bedtime?.from || '22:30').split(':').map(Number);
+  const [bh, bm] = String(answers?.bed || bedtime?.from || '22:30').split(':').map(Number);
   add(clock(bh * 60 + (bm || 0)), 'bedtime', 'rilo goes to sleep, apps lock');
 
   return rows;

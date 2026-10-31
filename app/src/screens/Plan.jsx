@@ -5,6 +5,7 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import TabBar from '../components/TabBar';
 import { riloSchedule } from '../demo/mockAI';
+import ScheduleAsk from '../components/ScheduleAsk';
 
 const ROWS = [
   ['3:15', 'chill + snack', '15 min free scroll allowed', 'done'],
@@ -31,18 +32,48 @@ const cellInput = (width) => ({
   color: '#12301A',
 });
 
-const modeBtn = (on) => ({
-  flex: 1,
-  minHeight: 38,
-  borderRadius: 999,
-  border: '2px solid #12301A',
-  background: on ? '#12301A' : 'rgba(255,255,255,0.85)',
-  color: on ? '#FFFFFF' : '#12301A',
+const bigBtn = (primary) => ({
+  width: '100%',
+  minHeight: 68,
+  padding: '12px 18px',
+  borderRadius: 24,
+  border: primary ? 0 : '2px solid #12301A',
+  background: primary ? '#12301A' : 'rgba(255,255,255,0.92)',
+  color: primary ? '#FFFFFF' : '#12301A',
   fontFamily: 'Fredoka, sans-serif',
-  fontSize: 14,
+  fontSize: 20,
+  fontWeight: 600,
+  textAlign: 'left',
+  cursor: 'pointer',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'center',
+  gap: 2,
+  boxShadow: primary ? '0 8px 22px rgba(10,40,20,0.3)' : '0 4px 0 #12301A',
+});
+
+const bigSub = (primary) => ({
+  fontFamily: 'Inter, system-ui, sans-serif',
+  fontSize: 12.5,
+  fontWeight: 600,
+  opacity: primary ? 0.78 : 0.68,
+});
+
+
+const doneBtn = {
+  marginTop: 10,
+  width: '100%',
+  minHeight: 56,
+  borderRadius: 999,
+  border: 0,
+  background: '#12301A',
+  color: '#FFFFFF',
+  fontFamily: 'Fredoka, sans-serif',
+  fontSize: 19,
   fontWeight: 600,
   cursor: 'pointer',
-});
+  boxShadow: '0 8px 22px rgba(10,40,20,0.3)',
+};
 
 const addBtn = {
   marginTop: 8,
@@ -123,23 +154,31 @@ export default function Plan({
   weekAhead = [],
 }) {
   const [editing, setEditing] = useState(false);
+  /* rilo asks a few things before he builds anything */
+  const [asking, setAsking] = useState(false);
 
   /* Rilo's version until they make their own; the design's day is the
      fallback so the screen is never empty. */
+  const blank = schedule.mode === 'own' && (schedule.rows ?? []).length === 0;
   const rows = schedule.rows?.length
     ? schedule.rows
-    : ROWS.map(([at, title, note]) => ({ at, title, note }));
+    : blank
+      ? []
+      : ROWS.map(([at, title, note]) => ({ at, title, note }));
 
-  const letRiloDoIt = () => {
+  const buildWithRilo = (answers) => {
     setSchedule({
       mode: 'rilo',
-      rows: riloSchedule({ hobbies, goals, school, bedtime, scrollMins }),
+      rows: riloSchedule({ hobbies, goals, school, bedtime, scrollMins, answers }),
     });
+    setAsking(false);
     setEditing(false);
   };
 
+  /* "make your own" starts empty on purpose — nothing to delete first */
   const startOwn = () => {
-    setSchedule({ mode: 'own', rows: rows.map((r) => ({ ...r })) });
+    setSchedule({ mode: 'own', rows: [] });
+    setAsking(false);
     setEditing(true);
   };
 
@@ -263,33 +302,42 @@ export default function Plan({
             </div>
           )}
 
-          {/* who makes the day (rilo-addons-test) */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
-            <button
-              type="button"
-              className="tap"
-              onClick={letRiloDoIt}
-              style={modeBtn(schedule.mode === 'rilo' && !editing)}
-            >
-              let rilo make it
-            </button>
-            <button
-              type="button"
-              className="tap"
-              onClick={startOwn}
-              style={modeBtn(schedule.mode === 'own' && !editing)}
-            >
-              make my own
-            </button>
-            <button
-              type="button"
-              className="tap"
-              onClick={() => setEditing((v) => !v)}
-              style={modeBtn(editing)}
-            >
-              {editing ? 'done' : 'edit'}
-            </button>
-          </div>
+          {/* who makes the day */}
+          {asking ? (
+            <ScheduleAsk skin={skin} onBuild={buildWithRilo} onCancel={() => setAsking(false)} />
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: 4 }}>
+              <button
+                type="button"
+                className="tap-94"
+                onClick={() => {
+                  setEditing(false);
+                  setAsking(true);
+                }}
+                style={bigBtn(true)}
+              >
+                let rilo make your schedule
+                <span style={bigSub(true)}>he&apos;ll ask a couple of things first</span>
+              </button>
+
+              <button
+                type="button"
+                className="tap-94"
+                onClick={() => setEditing((v) => !v)}
+                style={bigBtn(false)}
+              >
+                {editing ? 'done editing' : 'edit the schedule'}
+                <span style={bigSub(false)}>
+                  {editing ? "tap when you're happy with it" : 'change what you already have'}
+                </span>
+              </button>
+
+              <button type="button" className="tap-94" onClick={startOwn} style={bigBtn(false)}>
+                make your own
+                <span style={bigSub(false)}>start from nothing and add as you go</span>
+              </button>
+            </div>
+          )}
 
           {rows.map((row, i) => (
             <div key={`${row.at}-${i}`} style={rowStyle(row.status ?? '', i)}>
@@ -372,9 +420,35 @@ export default function Plan({
             </div>
           ))}
 
+          {!rows.length && (
+            <p
+              style={{
+                margin: '6px 0',
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#3D5A46',
+                textAlign: 'center',
+              }}
+            >
+              {editing ? 'empty. add your first thing below.' : 'nothing here yet.'}
+            </p>
+          )}
+
           {editing && (
             <button type="button" className="tap" onClick={addRow} style={addBtn}>
               + add something
+            </button>
+          )}
+
+          {/* finishing where they finish — at the bottom of the list */}
+          {editing && (
+            <button
+              type="button"
+              className="tap-94"
+              onClick={() => setEditing(false)}
+              style={doneBtn}
+            >
+              done
             </button>
           )}
         </div>
