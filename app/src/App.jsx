@@ -241,6 +241,11 @@ export default function App() {
 
   const usedTotalToday = Object.values(day.used).reduce((n, m) => n + m, 0);
 
+  /* Declared up here because the derived values below read it. Leaving it
+     further down meant weekAhead touched it before it existed, which only
+     blew up once a calendar was actually connected. */
+  const watched = pickedApps(apps);
+
   /* ---------- add-ons: clock, locks, mood, time back ---------- */
   /* DEMO ONLY: demoClock stands in for the phone's real clock */
   const now = new Date();
@@ -589,7 +594,6 @@ export default function App() {
     setNav((n) => (n.entries.length > 1 ? { entries: [n.entries[1]], dir: n.dir } : n));
 
   /* never default to an app they didn't pick */
-  const watched = pickedApps(apps);
   const currentApp = session.app && apps.on[session.app] ? session.app : watched[0] ?? 'the feed';
 
   /* "pretend you opened X": bump that app's real count for today */
@@ -750,8 +754,10 @@ export default function App() {
           />
         );
       case 'paywall':
+      case 'upgrade':
         return (
           <Paywall
+            next={screen === 'upgrade' ? 'home' : 'calendaronboard'}
             go={go}
             plan={plan}
             setPlan={setPlan}
@@ -1050,7 +1056,7 @@ export default function App() {
             go={go}
             skin={chosenRilo}
             locked={!isPro}
-            onUpgrade={() => go('paywall')}
+            onUpgrade={() => go('upgrade')}
             schedule={schedulePlan}
             setSchedule={setSchedulePlan}
             hobbies={profileList('hobby')}
@@ -1129,7 +1135,7 @@ export default function App() {
             }}
             onLockedTheme={(id) => {
               track('locked', `theme ${id}`);
-              go('paywall');
+              go('upgrade');
             }}
             stats={stats}
             strict={strict}

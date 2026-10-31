@@ -57,7 +57,7 @@ const planBase = {
   cursor: 'pointer',
 };
 
-export default function Paywall({ go, plan, setPlan, onChoose }) {
+export default function Paywall({ go, plan, setPlan, onChoose, next = 'calendaronboard' }) {
   return (
     <div
       style={{
@@ -324,9 +324,9 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
           onClick={() => {
             const free = plan === 'free';
             if (onChoose) onChoose(free ? 'continue with free' : 'start free trial');
-            /* free skips the pro-only onboarding screens */
-            /* the calendar ask comes next, then the rest of the flow */
-            go('calendaronboard');
+            /* onboarding carries on to the calendar; from settings it
+               just goes back to where they were */
+            go(next);
           }}
           style={{
             width: '100%',

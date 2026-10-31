@@ -59,7 +59,7 @@ export default function PickRilo({
     /* once the paid plan is real, a locked skin sells the plan instead */
     if (!state.unlocked && state.reason === 'pro') {
       if (onLockedTap) onLockedTap(state.name);
-      go('paywall');
+      go('upgrade');
       return;
     }
 
@@ -340,7 +340,7 @@ export default function PickRilo({
             className="tap"
             onClick={() => {
               if (onLockedTap) onLockedTap(cur.name);
-              go('paywall');
+              go('upgrade');
             }}
             style={{
               width: '100%',

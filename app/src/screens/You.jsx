@@ -394,7 +394,7 @@ export default function You({
               apps={apps}
               setApps={setApps}
               maxApps={isPro ? Infinity : FREE_MAX_APPS}
-              onMaxed={() => go('paywall')}
+              onMaxed={() => go('upgrade')}
               style={{ display: 'flex', flexDirection: 'column' }}
             />
             {!isPro && (
@@ -504,7 +504,7 @@ export default function You({
               style={card('.2s')}
               title="strict mode"
               sub={'half the opens, no "5 more", 24 hours to switch off.'}
-              onTap={() => go('paywall')}
+              onTap={() => go('upgrade')}
             />
           )}
 
@@ -519,7 +519,7 @@ export default function You({
               style={card('.32s')}
               title="your 30-day plan"
               sub="25% closer to your goal every week, with opens and time limits per app."
-              onTap={() => go('paywall')}
+              onTap={() => go('upgrade')}
             />
           ) : (
           <div style={card('.32s')}>
@@ -538,32 +538,53 @@ export default function You({
           <Section>account</Section>
 
           {/* plan */}
-          <div style={{ ...card('.32s'), flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <p
+          <div style={card('.32s')}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <p
+                style={{
+                  margin: 0,
+                  flexGrow: 1,
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 19,
+                  fontWeight: 600,
+                }}
+              >
+                your plan
+              </p>
+              <span
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 999,
+                  background: isPro ? '#12301A' : '#FFFFFF',
+                  color: isPro ? '#FFFFFF' : '#12301A',
+                  border: isPro ? 0 : '1.5px solid rgba(18,48,26,0.15)',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 15,
+                  fontWeight: 600,
+                }}
+              >
+                {planLabel}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className="tap"
+              onClick={() => go('upgrade')}
               style={{
-                margin: 0,
-                flexGrow: 1,
-                fontFamily: 'Fredoka, sans-serif',
-                fontSize: 19,
-                fontWeight: 600,
-              }}
-            >
-              your plan
-            </p>
-            <span
-              style={{
-                padding: '6px 14px',
+                minHeight: 46,
                 borderRadius: 999,
-                background: isPro ? '#12301A' : '#FFFFFF',
-                color: isPro ? '#FFFFFF' : '#12301A',
-                border: isPro ? 0 : '1.5px solid rgba(18,48,26,0.15)',
+                border: '2px solid var(--line, #12301A)',
+                background: isPro ? 'transparent' : '#12301A',
+                color: isPro ? '#12301A' : '#FFFFFF',
                 fontFamily: 'Fredoka, sans-serif',
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: 600,
+                cursor: 'pointer',
               }}
             >
-              {planLabel}
-            </span>
+              {isPro ? 'change plan' : 'see rilo pro'}
+            </button>
           </div>
 
           {/* start over, for the next tester */}

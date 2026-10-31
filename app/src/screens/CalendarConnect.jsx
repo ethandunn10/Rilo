@@ -279,6 +279,22 @@ export default function CalendarConnect({
             >
               connect google calendar
             </button>
+            {/* DEMO ONLY: skip the system sheet entirely */}
+            <button
+              type="button"
+              className="tap"
+              onClick={() => setCalendar({ on: true, which: 'Demo Calendar' })}
+              style={{
+                ...plainBtn,
+                fontSize: 13,
+                color: '#2C4A36',
+                textDecoration: 'underline',
+                textUnderlineOffset: 3,
+              }}
+            >
+              demo: connect a fake calendar
+            </button>
+
             <button
               type="button"
               className="tap"
