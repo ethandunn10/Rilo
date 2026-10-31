@@ -51,6 +51,8 @@ export default function DemoPanel({
   onNextWeek,
   onShareCard,
   onBuddies,
+  onNight,
+  onCalendar,
   onReset,
   used,
   goal,
@@ -164,6 +166,12 @@ export default function DemoPanel({
         </button>
         <button type="button" onClick={onBuddies} style={btn}>
           buddies
+        </button>
+        <button type="button" onClick={onNight} style={btn}>
+          tonight&apos;s check-in
+        </button>
+        <button type="button" onClick={onCalendar} style={btn}>
+          calendar
         </button>
       </div>
 

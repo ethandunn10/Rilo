@@ -116,6 +116,7 @@ export default function You({
   school = { on: false, days: [], from: '08:15', to: '15:00' },
   setSchool = () => {},
   buddyCount = 0,
+  calendarOn = false,
   planMode = 'rilo',
   setPlanMode = () => {},
   hobbies = [],
@@ -383,6 +384,42 @@ export default function You({
             school={school}
             setSchool={setSchool}
           />
+
+          {/* calendar (rilo-addons-test-2) */}
+          <button
+            type="button"
+            className="tap"
+            onClick={() => go('calendar')}
+            style={{
+              ...card('.23s'),
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              textAlign: 'left',
+              cursor: 'pointer',
+            }}
+          >
+            <Rilo skin={chosenRilo} mood={calendarOn ? 'proud' : 'coach'} size={54} />
+            <span style={{ flexGrow: 1, minWidth: 0 }}>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 19,
+                  fontWeight: 600,
+                }}
+              >
+                your calendar
+              </span>
+              <span
+                style={{ display: 'block', marginTop: 2, fontSize: 13, fontWeight: 600, color: '#2C4A36' }}
+              >
+                {calendarOn
+                  ? 'connected. rilo plans around your week.'
+                  : 'let rilo plan around practices and tests.'}
+              </span>
+            </span>
+          </button>
 
           {/* buddies (rilo-addons-test) */}
           <button

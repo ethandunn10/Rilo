@@ -120,6 +120,7 @@ export default function Plan({
   school,
   bedtime,
   scrollMins = 60,
+  weekAhead = [],
 }) {
   const [editing, setEditing] = useState(false);
 
@@ -235,6 +236,33 @@ export default function Plan({
             flexDirection: 'column',
           }}
         >
+          {/* what the calendar means for the week (rilo-addons-test-2) */}
+          {weekAhead.length > 0 && (
+            <div
+              style={{
+                marginBottom: 8,
+                padding: '10px 12px',
+                borderRadius: 18,
+                background: 'rgba(18,48,26,0.06)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 5,
+              }}
+            >
+              <p style={{ margin: 0, fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#2C4A36' }}>
+                from your calendar
+              </p>
+              {weekAhead.slice(0, 3).map((w) => (
+                <p
+                  key={`${w.day}-${w.why}`}
+                  style={{ margin: 0, fontSize: 13, fontWeight: 600, lineHeight: 1.35, color: '#2C4A36' }}
+                >
+                  {w.why}
+                </p>
+              ))}
+            </div>
+          )}
+
           {/* who makes the day (rilo-addons-test) */}
           <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
             <button

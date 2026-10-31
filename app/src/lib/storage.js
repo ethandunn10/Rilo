@@ -110,6 +110,10 @@ export const DEFAULT_STATE = {
   planMode: 'rilo',
   /* today's schedule on the plan tab: rilo's, or theirs */
   schedule: { mode: 'rilo', rows: [] },
+  /* their calendar, read only — DEMO ONLY, nothing is connected */
+  calendar: { on: false, which: '' },
+  /* the last nightly check-in, and what it put on tomorrow */
+  night: { date: '', said: null, tasks: [] },
   /* demo panel: a fake clock, null means use the real one */
   demoClock: null,
   strict: {

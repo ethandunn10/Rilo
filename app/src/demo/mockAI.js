@@ -118,6 +118,94 @@ export function riloSchedule({ hobbies = [], goals = [], school, bedtime, scroll
   return rows;
 }
 
+/* ---------- their calendar ----------
+   DEMO ONLY: a fixed week. In the mobile app this is EventKit on iOS or
+   the Google Calendar API, read only, after the user allows it. */
+export const DEMO_CALENDAR = [
+  { day: 'mon', at: '16:00', title: 'basketball practice', kind: 'practice' },
+  { day: 'tue', at: '15:30', title: 'tutoring', kind: 'study' },
+  { day: 'wed', at: '16:00', title: 'basketball practice', kind: 'practice' },
+  { day: 'thu', at: '08:30', title: 'ap bio test', kind: 'test' },
+  { day: 'fri', at: '19:00', title: 'game vs. lincoln', kind: 'practice' },
+  { day: 'sat', at: '11:00', title: 'work shift', kind: 'work' },
+];
+
+const DAY_NAME = {
+  mon: 'monday', tue: 'tuesday', wed: 'wednesday',
+  thu: 'thursday', fri: 'friday', sat: 'saturday', sun: 'sunday',
+};
+
+const DAY_ORDER = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+/* The night before a test, Rilo takes the apps away for a couple of
+   hours. Practices and shifts just become blocks he plans around. */
+export function calendarPlan(events, apps = ['tiktok']) {
+  const out = [];
+  events.forEach((e) => {
+    if (e.kind === 'test') {
+      const i = DAY_ORDER.indexOf(e.day);
+      const before = DAY_ORDER[(i + 6) % 7];
+      out.push({
+        day: before,
+        from: '19:00',
+        to: '21:00',
+        why: `you've got ${e.title} ${DAY_NAME[e.day]}. i'll lock ${apps[0]} 7–9 ${DAY_NAME[before]}.`,
+        kind: 'test',
+      });
+    } else if (e.kind === 'practice' || e.kind === 'work') {
+      out.push({
+        day: e.day,
+        from: e.at,
+        to: '',
+        why: `${e.title} ${DAY_NAME[e.day]}. i'll keep that time free.`,
+        kind: e.kind,
+      });
+    }
+  });
+  return out;
+}
+
+/* ---------- the nightly 30 seconds ----------
+   DEMO ONLY: no model. What they said is matched against a few patterns
+   to pull out tomorrow's tasks, and Rilo's reply is scripted. */
+const TASK_HINTS = [
+  { re: /test|quiz|exam|final/, title: 'study', note: 'apps locked for an hour' },
+  { re: /homework|hw|essay|project|assignment/, title: 'homework', note: 'apps locked for 45 min' },
+  { re: /practice|training|game|match|tryout/, title: 'practice', note: 'phone stays in the bag' },
+  { re: /\bwork\b|shift|\bjob\b/, title: 'work shift', note: 'phone away' },
+  { re: /\bgym\b|\blift|\brun\b|workout/, title: 'gym', note: 'earns you xp' },
+  { re: /guitar|piano|draw|read|paint|write/, title: 'your thing', note: 'the one you keep skipping' },
+  { re: /early|wake|morning/, title: 'early start', note: 'bedtime moves up tonight' },
+];
+
+export function tasksFrom(text) {
+  const t = (text || '').toLowerCase();
+  const out = [];
+  TASK_HINTS.forEach((h) => {
+    if (h.re.test(t) && !out.some((x) => x.title === h.title)) {
+      out.push({ title: h.title, note: h.note });
+    }
+  });
+  return out;
+}
+
+/* how the day went, from what they said about it */
+export function nightReply(text) {
+  const t = (text || '').toLowerCase();
+  if (/bad|rough|awful|terrible|hard|stressed|tired/.test(t)) {
+    return { mood: 'letdown', line: "rough one. tomorrow's a clean slate." };
+  }
+  if (/good|great|fine|ok|okay|solid|chill|nice/.test(t)) {
+    return { mood: 'proud', line: 'good. let me set tomorrow up for you.' };
+  }
+  return { mood: 'coach', line: 'got it. let me set tomorrow up.' };
+}
+
+export const NIGHT_QUESTIONS = [
+  { id: 'today', ask: "how'd today go?" },
+  { id: 'tomorrow', ask: "anything on tomorrow?" },
+];
+
 /* ---------- buddies ---------- */
 /* No backend in the demo. Codes are generated locally and these three
    exist so the screen looks like a real one. */
