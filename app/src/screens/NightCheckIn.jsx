@@ -11,7 +11,7 @@ import Rilo from '../components/Rilo';
 import { RiloStage, WaveBars } from '../components/TalkBits';
 import { useListen } from '../lib/listen';
 import { track } from '../lib/track';
-import { NIGHT_QUESTIONS, nightReply, tasksFrom } from '../demo/mockAI';
+import { NIGHT_QUESTIONS, nightReply, tasksFrom, DEMO_NIGHT } from '../demo/mockAI';
 
 /* thirty seconds, like the brief says */
 const SECONDS = 30;
@@ -261,6 +261,35 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
         ) : (
           <button type="button" className="tap" onClick={() => setTyping((v) => !v)} style={ghost}>
             {typing ? 'talk instead' : 'type instead'}
+          </button>
+        )}
+
+        {/* DEMO ONLY: see the whole thing without a mic */}
+        {!done && (
+          <button
+            type="button"
+            className="tap"
+            onClick={() => {
+              setSaid(DEMO_NIGHT);
+              mic.cancel?.();
+              setTyping(false);
+              setDone(true);
+              track('night', 'demo: filled it in');
+            }}
+            style={{
+              border: 0,
+              background: 'transparent',
+              color: 'rgba(255,255,255,0.65)',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 13,
+              fontWeight: 600,
+              padding: 4,
+              textDecoration: 'underline',
+              textUnderlineOffset: 3,
+              cursor: 'pointer',
+            }}
+          >
+            demo: answer it for me
           </button>
         )}
 

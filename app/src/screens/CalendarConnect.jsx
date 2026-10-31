@@ -146,7 +146,16 @@ function SystemSheet({ which, onAllow, onDeny }) {
   );
 }
 
-export default function CalendarConnect({ go, skin, apps = ['tiktok'], calendar, setCalendar }) {
+export default function CalendarConnect({
+  go,
+  skin,
+  apps = ['tiktok'],
+  calendar,
+  setCalendar,
+  /* in onboarding this carries on through the flow instead of going back */
+  onContinue,
+  onSkip,
+}) {
   const [sheet, setSheet] = useState('');
   const connected = calendar?.on;
   const plan = connected ? calendarPlan(DEMO_CALENDAR, apps) : [];
@@ -240,8 +249,13 @@ export default function CalendarConnect({ go, skin, apps = ['tiktok'], calendar,
 
         {connected ? (
           <>
-            <button type="button" className="tap" onClick={() => go('plan')} style={btn}>
-              see my plan
+            <button
+              type="button"
+              className="tap"
+              onClick={() => (onContinue ? onContinue() : go('plan'))}
+              style={btn}
+            >
+              {onContinue ? 'next' : 'see my plan'}
             </button>
             <button
               type="button"
@@ -265,7 +279,12 @@ export default function CalendarConnect({ go, skin, apps = ['tiktok'], calendar,
             >
               connect google calendar
             </button>
-            <button type="button" className="tap" onClick={() => go('you', 'back')} style={plainBtn}>
+            <button
+              type="button"
+              className="tap"
+              onClick={() => (onSkip ? onSkip() : go('you', 'back'))}
+              style={plainBtn}
+            >
               not now
             </button>
           </div>

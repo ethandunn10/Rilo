@@ -325,7 +325,8 @@ export default function Paywall({ go, plan, setPlan, onChoose }) {
             const free = plan === 'free';
             if (onChoose) onChoose(free ? 'continue with free' : 'start free trial');
             /* free skips the pro-only onboarding screens */
-            go(free ? 'timeback' : 'timegoes');
+            /* the calendar ask comes next, then the rest of the flow */
+            go('calendaronboard');
           }}
           style={{
             width: '100%',

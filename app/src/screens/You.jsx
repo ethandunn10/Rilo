@@ -38,6 +38,26 @@ const card = (delay) => ({
 });
 
 /* ChipPicker and AppPicker take the same card shape */
+/* The page is a long list, so it's broken into named groups. */
+function Section({ children, first = false }) {
+  return (
+    <p
+      style={{
+        margin: first ? '2px 0 -2px' : '14px 0 -2px',
+        paddingLeft: 4,
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: '0.09em',
+        textTransform: 'uppercase',
+        color: '#2C4A36',
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </p>
+  );
+}
+
 const chipCard = (delay) => ({ ...card(delay), background: 'rgba(255,255,255,0.55)' });
 
 /* the grey demo-only buttons at the bottom */
@@ -197,6 +217,8 @@ export default function You({
             padding: '0 4px 124px',
           }}
         >
+          <Section first>you</Section>
+
           {/* level + xp + current rilo */}
           <div
             style={{
@@ -261,6 +283,8 @@ export default function You({
             <Stat value={fmtSaved(stats.savedMinutes)} label="time saved" />
             <Stat value={stats.saidNo} label="times you said no" />
           </div>
+
+          <Section>how it looks</Section>
 
           {/* app theme — a Rilo Pro feature (grass is free) */}
           <div style={card('.12s')}>
@@ -352,8 +376,12 @@ export default function You({
             </div>
           </div>
 
+          <Section>what rilo knows about you</Section>
+
           {/* hobbies + goals, same chips as onboarding */}
           <ChipPicker about={about} setAbout={setAbout} cardStyle={chipCard} />
+
+          <Section>what rilo watches</Section>
 
           {/* apps rilo watches, same list + add sheet as onboarding */}
           <div style={card('.24s')}>
@@ -375,6 +403,8 @@ export default function You({
               </p>
             )}
           </div>
+
+          <Section>when rilo steps in</Section>
 
           {/* bedtime + school (rilo-addons-test) */}
           <ScheduleCard
@@ -421,6 +451,8 @@ export default function You({
             </span>
           </button>
 
+          <Section>friends</Section>
+
           {/* buddies (rilo-addons-test) */}
           <button
             type="button"
@@ -454,6 +486,8 @@ export default function You({
               </span>
             </span>
           </button>
+
+          <Section>your limits</Section>
 
           {/* strict mode — rilo pro */}
           {isPro ? (
@@ -500,6 +534,8 @@ export default function You({
             />
           </div>
           )}
+
+          <Section>account</Section>
 
           {/* plan */}
           <div style={{ ...card('.32s'), flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -561,6 +597,8 @@ export default function You({
           >
             start over
           </button>
+
+          <Section>demo</Section>
 
           {/* prototype only — lets a tester see level-ups without waiting weeks */}
           <button

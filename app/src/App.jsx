@@ -861,11 +861,18 @@ export default function App() {
         );
 
       case 'calendar':
+      case 'calendaronboard':
         return (
           <CalendarConnect
             go={go}
-            skin={chosenRilo}
+            skin={OG_SKIN}
             apps={watched}
+            onContinue={
+              screen === 'calendaronboard' ? () => go(isPro ? 'timegoes' : 'timeback') : undefined
+            }
+            onSkip={
+              screen === 'calendaronboard' ? () => go(isPro ? 'timegoes' : 'timeback') : undefined
+            }
             calendar={calendar}
             setCalendar={(next) => {
               setCalendar(next);

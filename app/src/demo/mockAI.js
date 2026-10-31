@@ -201,6 +201,13 @@ export function nightReply(text) {
   return { mood: 'coach', line: 'got it. let me set tomorrow up.' };
 }
 
+/* DEMO ONLY: a canned pair of answers, so the check-in can be shown
+   without a working mic. */
+export const DEMO_NIGHT = {
+  today: 'it was alright, kind of a long one',
+  tomorrow: 'i have a bio test and practice after school',
+};
+
 export const NIGHT_QUESTIONS = [
   { id: 'today', ask: "how'd today go?" },
   { id: 'tomorrow', ask: "anything on tomorrow?" },
