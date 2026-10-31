@@ -76,7 +76,9 @@ import {
   toMins,
   WEEKLY_PASS_MAX,
 } from './lib/addons';
-import { overLine, comparisonFor } from './demo/mockAI';
+import { overLine, comparisonFor, calendarPlan, DEMO_CALENDAR } from './demo/mockAI';
+import NightCheckIn from './screens/NightCheckIn';
+import CalendarConnect from './screens/CalendarConnect';
 import { ThemeContext, themeInfo } from './lib/themes';
 
 /* the hidden results screen: /results, or #results if rewrites aren't on */
@@ -165,6 +167,8 @@ export default function App() {
   const [planMode, setPlanMode] = useState(saved.planMode);
   /* today's schedule on the plan tab */
   const [schedulePlan, setSchedulePlan] = useState(saved.schedule);
+  const [calendar, setCalendar] = useState(saved.calendar);
+  const [night, setNight] = useState(saved.night);
   /* DEMO ONLY: a fake clock so bedtime and school can be tested */
   const [demoClock, setDemoClock] = useState(saved.demoClock);
   /* the promise they made on the check-in, for this session */
@@ -191,11 +195,13 @@ export default function App() {
       fiveMoreDays, strict,
       checkins, passBank, bedtime, school, buddies, planMode, demoClock,
       schedule: schedulePlan,
+      calendar,
+      night,
     });
   }, [name, about, apps, time, pace, sessionMins, plan, planChoice, isPro, xp, level, chosenRilo, theme, opens,
       extras, stats, screenTime, triedAgain, breakdown, program, day, history, streak,
       fiveMoreDays, strict, checkins, passBank, bedtime, school, buddies, planMode,
-      demoClock, schedulePlan]);
+      demoClock, schedulePlan, calendar, night]);
 
   /* The web can't read real Screen Time, so the baseline comes from the
      hours they gave on Your time back (5h if they never said). */
@@ -234,6 +240,11 @@ export default function App() {
   const limitFor = (app) => limits.find((l) => l.app === app) ?? null;
 
   const usedTotalToday = Object.values(day.used).reduce((n, m) => n + m, 0);
+
+  /* Declared up here because the derived values below read it. Leaving it
+     further down meant weekAhead touched it before it existed, which only
+     blew up once a calendar was actually connected. */
+  const watched = pickedApps(apps);
 
   /* ---------- add-ons: clock, locks, mood, time back ---------- */
   /* DEMO ONLY: demoClock stands in for the phone's real clock */
@@ -274,6 +285,12 @@ export default function App() {
   };
 
   const passesLeft = Math.max(0, (passBank.left ?? 1) - (day.passes ?? 0));
+
+  /* the thirty seconds at night: evening, and not already done today */
+  const askTonight = nowMins >= 20 * 60 && night.date !== today();
+
+  /* what the calendar means for the week ahead */
+  const weekAhead = calendar.on ? calendarPlan(DEMO_CALENDAR, watched) : [];
 
   const leftFor = (app) => {
     /* Free has no per-app allowance — the whole day is one pot, shared by
@@ -577,7 +594,6 @@ export default function App() {
     setNav((n) => (n.entries.length > 1 ? { entries: [n.entries[1]], dir: n.dir } : n));
 
   /* never default to an app they didn't pick */
-  const watched = pickedApps(apps);
   const currentApp = session.app && apps.on[session.app] ? session.app : watched[0] ?? 'the feed';
 
   /* "pretend you opened X": bump that app's real count for today */
@@ -738,8 +754,10 @@ export default function App() {
           />
         );
       case 'paywall':
+      case 'upgrade':
         return (
           <Paywall
+            next={screen === 'upgrade' ? 'home' : 'calendaronboard'}
             go={go}
             plan={plan}
             setPlan={setPlan}
@@ -777,6 +795,9 @@ export default function App() {
             onClearPassWon={() => setPassWon(false)}
             schedule={schedule}
             backToday={back.today}
+            askTonight={askTonight}
+            onNightCheckIn={() => go('nightcheckin')}
+            weekAhead={weekAhead}
             suggestStrict={
               isPro &&
               !strict.on &&
@@ -818,6 +839,50 @@ export default function App() {
             onNevermind={() => {
               track('checkin', 'never mind');
               go('home', 'back');
+            }}
+          />
+        );
+
+      case 'nightcheckin':
+        return (
+          <NightCheckIn
+            skin={chosenRilo}
+            onDone={({ said, tasks }) => {
+              setNight({ date: today(), said, tasks });
+              /* tomorrow's tasks go straight onto the plan */
+              setSchedulePlan((sp) => ({
+                mode: sp.mode,
+                rows: (sp.rows ?? []).concat(
+                  tasks.map((t) => ({ at: '', title: t.title, note: t.note })),
+                ),
+              }));
+              track('night', `${tasks.length} task(s) for tomorrow`);
+              go('plan');
+            }}
+            onSkip={() => {
+              track('night', 'not tonight');
+              go('home', 'back');
+            }}
+          />
+        );
+
+      case 'calendar':
+      case 'calendaronboard':
+        return (
+          <CalendarConnect
+            go={go}
+            skin={OG_SKIN}
+            apps={watched}
+            onContinue={
+              screen === 'calendaronboard' ? () => go(isPro ? 'timegoes' : 'timeback') : undefined
+            }
+            onSkip={
+              screen === 'calendaronboard' ? () => go(isPro ? 'timegoes' : 'timeback') : undefined
+            }
+            calendar={calendar}
+            setCalendar={(next) => {
+              setCalendar(next);
+              track('calendar', next.on ? `connected ${next.which}` : 'disconnected');
             }}
           />
         );
@@ -991,7 +1056,7 @@ export default function App() {
             go={go}
             skin={chosenRilo}
             locked={!isPro}
-            onUpgrade={() => go('paywall')}
+            onUpgrade={() => go('upgrade')}
             schedule={schedulePlan}
             setSchedule={setSchedulePlan}
             hobbies={profileList('hobby')}
@@ -999,6 +1064,7 @@ export default function App() {
             school={school}
             bedtime={bedtime}
             scrollMins={weekGoal}
+            weekAhead={weekAhead}
           />
         );
       case 'progress':
@@ -1053,6 +1119,7 @@ export default function App() {
             school={school}
             setSchool={setSchool}
             buddyCount={(buddies.friends ?? []).length}
+            calendarOn={calendar.on}
             planMode={planMode}
             setPlanMode={setPlanMode}
             hobbies={profileList('hobby')}
@@ -1068,7 +1135,7 @@ export default function App() {
             }}
             onLockedTheme={(id) => {
               track('locked', `theme ${id}`);
-              go('paywall');
+              go('upgrade');
             }}
             stats={stats}
             strict={strict}
@@ -1175,6 +1242,8 @@ export default function App() {
           onNextWeek={runWeek}
           onShareCard={() => go('sharecard')}
           onBuddies={() => go('buddies')}
+          onNight={() => go('nightcheckin')}
+          onCalendar={() => go('calendar')}
           onReset={startOver}
         />
       )}

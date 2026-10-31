@@ -38,6 +38,26 @@ const card = (delay) => ({
 });
 
 /* ChipPicker and AppPicker take the same card shape */
+/* The page is a long list, so it's broken into named groups. */
+function Section({ children, first = false }) {
+  return (
+    <p
+      style={{
+        margin: first ? '2px 0 -2px' : '14px 0 -2px',
+        paddingLeft: 4,
+        fontSize: 12,
+        fontWeight: 700,
+        letterSpacing: '0.09em',
+        textTransform: 'uppercase',
+        color: '#2C4A36',
+        flexShrink: 0,
+      }}
+    >
+      {children}
+    </p>
+  );
+}
+
 const chipCard = (delay) => ({ ...card(delay), background: 'rgba(255,255,255,0.55)' });
 
 /* the grey demo-only buttons at the bottom */
@@ -116,6 +136,7 @@ export default function You({
   school = { on: false, days: [], from: '08:15', to: '15:00' },
   setSchool = () => {},
   buddyCount = 0,
+  calendarOn = false,
   planMode = 'rilo',
   setPlanMode = () => {},
   hobbies = [],
@@ -196,6 +217,8 @@ export default function You({
             padding: '0 4px 124px',
           }}
         >
+          <Section first>you</Section>
+
           {/* level + xp + current rilo */}
           <div
             style={{
@@ -260,6 +283,8 @@ export default function You({
             <Stat value={fmtSaved(stats.savedMinutes)} label="time saved" />
             <Stat value={stats.saidNo} label="times you said no" />
           </div>
+
+          <Section>how it looks</Section>
 
           {/* app theme — a Rilo Pro feature (grass is free) */}
           <div style={card('.12s')}>
@@ -351,8 +376,12 @@ export default function You({
             </div>
           </div>
 
+          <Section>what rilo knows about you</Section>
+
           {/* hobbies + goals, same chips as onboarding */}
           <ChipPicker about={about} setAbout={setAbout} cardStyle={chipCard} />
+
+          <Section>what rilo watches</Section>
 
           {/* apps rilo watches, same list + add sheet as onboarding */}
           <div style={card('.24s')}>
@@ -365,7 +394,7 @@ export default function You({
               apps={apps}
               setApps={setApps}
               maxApps={isPro ? Infinity : FREE_MAX_APPS}
-              onMaxed={() => go('paywall')}
+              onMaxed={() => go('upgrade')}
               style={{ display: 'flex', flexDirection: 'column' }}
             />
             {!isPro && (
@@ -375,6 +404,8 @@ export default function You({
             )}
           </div>
 
+          <Section>when rilo steps in</Section>
+
           {/* bedtime + school (rilo-addons-test) */}
           <ScheduleCard
             style={card('.22s')}
@@ -383,6 +414,44 @@ export default function You({
             school={school}
             setSchool={setSchool}
           />
+
+          {/* calendar (rilo-addons-test-2) */}
+          <button
+            type="button"
+            className="tap"
+            onClick={() => go('calendar')}
+            style={{
+              ...card('.23s'),
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              textAlign: 'left',
+              cursor: 'pointer',
+            }}
+          >
+            <Rilo skin={chosenRilo} mood={calendarOn ? 'proud' : 'coach'} size={54} />
+            <span style={{ flexGrow: 1, minWidth: 0 }}>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 19,
+                  fontWeight: 600,
+                }}
+              >
+                your calendar
+              </span>
+              <span
+                style={{ display: 'block', marginTop: 2, fontSize: 13, fontWeight: 600, color: '#2C4A36' }}
+              >
+                {calendarOn
+                  ? 'connected. rilo plans around your week.'
+                  : 'let rilo plan around practices and tests.'}
+              </span>
+            </span>
+          </button>
+
+          <Section>friends</Section>
 
           {/* buddies (rilo-addons-test) */}
           <button
@@ -418,6 +487,8 @@ export default function You({
             </span>
           </button>
 
+          <Section>your limits</Section>
+
           {/* strict mode — rilo pro */}
           {isPro ? (
             <StrictCard
@@ -433,7 +504,7 @@ export default function You({
               style={card('.2s')}
               title="strict mode"
               sub={'half the opens, no "5 more", 24 hours to switch off.'}
-              onTap={() => go('paywall')}
+              onTap={() => go('upgrade')}
             />
           )}
 
@@ -448,7 +519,7 @@ export default function You({
               style={card('.32s')}
               title="your 30-day plan"
               sub="25% closer to your goal every week, with opens and time limits per app."
-              onTap={() => go('paywall')}
+              onTap={() => go('upgrade')}
             />
           ) : (
           <div style={card('.32s')}>
@@ -464,33 +535,56 @@ export default function You({
           </div>
           )}
 
+          <Section>account</Section>
+
           {/* plan */}
-          <div style={{ ...card('.32s'), flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <p
+          <div style={card('.32s')}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <p
+                style={{
+                  margin: 0,
+                  flexGrow: 1,
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 19,
+                  fontWeight: 600,
+                }}
+              >
+                your plan
+              </p>
+              <span
+                style={{
+                  padding: '6px 14px',
+                  borderRadius: 999,
+                  background: isPro ? '#12301A' : '#FFFFFF',
+                  color: isPro ? '#FFFFFF' : '#12301A',
+                  border: isPro ? 0 : '1.5px solid rgba(18,48,26,0.15)',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 15,
+                  fontWeight: 600,
+                }}
+              >
+                {planLabel}
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className="tap"
+              onClick={() => go('upgrade')}
               style={{
-                margin: 0,
-                flexGrow: 1,
-                fontFamily: 'Fredoka, sans-serif',
-                fontSize: 19,
-                fontWeight: 600,
-              }}
-            >
-              your plan
-            </p>
-            <span
-              style={{
-                padding: '6px 14px',
+                minHeight: 46,
                 borderRadius: 999,
-                background: isPro ? '#12301A' : '#FFFFFF',
-                color: isPro ? '#FFFFFF' : '#12301A',
-                border: isPro ? 0 : '1.5px solid rgba(18,48,26,0.15)',
+                border: '2px solid var(--line, #12301A)',
+                background: isPro ? 'transparent' : '#12301A',
+                color: isPro ? '#12301A' : '#FFFFFF',
                 fontFamily: 'Fredoka, sans-serif',
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: 600,
+                cursor: 'pointer',
               }}
             >
-              {planLabel}
-            </span>
+              {isPro ? 'change plan' : 'see rilo pro'}
+            </button>
           </div>
 
           {/* start over, for the next tester */}
@@ -524,6 +618,8 @@ export default function You({
           >
             start over
           </button>
+
+          <Section>demo</Section>
 
           {/* prototype only — lets a tester see level-ups without waiting weeks */}
           <button

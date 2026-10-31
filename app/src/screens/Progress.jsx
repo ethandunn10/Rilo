@@ -460,7 +460,7 @@ export default function Progress({
               breakdown={breakdown}
               compact
               isPro={isPro}
-              onUpgrade={() => go('paywall')}
+              onUpgrade={() => go('upgrade')}
             />
           </div>
         )}

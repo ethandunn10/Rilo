@@ -98,6 +98,9 @@ export default function Home({
   onClearPassWon,
   schedule = { locked: false, kind: null, until: null },
   backToday = 0,
+  askTonight = false,
+  onNightCheckIn,
+  weekAhead = [],
 }) {
   const theme = useTheme();
   const upNext = suggestion(about).task;
@@ -366,8 +369,52 @@ export default function Home({
         <span style={{ fontSize: 13, fontWeight: 700, color: '#1F6B2E' }}>test it</span>
       </button>
 
+      {/* thirty seconds before bed */}
+      {askTonight && (
+        <button
+          type="button"
+          className="tap"
+          onClick={onNightCheckIn}
+          style={{
+            position: 'absolute',
+            left: 20,
+            right: 20,
+            top: 568,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            textAlign: 'left',
+            padding: '12px 14px',
+            borderRadius: 24,
+            background: 'rgba(255,255,255,0.92)',
+            border: '2px solid var(--line, #12301A)',
+            cursor: 'pointer',
+            animation: 'rise .4s ease-out both',
+          }}
+        >
+          <Rilo skin={skin} mood="curious" size={58} />
+          <span style={{ flexGrow: 1, minWidth: 0 }}>
+            <span
+              style={{
+                display: 'block',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 17,
+                fontWeight: 600,
+              }}
+            >
+              got 30 seconds?
+            </span>
+            <span
+              style={{ display: 'block', marginTop: 2, fontSize: 13, fontWeight: 600, color: '#2C4A36' }}
+            >
+              tell me how today went and what&apos;s tomorrow.
+            </span>
+          </span>
+        </button>
+      )}
+
       {/* over the time they promised on the way in */}
-      {overNote && (
+      {overNote && !askTonight && (
         <button
           type="button"
           className="tap"
@@ -406,7 +453,7 @@ export default function Home({
       )}
 
       {/* a pass earned by hitting the goal */}
-      {passWon && !overNote && (
+      {passWon && !overNote && !askTonight && (
         <button
           type="button"
           className="tap"
@@ -450,7 +497,7 @@ export default function Home({
       )}
 
       {/* closed it early — the minutes they didn't spend are still theirs */}
-      {savedNote && !suggestStrict && !overNote && !passWon && (
+      {savedNote && !suggestStrict && !overNote && !passWon && !askTonight && (
         <button
           type="button"
           className="tap"

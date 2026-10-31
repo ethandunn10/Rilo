@@ -501,14 +501,24 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
             <span
               aria-hidden="true"
               style={{
-                fontSize: 34,
-                lineHeight: 1,
-                color: '#FFFFFF',
-                textShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginBottom: 2,
+                filter: 'drop-shadow(0 4px 10px rgba(0,0,0,0.4))',
                 animation: 'point-down 1.1s ease-in-out infinite',
               }}
             >
-              &#8595;
+              <svg width="54" height="58" viewBox="0 0 54 58" aria-hidden="true">
+                <path
+                  d="M27 4 L27 44 M11 30 L27 48 L43 30"
+                  fill="none"
+                  stroke="#FFFFFF"
+                  strokeWidth="9"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </span>
             <button
               type="button"

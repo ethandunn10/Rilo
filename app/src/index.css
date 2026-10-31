@@ -624,6 +624,6 @@ body {
 
 /* arrow pointing down at the next step, once Rilo is done asking */
 @keyframes point-down {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(8px); }
+  0%, 100% { transform: translateY(-4px); }
+  50% { transform: translateY(10px); }
 }
