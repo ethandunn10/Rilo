@@ -496,17 +496,32 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
 
         {/* bottom controls */}
         {done ? (
-          <button
-            type="button"
-            className="tap-94"
-            onClick={() => {
-              onTalked?.();
-              finish();
-            }}
-            style={bigBtn}
-          >
-            next step
-          </button>
+          <>
+            {/* he's finished asking — point at the way out */}
+            <span
+              aria-hidden="true"
+              style={{
+                fontSize: 34,
+                lineHeight: 1,
+                color: '#FFFFFF',
+                textShadow: '0 2px 8px rgba(0,0,0,0.35)',
+                animation: 'point-down 1.1s ease-in-out infinite',
+              }}
+            >
+              &#8595;
+            </span>
+            <button
+              type="button"
+              className="tap-94"
+              onClick={() => {
+                onTalked?.();
+                finish();
+              }}
+              style={bigBtn}
+            >
+              next step
+            </button>
+          </>
         ) : (
           <button
             type="button"

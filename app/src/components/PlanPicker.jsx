@@ -1,9 +1,10 @@
-/* How hard the plan pushes, and how long one sitting lasts.
+/* How fast they want to get to their goal. Three choices, a line each.
 
-   Rilo works the opens out from the sitting length — pick 10 minutes and
-   an hour of tiktok is six sittings, not some number nobody chose. */
+   The sitting length that the per-app opens are worked out from is kept
+   as a prop but no longer shown — one number across several apps didn't
+   mean anything anyone could act on. */
 
-import { PACES, sittingOptions } from '../lib/plan';
+import { PACES } from '../lib/plan';
 
 const chip = (on, dark) => ({
   flex: 1,
@@ -25,13 +26,10 @@ export default function PlanPicker({
   setPace,
   sessionMins,
   setSessionMins,
-  breakdown,
-  startMins,
-  weekGoal,
   dark = false,
 }) {
-  const picked = PACES.find((p) => p.id === pace) ?? PACES[1];
-  const options = sittingOptions(breakdown, startMins, weekGoal, sessionMins);
+
+
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -45,7 +43,7 @@ export default function PlanPicker({
           color: dark ? '#FFFFFF' : '#12301A',
         }}
       >
-        how fast do you want to get there?
+        how fast?
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {PACES.map((p) => (
@@ -72,66 +70,6 @@ export default function PlanPicker({
         ))}
       </div>
 
-      <p
-        style={{
-          margin: '8px 0 0',
-          fontFamily: 'Fredoka, sans-serif',
-          fontSize: 19,
-          fontWeight: 600,
-          lineHeight: 1.2,
-          color: dark ? '#FFFFFF' : '#12301A',
-        }}
-      >
-        choose how many opens a day you get, and how long each one is
-      </p>
-      <p
-        style={{
-          margin: 0,
-          fontSize: 13,
-          fontWeight: 600,
-          color: dark ? '#C9E6CE' : '#2C4A36',
-        }}
-      >
-        same amount of time either way — pick one.
-      </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {options.map((o) => (
-          <button
-            key={o.mins}
-            type="button"
-            className="tap"
-            onClick={() => setSessionMins(o.mins)}
-            style={{
-              ...chip(sessionMins === o.mins, dark),
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: 8,
-              padding: '9px 14px',
-              textAlign: 'left',
-            }}
-          >
-            <span style={{ fontSize: 19 }}>
-              {o.opens} open{o.opens === 1 ? '' : 's'} a day
-            </span>
-            <span style={{ fontSize: 15, opacity: 0.8 }}>
-              · {o.mins} min each
-            </span>
-          </button>
-        ))}
-      </div>
-
-      <p
-        style={{
-          margin: '2px 0 0',
-          fontSize: 13,
-          fontWeight: 600,
-          color: dark ? '#C9E6CE' : '#2C4A36',
-        }}
-      >
-        {picked.weeks === 1 ? 'one week' : `${picked.weeks} weeks`} ·{' '}
-        {options.find((o) => o.mins === sessionMins)?.opens ?? ''} opens a day of{' '}
-        {sessionMins} min. change it whenever.
-      </p>
     </div>
   );
 }

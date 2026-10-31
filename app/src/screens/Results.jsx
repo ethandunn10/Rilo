@@ -30,6 +30,7 @@ const GROUPS = [
   { key: 'fivemore', title: '"5 more minutes"', order: ['used', 'blocked (second time)'] },
   { key: 'unlock', title: 'what unlocked an app', order: [] },
   { key: 'early', title: 'closed an app early', order: [] },
+  { key: 'demo', title: 'demo panel used', order: [] },
   { key: 'plan', title: 'plan changes', order: [] },
   { key: 'day', title: 'days', order: ['goal hit', 'went over'] },
   { key: 'week', title: 'weeks', order: ['week cleared', 'repeated', 'plan finished'] },

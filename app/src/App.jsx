@@ -43,11 +43,13 @@ import Results from './screens/Results';
 import { loadState, saveState, clearState, DEFAULT_STATE, today } from './lib/storage';
 import { track } from './lib/track';
 import { pickedApps } from './lib/apps';
+import { HOBBIES, GOALS } from './lib/profile';
 import {
   buildBreakdown,
   hoursToMins,
   weekGoals,
   limitsFor,
+  fmtMins,
   PASS_MINUTES,
   BREAK_EARNED_AFTER,
   dayXp,
@@ -59,6 +61,22 @@ import {
   watchedFor,
 } from './lib/plan';
 import { levelFor, skinsUnlockedBetween, XP, UNLOCK_ALL } from './lib/levels';
+/* ---- add-ons (rilo-addons-test) ---- */
+import WhyOpen from './screens/WhyOpen';
+import ShareCard from './screens/ShareCard';
+import Buddies from './screens/Buddies';
+import DemoPanel from './components/DemoPanel';
+import {
+  moodForUsage,
+  moodNote,
+  passesAfterGoodDay,
+  timeBack,
+  lockReason,
+  dayIndexOf,
+  toMins,
+  WEEKLY_PASS_MAX,
+} from './lib/addons';
+import { overLine, comparisonFor } from './demo/mockAI';
 import { ThemeContext, themeInfo } from './lib/themes';
 
 /* the hidden results screen: /results, or #results if rewrites aren't on */
@@ -138,6 +156,24 @@ export default function App() {
   const [fiveMoreDays, setFiveMoreDays] = useState(saved.fiveMoreDays);
   const [strict, setStrict] = useState(saved.strict);
 
+  /* ---------- add-ons (rilo-addons-test) ---------- */
+  const [checkins, setCheckins] = useState(saved.checkins);
+  const [passBank, setPassBank] = useState(saved.passBank);
+  const [bedtime, setBedtime] = useState(saved.bedtime);
+  const [school, setSchool] = useState(saved.school);
+  const [buddies, setBuddies] = useState(saved.buddies);
+  const [planMode, setPlanMode] = useState(saved.planMode);
+  /* today's schedule on the plan tab */
+  const [schedulePlan, setSchedulePlan] = useState(saved.schedule);
+  /* DEMO ONLY: a fake clock so bedtime and school can be tested */
+  const [demoClock, setDemoClock] = useState(saved.demoClock);
+  /* the promise they made on the check-in, for this session */
+  const [promise, setPromise] = useState(null);
+  /* a pass they just earned, celebrated once */
+  const [passWon, setPassWon] = useState(false);
+  /* "you said 5 minutes for messages. it has been 22." */
+  const [overNote, setOverNote] = useState('');
+
   /* the app + length of the session being "opened" right now */
   const [session, setSession] = useState({ app: null, minutes: 5 });
   /* the iOS notification Rilo sends from the shield */
@@ -153,10 +189,13 @@ export default function App() {
       xp, level, chosenRilo, theme, opens, extras, stats,
       screenTime, triedAgain, breakdown, program, day, history, streak,
       fiveMoreDays, strict,
+      checkins, passBank, bedtime, school, buddies, planMode, demoClock,
+      schedule: schedulePlan,
     });
   }, [name, about, apps, time, pace, sessionMins, plan, planChoice, isPro, xp, level, chosenRilo, theme, opens,
       extras, stats, screenTime, triedAgain, breakdown, program, day, history, streak,
-      fiveMoreDays, strict]);
+      fiveMoreDays, strict, checkins, passBank, bedtime, school, buddies, planMode,
+      demoClock, schedulePlan]);
 
   /* The web can't read real Screen Time, so the baseline comes from the
      hours they gave on Your time back (5h if they never said). */
@@ -196,6 +235,46 @@ export default function App() {
 
   const usedTotalToday = Object.values(day.used).reduce((n, m) => n + m, 0);
 
+  /* ---------- add-ons: clock, locks, mood, time back ---------- */
+  /* DEMO ONLY: demoClock stands in for the phone's real clock */
+  const now = new Date();
+  const nowMins = demoClock ? toMins(demoClock) : now.getHours() * 60 + now.getMinutes();
+  const schedule = lockReason({ bedtime, school, nowMins, dayIndex: dayIndexOf(now) });
+  const asleep = schedule.kind === 'bedtime';
+
+  const minsSinceBlocked = day.lastBlockedAt
+    ? Math.round((Date.now() - day.lastBlockedAt) / 60000)
+    : 999;
+
+  const riloMood = moodForUsage({
+    used: usedTotalToday,
+    goal: weekGoal,
+    sinceBlockedMins: minsSinceBlocked,
+    asleep,
+  });
+  const riloNote = moodNote({
+    used: usedTotalToday,
+    goal: weekGoal,
+    sinceBlockedMins: minsSinceBlocked,
+    asleep,
+  });
+
+  const back = timeBack({
+    history,
+    baselineMins: startMins,
+    savedMinutes: stats.savedMinutes,
+  });
+  const backSays = comparisonFor(back.week, history.length);
+
+  /* what Rilo knows about them, for the suggestions and his own plan */
+  const profileList = (kind) => {
+    const list = kind === 'hobby' ? HOBBIES : GOALS;
+    const on = list.filter((k) => about.on?.[k]);
+    return on.concat(about.extra?.[kind] ?? []);
+  };
+
+  const passesLeft = Math.max(0, (passBank.left ?? 1) - (day.passes ?? 0));
+
   const leftFor = (app) => {
     /* Free has no per-app allowance — the whole day is one pot, shared by
        every app they block, and nothing counts opens. */
@@ -227,6 +306,15 @@ export default function App() {
     goTo('appopen');
   };
 
+  /* They said why and for how long. Rilo keeps both. */
+  const startCheckedIn = (appName, { reason, why, mins }) => {
+    const entry = { app: appName, reason, why, promised: mins, at: Date.now(), date: today() };
+    setPromise(entry);
+    setCheckins((list) => list.concat([entry]).slice(-60));
+    track('checkin', reason === 'custom' ? `custom: ${why}` : reason);
+    startSessionFor(appName, mins);
+  };
+
   const finishSession = (appName, minutesUsed) => {
     /* closing early doesn't spend the rest of the sitting — those minutes
        stay in today's budget, so they get another go later. */
@@ -245,6 +333,30 @@ export default function App() {
     } else {
       setSavedNote(null);
     }
+
+    /* did they keep the promise they made on the way in? */
+    if (promise) {
+      const gone = Math.round((Date.now() - promise.at) / 60000);
+      const over = gone > promise.promised;
+      setCheckins((list) =>
+        list.map((c) => (c.at === promise.at ? { ...c, used: minutesUsed, gone, over } : c)),
+      );
+      if (over) {
+        track('checkin', `over: said ${promise.promised}m, took ${gone}m`);
+        setSavedNote(null);
+        setOverNote(
+          overLine({
+            reason: promise.reason,
+            why: promise.why,
+            promised: promise.promised,
+            gone,
+            fmt: fmtMins,
+          }),
+        );
+      }
+      setPromise(null);
+    }
+
     goTo('home', 'back');
   };
 
@@ -274,6 +386,16 @@ export default function App() {
 
     let gained = res.xp;
     const over = !res.hit;
+
+    /* a day under goal earns an emergency pass, up to the weekly cap */
+    if (res.hit) {
+      setPassBank((b) => {
+        const next = passesAfterGoodDay(b.left ?? 1);
+        if (next > (b.left ?? 1)) setPassWon(true);
+        return { ...b, left: next };
+      });
+      track('pass', 'earned one by hitting the goal');
+    }
 
     /* a week is 7 days; more than 2 bad days and it runs again */
     const daysDone = program.daysDone + 1;
@@ -609,6 +731,10 @@ export default function App() {
             sessionMins={sessionMins}
             setSessionMins={chooseSession}
             isPro={isPro}
+            planMode={planMode}
+            setPlanMode={setPlanMode}
+            hobbies={profileList('hobby')}
+            goalList={profileList('goal')}
           />
         );
       case 'paywall':
@@ -642,6 +768,15 @@ export default function App() {
             savedNote={savedNote}
             onClearSavedNote={() => setSavedNote(null)}
             isPro={isPro}
+            riloMood={riloMood}
+            riloNote={riloNote}
+            overNote={overNote}
+            onClearOverNote={() => setOverNote('')}
+            passesLeft={passesLeft}
+            passWon={passWon}
+            onClearPassWon={() => setPassWon(false)}
+            schedule={schedule}
+            backToday={back.today}
             suggestStrict={
               isPro &&
               !strict.on &&
@@ -674,6 +809,43 @@ export default function App() {
           />
         );
 
+      case 'whyopen':
+        return (
+          <WhyOpen
+            app={currentApp}
+            skin={chosenRilo}
+            onStart={(pick) => startCheckedIn(currentApp, pick)}
+            onNevermind={() => {
+              track('checkin', 'never mind');
+              go('home', 'back');
+            }}
+          />
+        );
+
+      case 'sharecard':
+        return (
+          <ShareCard
+            go={go}
+            skin={chosenRilo}
+            level={level}
+            streak={streak}
+            week={back.week}
+            total={back.total}
+          />
+        );
+
+      case 'buddies':
+        return (
+          <Buddies
+            go={go}
+            skin={chosenRilo}
+            buddies={buddies}
+            setBuddies={setBuddies}
+            myMood={riloMood}
+            myStreak={streak}
+          />
+        );
+
       case 'shield':
         return (
           <Shield
@@ -681,6 +853,7 @@ export default function App() {
             skin={chosenRilo}
             left={leftFor(currentApp)}
             sessionMins={sessionMins}
+            schedule={schedule}
             onTalk={() => setBanner(true)}
             onClose={() => go('home', 'back')}
           />
@@ -718,7 +891,10 @@ export default function App() {
             }}
             onUnlock={(why, mins) => {
               track('unlock', why);
-              startSessionFor(currentApp, mins ?? sessionMins);
+              /* "5 more minutes" and the pass are already a stated length;
+                 everything else goes through the check-in first */
+              if (mins) startSessionFor(currentApp, mins);
+              else go('whyopen');
             }}
             onPass={(why) => useEmergencyPass(currentApp, why)}
             onFiveMore={tapFiveMore}
@@ -810,8 +986,21 @@ export default function App() {
 
       case 'plan':
         /* today's plan is rilo pro */
-        if (!isPro) return <Plan go={go} skin={chosenRilo} locked onUpgrade={() => go('paywall')} />;
-        return <Plan go={go} skin={chosenRilo} />;
+        return (
+          <Plan
+            go={go}
+            skin={chosenRilo}
+            locked={!isPro}
+            onUpgrade={() => go('paywall')}
+            schedule={schedulePlan}
+            setSchedule={setSchedulePlan}
+            hobbies={profileList('hobby')}
+            goals={profileList('goal')}
+            school={school}
+            bedtime={bedtime}
+            scrollMins={weekGoal}
+          />
+        );
       case 'progress':
         return (
           <Progress
@@ -824,6 +1013,9 @@ export default function App() {
             weekGoal={weekGoal}
             planWeeks={planWeeks}
             isPro={isPro}
+            back={back}
+            backSays={backSays}
+            checkins={checkins}
           />
         );
       case 'pickrilo':
@@ -856,6 +1048,15 @@ export default function App() {
             breakdown={breakdown}
             startMins={startMins}
             weekGoal={weekGoal}
+            bedtime={bedtime}
+            setBedtime={setBedtime}
+            school={school}
+            setSchool={setSchool}
+            buddyCount={(buddies.friends ?? []).length}
+            planMode={planMode}
+            setPlanMode={setPlanMode}
+            hobbies={profileList('hobby')}
+            goalList={profileList('goal')}
             xp={xp}
             level={level}
             isPro={isPro}
@@ -945,6 +1146,38 @@ export default function App() {
           </div>
         );
       })}
+
+      {/* DEMO ONLY: the tester's remote control */}
+      {nav.entries[nav.entries.length - 1] !== 'appopen' && (
+        <DemoPanel
+          demoClock={demoClock}
+          used={usedTotalToday}
+          goal={weekGoal}
+          passes={passesLeft}
+          fmtMins={fmtMins}
+          onClock={(at) => {
+            setDemoClock(at);
+            track('demo', `clock ${at ?? 'real'}`);
+          }}
+          onUsage={(how) => {
+            const target =
+              how === 'under'
+                ? Math.round(weekGoal * 0.5)
+                : how === 'close'
+                  ? Math.round(weekGoal * 0.92)
+                  : Math.round(weekGoal * 1.4);
+            const first = watched[0] ?? 'tiktok';
+            setDay((d) => ({ ...d, used: { [first]: target } }));
+            track('demo', `usage ${how}`);
+          }}
+          onOpenBlocked={() => openApp(watched[0] ?? 'tiktok')}
+          onNextDay={() => endDay(false)}
+          onNextWeek={runWeek}
+          onShareCard={() => go('sharecard')}
+          onBuddies={() => go('buddies')}
+          onReset={startOver}
+        />
+      )}
     </PhoneFrame>
     </ThemeContext.Provider>
   );
