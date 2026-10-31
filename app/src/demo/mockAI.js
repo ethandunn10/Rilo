@@ -66,6 +66,58 @@ export function riloPlan({ startMins, goalMins, hobbies = [], goals = [], apps =
   return { pace, sessionMins, why };
 }
 
+/* ---------- Rilo builds your day ----------
+   Rules over the profile, their school hours and their bedtime. The
+   wording is scripted; in the mobile app this is a real model looking at
+   real Screen Time and a real calendar. */
+function clock(mins) {
+  const h = Math.floor(mins / 60) % 24;
+  const m = String(mins % 60).padStart(2, '0');
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${m}`;
+}
+
+export function riloSchedule({ hobbies = [], goals = [], school, bedtime, scrollMins = 60 }) {
+  const rows = [];
+  const add = (at, title, note) => rows.push({ at, title, note });
+
+  /* the day starts when school lets out, or mid-afternoon if there's none */
+  const [eh, em] = String(school?.on ? school.to : '15:00').split(':').map(Number);
+  let t = eh * 60 + (em || 0);
+
+  const free1 = Math.max(10, Math.round(scrollMins * 0.25));
+  const free2 = Math.max(10, Math.round(scrollMins * 0.5));
+
+  add(clock(t), school?.on ? 'out of school' : 'chill + snack', `${free1} min free scroll`);
+  t += 30;
+
+  const studyGoal = goals.find((g) => /grade|school|college|read|code|learn/.test(g));
+  add(clock(t), studyGoal ? `work on ${studyGoal}` : 'homework', 'apps locked for 45 min');
+  t += 75;
+
+  if (hobbies[0]) {
+    add(clock(t), hobbies[0], 'the thing you said you wanted time for');
+    t += 60;
+  }
+
+  const fitGoal = goals.find((g) => /fit|team|gym|strong/.test(g));
+  if (fitGoal && hobbies[1]) {
+    add(clock(t), hobbies[1], `counts toward ${fitGoal}`);
+    t += 45;
+  }
+
+  add(clock(t), 'dinner', 'phone away');
+  t += 60;
+
+  add(clock(t), 'free time', `${free2} min scroll allowed`);
+  t += 60;
+
+  const [bh, bm] = String(bedtime?.from || '22:30').split(':').map(Number);
+  add(clock(bh * 60 + (bm || 0)), 'bedtime', 'rilo goes to sleep, apps lock');
+
+  return rows;
+}
+
 /* ---------- buddies ---------- */
 /* No backend in the demo. Codes are generated locally and these three
    exist so the screen looks like a real one. */

@@ -108,6 +108,8 @@ export const DEFAULT_STATE = {
   buddies: { code: '', friends: [] },
   /* how the plan was made: 'rilo' | 'own' */
   planMode: 'rilo',
+  /* today's schedule on the plan tab: rilo's, or theirs */
+  schedule: { mode: 'rilo', rows: [] },
   /* demo panel: a fake clock, null means use the real one */
   demoClock: null,
   strict: {

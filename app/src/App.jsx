@@ -163,6 +163,8 @@ export default function App() {
   const [school, setSchool] = useState(saved.school);
   const [buddies, setBuddies] = useState(saved.buddies);
   const [planMode, setPlanMode] = useState(saved.planMode);
+  /* today's schedule on the plan tab */
+  const [schedulePlan, setSchedulePlan] = useState(saved.schedule);
   /* DEMO ONLY: a fake clock so bedtime and school can be tested */
   const [demoClock, setDemoClock] = useState(saved.demoClock);
   /* the promise they made on the check-in, for this session */
@@ -188,11 +190,12 @@ export default function App() {
       screenTime, triedAgain, breakdown, program, day, history, streak,
       fiveMoreDays, strict,
       checkins, passBank, bedtime, school, buddies, planMode, demoClock,
+      schedule: schedulePlan,
     });
   }, [name, about, apps, time, pace, sessionMins, plan, planChoice, isPro, xp, level, chosenRilo, theme, opens,
       extras, stats, screenTime, triedAgain, breakdown, program, day, history, streak,
       fiveMoreDays, strict, checkins, passBank, bedtime, school, buddies, planMode,
-      demoClock]);
+      demoClock, schedulePlan]);
 
   /* The web can't read real Screen Time, so the baseline comes from the
      hours they gave on Your time back (5h if they never said). */
@@ -983,8 +986,21 @@ export default function App() {
 
       case 'plan':
         /* today's plan is rilo pro */
-        if (!isPro) return <Plan go={go} skin={chosenRilo} locked onUpgrade={() => go('paywall')} />;
-        return <Plan go={go} skin={chosenRilo} />;
+        return (
+          <Plan
+            go={go}
+            skin={chosenRilo}
+            locked={!isPro}
+            onUpgrade={() => go('paywall')}
+            schedule={schedulePlan}
+            setSchedule={setSchedulePlan}
+            hobbies={profileList('hobby')}
+            goals={profileList('goal')}
+            school={school}
+            bedtime={bedtime}
+            scrollMins={weekGoal}
+          />
+        );
       case 'progress':
         return (
           <Progress

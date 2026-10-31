@@ -1,8 +1,10 @@
 /* Plan — exact port of designs/Plan.dc.html */
 
+import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import TabBar from '../components/TabBar';
+import { riloSchedule } from '../demo/mockAI';
 
 const ROWS = [
   ['3:15', 'chill + snack', '15 min free scroll allowed', 'done'],
@@ -13,6 +15,48 @@ const ROWS = [
   ['7:30', 'ap gov review', 'apps locked for 40 min', ''],
   ['9:00', 'free time', '30 min scroll allowed', ''],
 ];
+
+const cellInput = (width) => ({
+  width: width ?? '100%',
+  boxSizing: 'border-box',
+  minWidth: 0,
+  height: 26,
+  padding: '0 8px',
+  borderRadius: 10,
+  border: '1.5px solid rgba(18,48,26,0.35)',
+  background: '#FFFFFF',
+  fontFamily: 'Fredoka, sans-serif',
+  fontSize: 15,
+  fontWeight: 600,
+  color: '#12301A',
+});
+
+const modeBtn = (on) => ({
+  flex: 1,
+  minHeight: 38,
+  borderRadius: 999,
+  border: '2px solid #12301A',
+  background: on ? '#12301A' : 'rgba(255,255,255,0.85)',
+  color: on ? '#FFFFFF' : '#12301A',
+  fontFamily: 'Fredoka, sans-serif',
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: 'pointer',
+});
+
+const addBtn = {
+  marginTop: 8,
+  minHeight: 42,
+  width: '100%',
+  borderRadius: 999,
+  border: '2px dashed rgba(18,48,26,0.4)',
+  background: 'transparent',
+  color: '#12301A',
+  fontFamily: 'Fredoka, sans-serif',
+  fontSize: 15,
+  fontWeight: 600,
+  cursor: 'pointer',
+};
 
 const dotStyle = (status) => {
   if (status === 'now') {
@@ -63,7 +107,58 @@ const rowStyle = (status, i) => {
   };
 };
 
-export default function Plan({ go, skin, locked = false, onUpgrade }) {
+export default function Plan({
+  go,
+  skin,
+  locked = false,
+  onUpgrade,
+  /* ---- add-ons (rilo-addons-test) ---- */
+  schedule = { mode: 'rilo', rows: [] },
+  setSchedule = () => {},
+  hobbies = [],
+  goals = [],
+  school,
+  bedtime,
+  scrollMins = 60,
+}) {
+  const [editing, setEditing] = useState(false);
+
+  /* Rilo's version until they make their own; the design's day is the
+     fallback so the screen is never empty. */
+  const rows = schedule.rows?.length
+    ? schedule.rows
+    : ROWS.map(([at, title, note]) => ({ at, title, note }));
+
+  const letRiloDoIt = () => {
+    setSchedule({
+      mode: 'rilo',
+      rows: riloSchedule({ hobbies, goals, school, bedtime, scrollMins }),
+    });
+    setEditing(false);
+  };
+
+  const startOwn = () => {
+    setSchedule({ mode: 'own', rows: rows.map((r) => ({ ...r })) });
+    setEditing(true);
+  };
+
+  const editRow = (i, key, value) =>
+    setSchedule({
+      ...schedule,
+      mode: 'own',
+      rows: rows.map((r, n) => (n === i ? { ...r, [key]: value } : r)),
+    });
+
+  const removeRow = (i) =>
+    setSchedule({ ...schedule, mode: 'own', rows: rows.filter((_, n) => n !== i) });
+
+  const addRow = () =>
+    setSchedule({
+      ...schedule,
+      mode: 'own',
+      rows: rows.concat([{ at: '8:00', title: 'something', note: '' }]),
+    });
+
   return (
     <div
       style={{
@@ -77,9 +172,12 @@ export default function Plan({ go, skin, locked = false, onUpgrade }) {
       <Sky hills="low" />
 
       <div
+        className="scroll-y"
         style={{
           position: 'relative',
-          padding: '52px 20px 0',
+          height: '100%',
+          boxSizing: 'border-box',
+          padding: '52px 20px 104px',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
@@ -137,8 +235,36 @@ export default function Plan({ go, skin, locked = false, onUpgrade }) {
             flexDirection: 'column',
           }}
         >
-          {ROWS.map(([time, title, sub, status], i) => (
-            <div key={time} style={rowStyle(status, i)}>
+          {/* who makes the day (rilo-addons-test) */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+            <button
+              type="button"
+              className="tap"
+              onClick={letRiloDoIt}
+              style={modeBtn(schedule.mode === 'rilo' && !editing)}
+            >
+              let rilo make it
+            </button>
+            <button
+              type="button"
+              className="tap"
+              onClick={startOwn}
+              style={modeBtn(schedule.mode === 'own' && !editing)}
+            >
+              make my own
+            </button>
+            <button
+              type="button"
+              className="tap"
+              onClick={() => setEditing((v) => !v)}
+              style={modeBtn(editing)}
+            >
+              {editing ? 'done' : 'edit'}
+            </button>
+          </div>
+
+          {rows.map((row, i) => (
+            <div key={`${row.at}-${i}`} style={rowStyle(row.status ?? '', i)}>
               <p
                 style={{
                   margin: 0,
@@ -150,24 +276,79 @@ export default function Plan({ go, skin, locked = false, onUpgrade }) {
                   color: '#3D5A46',
                 }}
               >
-                {time}
+                {editing ? (
+                  <input
+                    value={row.at}
+                    onChange={(e) => editRow(i, 'at', e.target.value)}
+                    style={cellInput(44)}
+                  />
+                ) : (
+                  row.at
+                )}
               </p>
-              <span style={dotStyle(status)} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flexGrow: 1 }}>
-                <p
+              <span style={dotStyle(row.status ?? '')} />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 1, flexGrow: 1, minWidth: 0 }}>
+                {editing ? (
+                  <>
+                    <input
+                      value={row.title}
+                      onChange={(e) => editRow(i, 'title', e.target.value)}
+                      style={cellInput()}
+                    />
+                    <input
+                      value={row.note}
+                      onChange={(e) => editRow(i, 'note', e.target.value)}
+                      placeholder="what happens to your apps"
+                      style={{ ...cellInput(), fontSize: 12 }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontFamily: 'Fredoka, sans-serif',
+                        fontSize: 17,
+                        fontWeight: 600,
+                      }}
+                    >
+                      {row.title}
+                    </p>
+                    <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#3D5A46' }}>
+                      {row.note}
+                    </p>
+                  </>
+                )}
+              </div>
+              {editing && (
+                <button
+                  type="button"
+                  aria-label={`Remove ${row.title}`}
+                  onClick={() => removeRow(i)}
                   style={{
-                    margin: 0,
-                    fontFamily: 'Fredoka, sans-serif',
-                    fontSize: 17,
-                    fontWeight: 600,
+                    flexShrink: 0,
+                    width: 28,
+                    height: 28,
+                    borderRadius: 999,
+                    border: '2px solid #12301A',
+                    background: 'transparent',
+                    color: '#12301A',
+                    fontSize: 15,
+                    fontWeight: 700,
+                    cursor: 'pointer',
                   }}
                 >
-                  {title}
-                </p>
-                <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#3D5A46' }}>{sub}</p>
-              </div>
+                  ×
+                </button>
+              )}
             </div>
           ))}
+
+          {editing && (
+            <button type="button" className="tap" onClick={addRow} style={addBtn}>
+              + add something
+            </button>
+          )}
         </div>
       </div>
 

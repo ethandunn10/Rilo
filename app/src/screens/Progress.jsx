@@ -184,10 +184,14 @@ export default function Progress({
     >
       <Sky hills="low" />
 
+      {/* the cards outgrew the screen, so the page scrolls */}
       <div
+        className="scroll-y"
         style={{
           position: 'relative',
-          padding: '52px 20px 0',
+          height: '100%',
+          boxSizing: 'border-box',
+          padding: '52px 20px 104px',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
