@@ -460,13 +460,6 @@ export default function You({
               setPace={setPace}
               sessionMins={sessionMins}
               setSessionMins={setSessionMins}
-              breakdown={breakdown}
-              startMins={startMins}
-              weekGoal={weekGoal}
-              mode={planMode}
-              setMode={setPlanMode}
-              hobbies={hobbies}
-              goals={goalList}
             />
           </div>
           )}

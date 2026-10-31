@@ -305,17 +305,19 @@ export default function TimeBack({
               className="tap"
               onClick={() => setEditing((v) => !v)}
               style={{
-                alignSelf: 'flex-start',
-                minHeight: 36,
-                padding: '0 14px',
+                alignSelf: 'stretch',
+                minHeight: 46,
+                marginTop: 4,
+                padding: '0 18px',
                 borderRadius: 999,
-                border: '2px solid rgba(255,255,255,0.55)',
-                background: editing ? '#FFFFFF' : 'transparent',
-                color: editing ? '#12301A' : '#FFFFFF',
+                border: 0,
+                background: '#FFFFFF',
+                color: '#12301A',
                 fontFamily: 'Fredoka, sans-serif',
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: 600,
                 cursor: 'pointer',
+                boxShadow: '0 4px 0 rgba(0,0,0,0.28)',
               }}
             >
               {editing ? 'done' : 'change my plan'}
@@ -327,13 +329,6 @@ export default function TimeBack({
                 setPace={setPace}
                 sessionMins={sessionMins}
                 setSessionMins={setSessionMins}
-                breakdown={breakdown}
-                startMins={startMins}
-                weekGoal={goals[0]}
-                mode={planMode}
-                setMode={setPlanMode}
-                hobbies={hobbies}
-                goals={goalList}
                 dark
               />
             )}

@@ -57,9 +57,9 @@ export const NEVER_BLOCK = ['messages', 'phone'];
 /* how fast they want to get there. Straight to the goal is one week at
    the target; the others close the gap a step at a time. */
 export const PACES = [
-  { id: 'straight', weeks: 1, label: 'straight to the goal', note: 'your goal from day one' },
-  { id: 'two', weeks: 2, label: '2 weeks', note: 'halfway, then all the way' },
-  { id: 'steady', weeks: 4, label: '4 weeks', note: 'a step down every week' },
+  { id: 'straight', weeks: 1, label: 'straight to it', note: 'your goal from day one. hardest.' },
+  { id: 'two', weeks: 2, label: '2 weeks', note: 'halfway, then all the way.' },
+  { id: 'steady', weeks: 4, label: '4 weeks', note: 'a small step down each week. easiest.' },
 ];
 
 export const PLAN_WEEKS = 4;

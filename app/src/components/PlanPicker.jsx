@@ -1,11 +1,10 @@
-/* How hard the plan pushes, and how long one sitting lasts.
+/* How fast they want to get to their goal. Three choices, a line each.
 
-   Rilo works the opens out from the sitting length — pick 10 minutes and
-   an hour of tiktok is six sittings, not some number nobody chose. */
+   The sitting length that the per-app opens are worked out from is kept
+   as a prop but no longer shown — one number across several apps didn't
+   mean anything anyone could act on. */
 
-import { useState } from 'react';
 import { PACES } from '../lib/plan';
-import { riloPlan } from '../demo/mockAI';
 
 const chip = (on, dark) => ({
   flex: 1,
@@ -27,95 +26,13 @@ export default function PlanPicker({
   setPace,
   sessionMins,
   setSessionMins,
-  breakdown,
-  startMins,
-  weekGoal,
   dark = false,
-  /* ---- add-ons (rilo-addons-test) ---- */
-  mode = 'rilo',
-  setMode,
-  hobbies = [],
-  goals = [],
 }) {
-  const picked = PACES.find((p) => p.id === pace) ?? PACES[1];
-  const [why, setWhy] = useState([]);
 
-  /* DEMO ONLY: scripted rules over the saved profile, see demo/mockAI.js */
-  const letRiloDoIt = () => {
-    const made = riloPlan({
-      startMins,
-      goalMins: weekGoal,
-      hobbies,
-      goals,
-      apps: (breakdown?.apps ?? []).map((a) => a.app),
-    });
-    setPace(made.pace);
-    setSessionMins(made.sessionMins);
-    setWhy(made.why);
-    setMode?.('rilo');
-  };
 
-  const chip2 = (on) => ({
-    flex: 1,
-    minHeight: 44,
-    borderRadius: 999,
-    border: `2px solid ${dark ? 'rgba(255,255,255,0.55)' : 'var(--line, #12301A)'}`,
-    background: on ? (dark ? '#FFFFFF' : '#12301A') : 'transparent',
-    color: on ? (dark ? '#12301A' : '#FFFFFF') : dark ? '#FFFFFF' : '#12301A',
-    fontFamily: 'Fredoka, sans-serif',
-    fontSize: 15,
-    fontWeight: 600,
-    cursor: 'pointer',
-  });
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      {/* who makes the plan (rilo-addons-test) */}
-      <div style={{ display: 'flex', gap: 6 }}>
-        <button type="button" className="tap" onClick={letRiloDoIt} style={chip2(mode === 'rilo')}>
-          let rilo make it
-        </button>
-        <button
-          type="button"
-          className="tap"
-          onClick={() => {
-            setWhy([]);
-            setMode?.('own');
-          }}
-          style={chip2(mode === 'own')}
-        >
-          make my own
-        </button>
-      </div>
-
-      {why.length > 0 && (
-        <div
-          style={{
-            padding: '10px 12px',
-            borderRadius: 18,
-            background: dark ? 'rgba(255,255,255,0.12)' : 'rgba(18,48,26,0.06)',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-          }}
-        >
-          {why.map((line) => (
-            <p
-              key={line}
-              style={{
-                margin: 0,
-                fontSize: 13,
-                fontWeight: 600,
-                lineHeight: 1.35,
-                color: dark ? '#C9E6CE' : '#2C4A36',
-              }}
-            >
-              {line}
-            </p>
-          ))}
-        </div>
-      )}
-
       <p
         style={{
           margin: 0,
@@ -126,7 +43,7 @@ export default function PlanPicker({
           color: dark ? '#FFFFFF' : '#12301A',
         }}
       >
-        how fast do you want to get there?
+        how fast?
       </p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {PACES.map((p) => (
@@ -153,19 +70,6 @@ export default function PlanPicker({
         ))}
       </div>
 
-      <p
-        style={{
-          margin: '2px 0 0',
-          fontSize: 13,
-          fontWeight: 600,
-          color: dark ? '#C9E6CE' : '#2C4A36',
-        }}
-      >
-        {picked.weeks === 1
-          ? 'one week, straight at your goal.'
-          : `${picked.weeks} weeks, a step down each one.`}{' '}
-        change it whenever.
-      </p>
     </div>
   );
 }
