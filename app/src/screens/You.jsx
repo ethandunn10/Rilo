@@ -14,6 +14,7 @@ import AppPicker from '../components/AppPicker';
 import GoalStepper from '../components/GoalStepper';
 import StrictCard from '../components/StrictCard';
 import ProLock from '../components/ProLock';
+import ScheduleCard from '../components/ScheduleCard';
 import { FREE_MAX_APPS, goalFloorHours, hoursToMins } from '../lib/plan';
 import PlanPicker from '../components/PlanPicker';
 import { levelProgress, skinInfo, UNLOCK_ALL } from '../lib/levels';
@@ -109,6 +110,16 @@ export default function You({
   breakdown,
   startMins,
   weekGoal,
+  /* ---- add-ons (rilo-addons-test) ---- */
+  bedtime = { on: false, from: '22:30', to: '07:00' },
+  setBedtime = () => {},
+  school = { on: false, days: [], from: '08:15', to: '15:00' },
+  setSchool = () => {},
+  buddyCount = 0,
+  planMode = 'rilo',
+  setPlanMode = () => {},
+  hobbies = [],
+  goalList = [],
   xp,
   level,
   isPro,
@@ -364,6 +375,49 @@ export default function You({
             )}
           </div>
 
+          {/* bedtime + school (rilo-addons-test) */}
+          <ScheduleCard
+            style={card('.22s')}
+            bedtime={bedtime}
+            setBedtime={setBedtime}
+            school={school}
+            setSchool={setSchool}
+          />
+
+          {/* buddies (rilo-addons-test) */}
+          <button
+            type="button"
+            className="tap"
+            onClick={() => go('buddies')}
+            style={{
+              ...card('.24s'),
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 10,
+              textAlign: 'left',
+              cursor: 'pointer',
+            }}
+          >
+            <Rilo skin={chosenRilo} mood="wave" size={54} />
+            <span style={{ flexGrow: 1, minWidth: 0 }}>
+              <span
+                style={{
+                  display: 'block',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 19,
+                  fontWeight: 600,
+                }}
+              >
+                buddies
+              </span>
+              <span
+                style={{ display: 'block', marginTop: 2, fontSize: 13, fontWeight: 600, color: '#2C4A36' }}
+              >
+                {buddyCount ? `${buddyCount} added` : 'invite code only. no profiles.'}
+              </span>
+            </span>
+          </button>
+
           {/* strict mode — rilo pro */}
           {isPro ? (
             <StrictCard
@@ -409,6 +463,10 @@ export default function You({
               breakdown={breakdown}
               startMins={startMins}
               weekGoal={weekGoal}
+              mode={planMode}
+              setMode={setPlanMode}
+              hobbies={hobbies}
+              goals={goalList}
             />
           </div>
           )}

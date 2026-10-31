@@ -95,6 +95,21 @@ export const DEFAULT_STATE = {
   fiveMoreDays: 0,
 
   /* strict mode */
+  /* ---------- add-ons (rilo-addons-test) ---------- */
+  /* why they opened a blocked app, and for how long — kept for stats */
+  checkins: [],
+  /* emergency passes they've banked this week, earned by good days */
+  passBank: { week: '', left: 1, earnedToday: false },
+  /* rilo goes to sleep, apps lock */
+  bedtime: { on: false, from: '22:30', to: '07:00' },
+  /* locked on a schedule, not location */
+  school: { on: false, days: ['mon', 'tue', 'wed', 'thu', 'fri'], from: '08:15', to: '15:00' },
+  /* buddies: invite codes only, no profiles, no search */
+  buddies: { code: '', friends: [] },
+  /* how the plan was made: 'rilo' | 'own' */
+  planMode: 'rilo',
+  /* demo panel: a fake clock, null means use the real one */
+  demoClock: null,
   strict: {
     on: false,
     /* 1 | 3 | 7 days */

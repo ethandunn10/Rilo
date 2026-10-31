@@ -161,7 +161,13 @@ export default function Progress({
   weekGoal,
   planWeeks = 4,
   isPro = false,
+  /* ---- add-ons (rilo-addons-test) ---- */
+  back = { today: 0, week: 0, total: 0 },
+  backSays = '',
+  checkins = [],
 }) {
+  const kept = checkins.filter((c) => c.gone !== undefined);
+  const onTime = kept.filter((c) => !c.over).length;
   const theme = useTheme();
   const prog = levelProgress(xp, level);
   const nextSkin = prog.atMax ? null : nextSkinAfter(level);
@@ -286,6 +292,78 @@ export default function Progress({
           }}
         >
           <CardDecor theme={theme.id} />
+
+          {/* time you got back (rilo-addons-test) */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 8,
+              marginBottom: 2,
+            }}
+          >
+            {[
+              ['today', back.today],
+              ['this week', back.week],
+              ['all time', back.total],
+            ].map(([label, mins]) => (
+              <div
+                key={label}
+                style={{
+                  flex: 1,
+                  padding: '8px 6px',
+                  borderRadius: 16,
+                  background: 'rgba(255,255,255,0.6)',
+                  textAlign: 'center',
+                }}
+              >
+                <p
+                  style={{
+                    margin: 0,
+                    fontFamily: 'Fredoka, sans-serif',
+                    fontSize: 19,
+                    fontWeight: 700,
+                    color: '#1F6B2E',
+                  }}
+                >
+                  {fmtMins(mins)}
+                </p>
+                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: '#2C4A36' }}>{label}</p>
+              </div>
+            ))}
+          </div>
+          {backSays && (
+            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: '#2C4A36' }}>
+              you got back {fmtMins(back.week)} this week. {backSays}.
+            </p>
+          )}
+          {kept.length > 0 && (
+            <p style={{ margin: '0 0 4px', fontSize: 13, fontWeight: 700, color: '#2C4A36' }}>
+              check-ins: {onTime} of {kept.length} stayed inside the time you asked for.
+            </p>
+          )}
+
+          <button
+            type="button"
+            className="tap"
+            onClick={() => go('sharecard')}
+            style={{
+              alignSelf: 'flex-start',
+              marginBottom: 6,
+              minHeight: 38,
+              padding: '0 14px',
+              borderRadius: 999,
+              border: '2px solid var(--line, #12301A)',
+              background: '#FFFFFF',
+              color: '#12301A',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 14,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            your week, as a card
+          </button>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
             <p
               style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}

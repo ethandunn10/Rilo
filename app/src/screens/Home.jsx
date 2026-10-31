@@ -88,6 +88,16 @@ export default function Home({
   savedNote,
   onClearSavedNote,
   isPro = false,
+  /* ---- add-ons (rilo-addons-test) ---- */
+  riloMood = 'coach',
+  riloNote = '',
+  overNote = '',
+  onClearOverNote,
+  passesLeft = 1,
+  passWon = false,
+  onClearPassWon,
+  schedule = { locked: false, kind: null, until: null },
+  backToday = 0,
 }) {
   const theme = useTheme();
   const upNext = suggestion(about).task;
@@ -135,7 +145,7 @@ export default function Home({
             color: '#1F6B2E',
           }}
         >
-          lvl 4 · {xp} xp
+          lvl 4 · {xp} xp · {passesLeft} pass{passesLeft === 1 ? '' : 'es'}
         </p>
       </div>
 
@@ -195,7 +205,7 @@ export default function Home({
             cursor: 'pointer',
           }}
         >
-          <Rilo skin={skin} mood="coach" size={140} />
+          <Rilo skin={skin} mood={riloMood} size={140} />
           {/* tap Rilo to talk */}
           <span
             style={{
@@ -234,7 +244,7 @@ export default function Home({
           }}
         >
           <p style={{ margin: 0, fontSize: 14, fontWeight: 700, lineHeight: 1.4 }}>
-            34 min saved today. that's a whole practice.
+            {riloNote || `${fmtMins(backToday)} saved today.`}
           </p>
         </div>
       </div>
@@ -356,8 +366,91 @@ export default function Home({
         <span style={{ fontSize: 13, fontWeight: 700, color: '#1F6B2E' }}>test it</span>
       </button>
 
+      {/* over the time they promised on the way in */}
+      {overNote && (
+        <button
+          type="button"
+          className="tap"
+          onClick={onClearOverNote}
+          style={{
+            position: 'absolute',
+            left: 20,
+            right: 20,
+            top: 568,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            textAlign: 'left',
+            padding: '12px 14px',
+            borderRadius: 24,
+            background: 'rgba(255,255,255,0.92)',
+            border: '2px solid var(--line, #12301A)',
+            cursor: 'pointer',
+            animation: 'rise .4s ease-out both',
+          }}
+        >
+          <Rilo skin={skin} mood="letdown" size={58} />
+          <span
+            style={{
+              flexGrow: 1,
+              minWidth: 0,
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 16,
+              fontWeight: 600,
+              lineHeight: 1.25,
+            }}
+          >
+            {overNote}
+          </span>
+        </button>
+      )}
+
+      {/* a pass earned by hitting the goal */}
+      {passWon && !overNote && (
+        <button
+          type="button"
+          className="tap"
+          onClick={onClearPassWon}
+          style={{
+            position: 'absolute',
+            left: 20,
+            right: 20,
+            top: 568,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            textAlign: 'left',
+            padding: '12px 14px',
+            borderRadius: 24,
+            background: 'rgba(255,255,255,0.92)',
+            border: '2px solid var(--line, #12301A)',
+            cursor: 'pointer',
+            animation: 'rise .4s ease-out both',
+          }}
+        >
+          <Rilo skin={skin} mood="proud" motion="jump" size={58} />
+          <span style={{ flexGrow: 1, minWidth: 0 }}>
+            <span
+              style={{
+                display: 'block',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 17,
+                fontWeight: 600,
+              }}
+            >
+              you earned an emergency pass.
+            </span>
+            <span
+              style={{ display: 'block', marginTop: 2, fontSize: 13, fontWeight: 600, color: '#2C4A36' }}
+            >
+              {passesLeft} in the bank now.
+            </span>
+          </span>
+        </button>
+      )}
+
       {/* closed it early — the minutes they didn't spend are still theirs */}
-      {savedNote && !suggestStrict && (
+      {savedNote && !suggestStrict && !overNote && !passWon && (
         <button
           type="button"
           className="tap"

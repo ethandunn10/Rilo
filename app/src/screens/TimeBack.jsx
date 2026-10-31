@@ -64,6 +64,10 @@ export default function TimeBack({
   sessionMins,
   setSessionMins,
   isPro = false,
+  planMode = 'rilo',
+  setPlanMode = () => {},
+  hobbies = [],
+  goalList = [],
 }) {
   const { now, goal } = time;
   const saved = Math.max(0, now - goal);
@@ -326,6 +330,10 @@ export default function TimeBack({
                 breakdown={breakdown}
                 startMins={startMins}
                 weekGoal={goals[0]}
+                mode={planMode}
+                setMode={setPlanMode}
+                hobbies={hobbies}
+                goals={goalList}
                 dark
               />
             )}

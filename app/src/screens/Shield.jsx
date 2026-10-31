@@ -7,10 +7,19 @@
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import AppLogo from '../components/AppLogo';
+import { fmtClock } from '../lib/addons';
 import { fmtMins } from '../lib/plan';
 
-export default function Shield({ app, skin, left, sessionMins = 15, onTalk, onClose }) {
-  const locked = left?.locked;
+export default function Shield({
+  app,
+  skin,
+  left,
+  sessionMins = 15,
+  schedule = { locked: false, kind: null, until: null },
+  onTalk,
+  onClose,
+}) {
+  const locked = left?.locked || schedule.locked;
 
   return (
     <div
@@ -80,7 +89,11 @@ export default function Shield({ app, skin, left, sessionMins = 15, onTalk, onCl
             textAlign: 'center',
           }}
         >
-          {locked
+          {schedule.locked
+            ? schedule.kind === 'bedtime'
+              ? `bedtime. open again at ${fmtClock(schedule.until)}`
+              : `school hours. open again at ${fmtClock(schedule.until)}`
+            : locked
             ? 'locked till tomorrow'
             : left.shared
               ? `${fmtMins(left.minutes)} left today`
