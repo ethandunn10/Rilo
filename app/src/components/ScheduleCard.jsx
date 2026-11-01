@@ -1,5 +1,8 @@
-/* Bedtime and school mode. Both are schedules, never location, and both
-   leave emergency passes working. */
+/* Bedtime, school mode and focus blocks.
+
+   All three lock the same set of apps: blocked and limited ones go away,
+   always-allowed ones never do, and the emergency pass works through all of
+   it (§14). None of them is location-based — they're all just windows. */
 
 import { SCHOOL_DAYS, fmtClock } from '../lib/addons';
 
@@ -54,7 +57,23 @@ function Toggle({ on, onTap, label }) {
   );
 }
 
-export default function ScheduleCard({ style, bedtime, setBedtime, school, setSchool }) {
+/* a focus block is "lock it for the next N minutes", from now */
+const FOCUS_LENGTHS = [30, 45, 60, 90];
+
+function endsIn(mins) {
+  const d = new Date(Date.now() + mins * 60000);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+export default function ScheduleCard({
+  style,
+  bedtime,
+  setBedtime,
+  school,
+  setSchool,
+  focus = { on: false, until: '' },
+  setFocus = () => {},
+}) {
   const toggleDay = (d) => {
     const days = school.days ?? [];
     setSchool({
@@ -161,9 +180,57 @@ export default function ScheduleCard({ style, bedtime, setBedtime, school, setSc
         </div>
       )}
 
-      {(bedtime.on || school.on) && (
+      <div style={{ height: 1, background: 'rgba(18,48,26,0.12)' }} />
+
+      {/* focus block — the one you start yourself, right now */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ flexGrow: 1, minWidth: 0 }}>
+          <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}>
+            focus block
+          </p>
+          <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 600, color: '#2C4A36' }}>
+            {focus.on
+              ? `on till ${fmtClock(focus.until)}. apps locked.`
+              : 'lock everything for a while, starting now.'}
+          </p>
+        </div>
+        <Toggle
+          on={focus.on}
+          label="Focus block"
+          onTap={() => setFocus(focus.on ? { on: false, until: '' } : { on: true, until: endsIn(45) })}
+        />
+      </div>
+
+      {!focus.on && (
+        <div style={{ display: 'flex', gap: 5 }}>
+          {FOCUS_LENGTHS.map((m) => (
+            <button
+              key={m}
+              type="button"
+              className="tap"
+              onClick={() => setFocus({ on: true, until: endsIn(m) })}
+              style={{
+                flex: 1,
+                minHeight: 38,
+                borderRadius: 999,
+                border: '2px solid var(--line, #12301A)',
+                background: 'rgba(255,255,255,0.9)',
+                color: '#12301A',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              {m}m
+            </button>
+          ))}
+        </div>
+      )}
+
+      {(bedtime.on || school.on || focus.on) && (
         <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#2C4A36' }}>
-          emergency passes still work
+          always-allowed apps keep working, and so does your emergency pass
           {bedtime.on ? `, even after ${fmtClock(bedtime.from)}` : ''}.
         </p>
       )}

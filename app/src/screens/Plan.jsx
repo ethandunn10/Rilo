@@ -6,6 +6,8 @@ import Rilo from '../components/Rilo';
 import TabBar from '../components/TabBar';
 import { riloSchedule } from '../demo/mockAI';
 import ScheduleAsk from '../components/ScheduleAsk';
+import { fmtMins } from '../lib/plan';
+import { planCheckLine } from '../lib/limits';
 
 const ROWS = [
   ['3:15', 'chill + snack', '15 min free scroll allowed', 'done'],
@@ -60,7 +62,12 @@ const bigSub = (primary) => ({
 });
 
 
+/* Sticks to the bottom of the scroller while editing, so however many rows
+   they add, "done" is on screen and tappable without hunting for it. */
 const doneBtn = {
+  position: 'sticky',
+  bottom: 8,
+  zIndex: 3,
   marginTop: 10,
   width: '100%',
   minHeight: 56,
@@ -152,6 +159,9 @@ export default function Plan({
   bedtime,
   scrollMins = 60,
   weekAhead = [],
+  /* the plan check belongs on the plan screen too (§9) */
+  check,
+  onLimits = () => {},
 }) {
   const [editing, setEditing] = useState(false);
   /* rilo asks a few things before he builds anything */
@@ -217,7 +227,8 @@ export default function Plan({
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '52px 20px 104px',
+          padding: '52px 20px 0',
+          '--tail': '128px',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
@@ -228,6 +239,9 @@ export default function Plan({
             display: 'flex',
             alignItems: 'center',
             gap: 8,
+            /* a flex child in a scrolling column must not shrink, or the
+               page squashes its content instead of scrolling to it */
+            flexShrink: 0,
             animation: 'rise14 .4s ease-out both',
           }}
         >
@@ -273,8 +287,66 @@ export default function Plan({
             boxShadow: '0 4px 0 var(--line)',
             display: 'flex',
             flexDirection: 'column',
+            /* same reason: this card grows with every row they add, and it
+               has to push the page taller rather than compress */
+            flexShrink: 0,
           }}
         >
+          {/* Does the plan add up? The limits are what actually block apps,
+              so a day planned around them has to fit inside them (§9). */}
+          {check && (
+            <button
+              type="button"
+              className="tap"
+              onClick={onLimits}
+              style={{
+                marginTop: 8,
+                marginBottom: 8,
+                padding: '11px 13px',
+                borderRadius: 18,
+                background: check.over ? '#12301A' : 'rgba(18,48,26,0.06)',
+                border: 0,
+                color: check.over ? '#FFFFFF' : '#12301A',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 3,
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.08em',
+                  textTransform: 'uppercase',
+                  color: check.over ? '#9FD8A9' : '#2C4A36',
+                }}
+              >
+                plan check
+              </span>
+              <span
+                style={{
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  lineHeight: 1.35,
+                }}
+              >
+                {planCheckLine(check, fmtMins)}
+              </span>
+              <span
+                style={{
+                  fontSize: 12,
+                  fontWeight: 600,
+                  color: check.over ? '#C9E6CE' : '#3D5A46',
+                }}
+              >
+                tap to change your limits
+              </span>
+            </button>
+          )}
+
           {/* what the calendar means for the week (rilo-addons-test-2) */}
           {weekAhead.length > 0 && (
             <div

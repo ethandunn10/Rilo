@@ -19,7 +19,8 @@ const SECONDS = 30;
 export default function NightCheckIn({ skin, onDone, onSkip }) {
   const [step, setStep] = useState(0);
   const [said, setSaid] = useState({ today: '', tomorrow: '' });
-  const [typing, setTyping] = useState(false);
+  /* typing first here too — talking is the button underneath */
+  const [typing, setTyping] = useState(true);
   const [draft, setDraft] = useState('');
   const [left, setLeft] = useState(SECONDS);
   const [done, setDone] = useState(false);
@@ -74,6 +75,9 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
       setTyping(true);
       return;
     }
+    /* tapping him is choosing to talk — put the keyboard away so there
+       aren't two live ways to answer at once */
+    setTyping(false);
     setLeft(SECONDS);
     mic.start((heard) => answer(heard));
   };
@@ -101,16 +105,63 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '52px 22px 26px',
+          padding: '52px 22px 0',
+          '--tail': '26px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: 10,
         }}
       >
-        <p style={{ margin: 0, fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', opacity: 0.7 }}>
-          TONIGHT&apos;S CHECK-IN
-        </p>
+        {/* Top row, the same shape as the Talk screen: one clearly tappable
+            button on the left. The old way out was a 15px "not tonight" at
+            the very bottom of a scrolling page — easy to miss, easy to
+            mis-tap, and below the fold while he was still asking. */}
+        <div
+          style={{
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+            minHeight: 40,
+          }}
+        >
+          <button
+            type="button"
+            className="tap"
+            onClick={onSkip}
+            style={{
+              minHeight: 40,
+              padding: '0 16px',
+              borderRadius: 999,
+              border: '2px solid rgba(255,255,255,0.6)',
+              background: 'rgba(255,255,255,0.14)',
+              color: '#FFFFFF',
+              fontFamily: 'Fredoka, sans-serif',
+              fontSize: 16,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            close
+          </button>
+
+          <p
+            style={{
+              margin: 0,
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: '0.1em',
+              opacity: 0.7,
+            }}
+          >
+            CHECK-IN
+          </p>
+
+          {/* keeps the label centred against the button on the left */}
+          <span style={{ width: 72 }} />
+        </div>
 
         <div
           style={{
@@ -159,7 +210,11 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
               fontWeight: 600,
             }}
           >
-            {mic.listening ? `tap to stop · ${left}s` : 'hold the thought, tap to talk'}
+            {mic.listening
+              ? `tap to stop · ${left}s`
+              : typing
+                ? 'type it below, or tap rilo to say it'
+                : 'hold the thought, tap to talk'}
           </p>
         )}
 
@@ -293,23 +348,6 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
           </button>
         )}
 
-        <button
-          type="button"
-          className="tap"
-          onClick={onSkip}
-          style={{
-            border: 0,
-            background: 'transparent',
-            color: 'rgba(255,255,255,0.75)',
-            fontFamily: 'Fredoka, sans-serif',
-            fontSize: 15,
-            fontWeight: 600,
-            padding: 6,
-            cursor: 'pointer',
-          }}
-        >
-          not tonight
-        </button>
       </div>
     </div>
   );

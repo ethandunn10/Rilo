@@ -1,9 +1,9 @@
 /* Talk — tell Rilo about yourself, out loud.
 
-   mode="onboarding": after "Instead", before About you. Rilo asks 4 quick
-   questions (name, hobbies, goals, when you scroll most). What he hears is
-   turned into the same chips About you uses, so the next screen shows
-   "here's what i got" and they can fix anything.
+   mode="onboarding": after "Instead", before About you. Rilo asks 5 quick
+   questions (name, hobbies, goals, whether they post, and when they scroll
+   most). What he hears is turned into the same chips About you uses, so the
+   next screen shows "here's what i got" and they can fix anything.
 
    mode="chat": from Home (tap Rilo). Tell him anything new — a hobby, a
    goal — and he adds it.
@@ -22,6 +22,7 @@ import {
   hobbiesIn,
   goalsIn,
   nameIn,
+  creatorIn,
   joinNice,
   didYouMean,
   isNonAnswer,
@@ -36,6 +37,14 @@ const ONBOARDING = [
   { id: 'name', ask: "hey! i'm rilo. what should i call you?", mood: 'wave' },
   { id: 'hobby', ask: "what do you love doing when you're not on your phone?", mood: 'curious' },
   { id: 'goal', ask: "what are you working toward right now?", mood: 'curious' },
+  /* This one changes the plan, not just the chips: if these apps are how
+     they make things, Rilo keeps more opens on them instead of limiting
+     them like doom scrolling (see riloLimits in demo/mockAI). */
+  {
+    id: 'creator',
+    ask: 'are you a content creator, or post pretty often?',
+    mood: 'curious',
+  },
   { id: 'when', ask: 'last one. when do you end up scrolling the most?', mood: 'curious' },
 ];
 
@@ -46,6 +55,7 @@ const NUDGE = {
   name: "come on, what do your friends call you?",
   hobby: "anything. one thing you'd do instead of scrolling.",
   goal: "one thing. grades, gym, whatever you actually want.",
+  creator: 'do you make stuff and post it, or mostly just watch?',
   when: 'just roughly — night? after school?',
   chat: 'try me. a hobby, a goal, anything.',
 };
@@ -78,7 +88,11 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
   const [mood, setMood] = useState(qs[0].mood);
   const [speaking, setSpeaking] = useState(true);
   const [thinking, setThinking] = useState(false);
-  const [typingPick, setTyping] = useState(false);
+  /* Typing is the default. Talking is right there on a button, and once
+     they pick it it sticks (keyboardMode below), but nobody should have to
+     find a quiet room or deal with a mic prompt to answer "what's your
+     name" — most people just want to type it and move on. */
+  const [typingPick, setTyping] = useState(true);
   const [draft, setDraft] = useState('');
   /* something he wants to check before taking it: a name he might have
      misheard, or a word that looks like a typo */
@@ -90,8 +104,9 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
   /* once they've let the mic through, it comes back on by itself */
   const usedMic = useRef(false);
   /* The mode they chose on purpose, as opposed to a one-off keyboard for
-     fixing a name. Sticky: picked once, it holds for the rest. */
-  const keyboardMode = useRef(false);
+     fixing a name. Sticky: picked once, it holds for the rest — and it
+     starts on the keyboard, matching typingPick above. */
+  const keyboardMode = useRef(true);
   /* they tapped the panda while Rilo was still replying — start as soon
      as he's finished instead of swallowing the tap */
   const resumeWanted = useRef(false);
@@ -136,8 +151,14 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
     const at = Math.min(stepRef.current, qs.length - 1);
     const q = qs[at];
 
-    /* "maybe" isn't an answer — ask again, but only once */
-    if (!opts.asTyped && isNonAnswer(text) && !nudged.current.has(q.id)) {
+    /* "maybe" isn't an answer — ask again, but only once.
+       The creator question is exempt: it's a yes/no, and "no" / "yep" are
+       exactly the words someone answers it with. It does its own check
+       below instead. */
+    const shrug =
+      q.id === 'creator' ? !creatorIn(text) : isNonAnswer(text);
+
+    if (!opts.asTyped && shrug && !nudged.current.has(q.id)) {
       nudged.current.add(q.id);
       mic.setText('');
       setDraft('');
@@ -187,6 +208,17 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
       reply = found.length
         ? `${joinNice(found)}. okay, i'm locked in on that.`
         : "got it. we'll work on that together.";
+    } else if (q.id === 'creator') {
+      const c = creatorIn(text);
+      if (c) setAbout((a) => ({ ...a, creator: c }));
+      reply =
+        c === 'yes'
+          ? "a creator. then posting is work, not scrolling — i'll leave you room for it."
+          : c === 'sometimes'
+            ? "posting sometimes. you'll get a proper sitting on those, just not forever."
+            : c === 'no'
+              ? "just watching. that's honest, and it makes my job easier."
+              : "we'll sort that one out on the next screen.";
     } else if (q.id === 'when') {
       reply = whenReply(text);
     } else {
@@ -248,6 +280,15 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
       setTyping(true);
       return;
     }
+
+    /* Tapping Rilo IS choosing to talk, so it has to leave the keyboard —
+       otherwise the mic opens with a text box still sitting under it and
+       there are two ways to answer at once. Set before the `thinking`
+       check below, because that path relies on keyboardMode being false
+       for the auto-start to fire once he's done. */
+    keyboardMode.current = false;
+    setTyping(false);
+
     /* Rilo is still talking or thinking: remember the tap and pick it up
        the moment he's done, rather than doing nothing. */
     if (thinking) {
@@ -660,9 +701,11 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
             ? mic.problem
             : mic.asking
               ? 'allow the mic up there and he starts listening.'
-              : mic.supported
-                ? "tap rilo to talk, tap him again when you're done."
-                : "no mic here, so just type. rilo still gets it."}
+              : !mic.supported
+                ? "no mic here, so just type. rilo still gets it."
+                : typing
+                  ? 'type your answer, or tap talk instead to say it out loud.'
+                  : "tap rilo to talk, tap him again when you're done."}
         </p>
         )}
       </div>

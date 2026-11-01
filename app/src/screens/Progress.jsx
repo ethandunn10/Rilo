@@ -1,6 +1,13 @@
 /* Progress — port of designs/Progress.dc.html, with the panda update's
    level system: real level, an XP bar to the NEXT level, and the next skin
-   you'll unlock shown with its picture. */
+   you'll unlock shown with its picture.
+
+   The week bars, the streak and the "times you said no" are real now, and
+   they're all scored against the DAILY GOAL (§8) — the goal is the only
+   thing xp and streaks ever look at. The plain bars stay plain, as asked.
+
+   The per-app percentages below are insight only (§10): they're what Rilo
+   uses to decide which app to limit first, and they never set a limit. */
 
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
@@ -109,15 +116,8 @@ function CardDecor({ theme }) {
   );
 }
 
-const DAYS = [
-  ['m', 2.8],
-  ['t', 2.4],
-  ['w', 1.9],
-  ['t', 1.7],
-  ['f', 2.2],
-  ['s', 1.5],
-  ['s', 1.8],
-];
+/* monday-first labels under the bars, oldest day on the left */
+const DAY_LABELS = ['m', 't', 'w', 't', 'f', 's', 's'];
 
 const statCard = {
   padding: '12px 6px',
@@ -158,8 +158,12 @@ export default function Progress({
   level,
   breakdown,
   program,
-  weekGoal,
-  planWeeks = 4,
+  goalMins = 120,
+  usedToday = 0,
+  history = [],
+  streak = 0,
+  stats = { savedMinutes: 0, saidNo: 0 },
+  check,
   isPro = false,
   /* ---- add-ons (rilo-addons-test) ---- */
   back = { today: 0, week: 0, total: 0 },
@@ -171,6 +175,31 @@ export default function Progress({
   const theme = useTheme();
   const prog = levelProgress(xp, level);
   const nextSkin = prog.atMax ? null : nextSkinAfter(level);
+
+  /* This week's bars: the last seven finished days, with today tacked on
+     the end so the day in progress shows too. Days they haven't lived yet
+     are left empty rather than invented. */
+  const week = history.slice(-6).map((d) => ({
+    mins: d.used,
+    goal: d.goal,
+    hit: d.hit,
+    real: true,
+  }));
+  const bars = week
+    .concat([{ mins: usedToday, goal: goalMins, hit: usedToday <= goalMins, real: true }])
+    .slice(-7);
+  const pad = Array.from({ length: Math.max(0, 7 - bars.length) }, () => ({
+    mins: 0,
+    goal: goalMins,
+    hit: false,
+    real: false,
+  }));
+  const weekBars = pad.concat(bars);
+
+  /* the tallest bar sets the scale, so a bad day doesn't clip */
+  const tallest = Math.max(goalMins, ...weekBars.map((b) => b.mins), 1);
+  const savedThisWeek = back.week;
+  const goodDays = weekBars.filter((b) => b.real && b.hit).length;
 
   return (
     <div
@@ -191,7 +220,8 @@ export default function Progress({
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '52px 20px 104px',
+          padding: '52px 20px 0',
+          '--tail': '116px',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
@@ -372,10 +402,7 @@ export default function Progress({
             <p
               style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}
             >
-              {isPro
-                ? `week ${Math.min(program?.week ?? 1, planWeeks)} of ${planWeeks} · `
-                : 'your daily limit · '}
-              {fmtMins(weekGoal ?? 0)} a day
+              week {program?.week ?? 1} · {fmtMins(goalMins)} a day
             </p>
             <p
               style={{
@@ -386,7 +413,7 @@ export default function Progress({
                 color: '#1F6B2E',
               }}
             >
-              4h 20m saved
+              {fmtMins(savedThisWeek)} saved
             </p>
           </div>
           <div
@@ -398,9 +425,9 @@ export default function Progress({
               gap: 10,
             }}
           >
-            {DAYS.map(([label, hours], i) => (
+            {weekBars.map((b, i) => (
               <div
-                key={`${label}-${i}`}
+                key={i}
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -412,8 +439,8 @@ export default function Progress({
                 {/* plain bar; colour follows the app theme */}
                 <WeekBar
                   theme={theme.id}
-                  good={hours <= 2}
-                  height={Math.round((hours / 3) * 96)}
+                  good={b.real && b.hit}
+                  height={b.real ? Math.max(4, Math.round((b.mins / tallest) * 96)) : 3}
                   delay={(0.2 + i * 0.07).toFixed(2)}
                 />
                 <p
@@ -425,13 +452,14 @@ export default function Progress({
                     color: '#3D5A46',
                   }}
                 >
-                  {label}
+                  {DAY_LABELS[i]}
                 </p>
               </div>
             ))}
           </div>
           <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#3D5A46' }}>
-            {(BAR_COLOR[theme.id] ?? BAR_COLOR.grass).name} bars hit your 2h goal
+            {(BAR_COLOR[theme.id] ?? BAR_COLOR.grass).name} bars came in under{' '}
+            {fmtMins(goalMins)} · {goodDays} of 7 this week
           </p>
         </div>
 
@@ -473,9 +501,12 @@ export default function Progress({
             animation: 'rise14 .4s .18s ease-out both',
           }}
         >
-          <Stat value="6" label="day streak" />
-          <Stat value="12" label="times you said no" />
-          <Stat value="3" label="plans finished" />
+          <Stat value={streak} label="day streak" />
+          <Stat value={stats.saidNo} label="times you said no" />
+          <Stat
+            value={check ? fmtMins(check.allows) : '—'}
+            label="your limits allow a day"
+          />
         </div>
       </div>
 

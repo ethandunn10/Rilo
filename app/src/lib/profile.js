@@ -186,3 +186,18 @@ export function suggestion(about, app = 'the feed') {
     meta: 'about 20 min · +40 xp',
   };
 }
+
+/* ---------- do you post? ----------
+   Asked in onboarding, used by the generated plan and the check-in. The
+   middle answer matters most: plenty of people post sometimes and would
+   resent being limited like a pure scroller, but don't want a free pass
+   either. */
+export const CREATOR_ANSWERS = [
+  { id: 'yes', label: 'yes, all the time', sub: 'posting is the point' },
+  { id: 'sometimes', label: 'sometimes', sub: 'a few times a month' },
+  { id: 'no', label: 'no, i just watch', sub: 'be honest, it helps' },
+];
+
+export function postsContent(about) {
+  return about?.creator === 'yes' || about?.creator === 'sometimes';
+}

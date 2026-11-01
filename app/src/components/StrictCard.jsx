@@ -1,17 +1,32 @@
-/* Strict mode. Free, not Pro.
+/* Strict mode — the bundle (§12).
 
-   Turning it on is a choice of how long and when. Turning it off isn't
-   instant — it runs for another 24 hours first, which is the whole point
-   of it. */
+   Strict mode isn't a separate set of limits. It's one switch that changes
+   five things about the limits you already have, so it's shown as exactly
+   that: two columns, same five rows.
+
+   Turning it ON is instant. Turning it OFF runs for another 24 hours first,
+   which is the whole point of it — and that countdown is cancelable, so
+   nobody gets trapped by a switch they flipped at 2am.
+
+   The emergency pass works in both modes. It always has. */
 
 import { useState } from 'react';
 import Rilo from './Rilo';
+import { WAIT_NORMAL, WAIT_STRICT } from '../lib/limits';
 
+/* 0 days means no end date — it runs until they deliberately turn it off,
+   which itself takes 24 hours. It's the one people actually want: the whole
+   point of strict mode is not having to re-decide every week. */
 const LENGTHS = [
   { days: 1, label: '1 day' },
   { days: 3, label: '3 days' },
   { days: 7, label: '1 week' },
+  { days: 0, label: 'for good' },
 ];
+
+export function lengthLabel(days) {
+  return LENGTHS.find((l) => l.days === days)?.label ?? '1 week';
+}
 
 const WINDOWS = [
   { id: 'all', label: 'all day' },
@@ -19,16 +34,35 @@ const WINDOWS = [
   { id: 'night', label: 'after 10pm' },
 ];
 
+/* the five things the switch actually changes */
+const BUNDLE = [
+  { what: 'opens', normal: 'count in halves', strict: 'every session costs a whole one' },
+  { what: 'loosening a limit', normal: 'instant', strict: 'takes 24 hours' },
+  { what: 'the weekly step-down', normal: 'he asks first', strict: 'happens by itself' },
+  { what: 'borrowing from tomorrow', normal: 'available', strict: 'off' },
+  {
+    what: 'the wait before an app opens',
+    normal: `about ${WAIT_NORMAL} seconds`,
+    strict: `about ${WAIT_STRICT} seconds`,
+  },
+];
+
 const chip = (on) => ({
   flex: 1,
+  flexBasis: 0,
+  minWidth: 0,
   minHeight: 44,
+  padding: '0 4px',
   borderRadius: 999,
   border: '2px solid var(--line, #12301A)',
   background: on ? '#12301A' : 'rgba(255,255,255,0.9)',
   color: on ? '#FFFFFF' : '#12301A',
   fontFamily: 'Fredoka, sans-serif',
-  fontSize: 15,
+  /* four lengths across a phone-width card, so a notch smaller than the
+     three windows below it */
+  fontSize: 14,
   fontWeight: 600,
+  whiteSpace: 'nowrap',
   cursor: 'pointer',
 });
 
@@ -42,8 +76,106 @@ export function endsAtText(endingAt) {
   return `${h12}:${m}${ampm}`;
 }
 
-export default function StrictCard({ style, skin, strict, onTurnOn, onAskOff, onKeepOn }) {
+/* "23h 41m" — how long the countdown has left */
+function leftText(endingAt) {
+  const mins = Math.max(0, Math.ceil((endingAt - Date.now()) / 60000));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  if (!h) return `${m}m`;
+  return m ? `${h}h ${m}m` : `${h}h`;
+}
+
+function BundleTable({ on }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1.25fr 1fr 1fr',
+          gap: 6,
+          paddingBottom: 5,
+          borderBottom: '1.5px solid rgba(18,48,26,0.14)',
+        }}
+      >
+        <span />
+        <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#3D5A46' }}>
+          normal
+        </span>
+        <span
+          style={{
+            fontSize: 11,
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.06em',
+            color: on ? '#1F6B2E' : '#3D5A46',
+          }}
+        >
+          strict
+        </span>
+      </div>
+
+      {BUNDLE.map((r) => (
+        <div
+          key={r.what}
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1.25fr 1fr 1fr',
+            gap: 6,
+            padding: '7px 0',
+            borderBottom: '1px solid rgba(18,48,26,0.07)',
+            alignItems: 'start',
+          }}
+        >
+          <span style={{ fontSize: 12.5, fontWeight: 700, color: '#12301A', lineHeight: 1.3 }}>
+            {r.what}
+          </span>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              lineHeight: 1.3,
+              color: on ? 'rgba(61,90,70,0.55)' : '#3D5A46',
+            }}
+          >
+            {r.normal}
+          </span>
+          <span
+            style={{
+              fontSize: 12,
+              fontWeight: 600,
+              lineHeight: 1.3,
+              color: on ? '#12301A' : 'rgba(61,90,70,0.55)',
+            }}
+          >
+            {r.strict}
+          </span>
+        </div>
+      ))}
+
+      <p style={{ margin: '7px 0 0', fontSize: 12, fontWeight: 600, color: '#2C4A36' }}>
+        your emergency pass works in both. making a limit stricter is instant
+        in both.
+      </p>
+    </div>
+  );
+}
+
+export default function StrictCard({
+  style,
+  skin,
+  strict,
+  onTurnOn,
+  /* start the 24-hour countdown */
+  onAskOff,
+  /* cancel a countdown that's already running */
+  onKeepOn,
+  /* turn it off right now, no waiting — their call (see the panel below) */
+  onTurnOffNow = () => {},
+}) {
   const [picking, setPicking] = useState(false);
+  const [showing, setShowing] = useState(false);
+  /* turning it off asks first — see the confirm panel below */
+  const [confirmOff, setConfirmOff] = useState(false);
   const [days, setDays] = useState(strict.days ?? 7);
   const [when, setWhen] = useState(strict.when ?? 'all');
 
@@ -57,7 +189,7 @@ export default function StrictCard({ style, skin, strict, onTurnOn, onAskOff, on
             strict mode
           </p>
           <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 600, color: '#2C4A36' }}>
-            half the opens, no &quot;5 more&quot;, no breaks. free.
+            no half opens, no borrowing, 24 hours to loosen anything.
           </p>
         </div>
 
@@ -68,7 +200,7 @@ export default function StrictCard({ style, skin, strict, onTurnOn, onAskOff, on
           aria-label="Strict mode"
           className="tap"
           onClick={() => {
-            if (strict.on) onAskOff();
+            if (strict.on) setConfirmOff((v) => !v);
             else setPicking((v) => !v);
           }}
           style={{
@@ -97,7 +229,94 @@ export default function StrictCard({ style, skin, strict, onTurnOn, onAskOff, on
         </button>
       </div>
 
-      {/* winding down */}
+      {/* They asked to turn it off. They're allowed to, full stop — nobody
+          should be locked inside a setting they chose. Rilo asks once
+          whether they'd rather wait the 24 hours out, because that's the
+          version that actually helps, and then does whatever they say. */}
+      {strict.on && !ending && confirmOff && (
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 9,
+            padding: '12px 13px',
+            borderRadius: 18,
+            background: '#12301A',
+            color: '#FFFFFF',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Rilo skin={skin} mood="curious" size={56} />
+            <div style={{ flexGrow: 1, minWidth: 0 }}>
+              <p
+                style={{
+                  margin: 0,
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 17,
+                  fontWeight: 600,
+                  lineHeight: 1.25,
+                }}
+              >
+                get through 24 hours first?
+              </p>
+              <p style={{ margin: '3px 0 0', fontSize: 12.5, fontWeight: 600, color: '#C9E6CE', lineHeight: 1.35 }}>
+                waiting it out is the one that works — one more day, then it
+                switches itself off, and you can cancel any time. or turn it
+                off now. up to you.
+              </p>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: 7 }}>
+            <button
+              type="button"
+              className="tap"
+              onClick={() => {
+                setConfirmOff(false);
+                onAskOff();
+              }}
+              style={{
+                flex: 1,
+                minHeight: 46,
+                borderRadius: 999,
+                border: 0,
+                background: '#FFFFFF',
+                color: '#12301A',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              yes, wait it out
+            </button>
+            <button
+              type="button"
+              className="tap"
+              onClick={() => {
+                setConfirmOff(false);
+                onTurnOffNow();
+              }}
+              style={{
+                flex: 1,
+                minHeight: 46,
+                borderRadius: 999,
+                border: '2px solid #FFFFFF',
+                background: 'transparent',
+                color: '#FFFFFF',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              no, turn it off
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* winding down: 24 hours, with a way back */}
       {strict.on && ending && (
         <div
           style={{
@@ -115,12 +334,18 @@ export default function StrictCard({ style, skin, strict, onTurnOn, onAskOff, on
             <p
               style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 15, fontWeight: 600 }}
             >
-              strict mode ends tomorrow at {endsAtText(strict.endingAt)}
+              strict mode turns off in {leftText(strict.endingAt)}
+            </p>
+            <p style={{ margin: '1px 0 0', fontSize: 12, fontWeight: 600, color: '#2C4A36' }}>
+              pending · tomorrow at {endsAtText(strict.endingAt)}
             </p>
             <button
               type="button"
               className="tap"
-              onClick={onKeepOn}
+              onClick={() => {
+                setConfirmOff(false);
+                onKeepOn();
+              }}
               style={{
                 marginTop: 6,
                 minHeight: 38,
@@ -155,10 +380,34 @@ export default function StrictCard({ style, skin, strict, onTurnOn, onAskOff, on
             fontWeight: 600,
           }}
         >
-          on · {strict.days === 1 ? '1 day' : strict.days === 3 ? '3 days' : '1 week'} ·{' '}
+          on · {lengthLabel(strict.days)} ·{' '}
           {WINDOWS.find((w) => w.id === strict.when)?.label ?? 'all day'}
         </p>
       )}
+
+      {/* what the switch actually does */}
+      <button
+        type="button"
+        className="tap"
+        onClick={() => setShowing((v) => !v)}
+        style={{
+          alignSelf: 'flex-start',
+          minHeight: 34,
+          padding: '0 12px',
+          borderRadius: 999,
+          border: '1.5px solid rgba(18,48,26,0.3)',
+          background: 'transparent',
+          color: '#2C4A36',
+          fontFamily: 'Fredoka, sans-serif',
+          fontSize: 13,
+          fontWeight: 600,
+          cursor: 'pointer',
+        }}
+      >
+        {showing ? 'hide what changes' : 'what changes?'}
+      </button>
+
+      {showing && <BundleTable on={strict.on} />}
 
       {/* choosing how long and when */}
       {!strict.on && picking && (
@@ -192,6 +441,12 @@ export default function StrictCard({ style, skin, strict, onTurnOn, onAskOff, on
               </button>
             ))}
           </div>
+
+          <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#2C4A36' }}>
+            {days === 0
+              ? 'no end date — it stays on until you turn it off, and that takes 24 hours.'
+              : 'this starts the second you tap. turning it back off takes 24 hours.'}
+          </p>
 
           <button
             type="button"

@@ -1,14 +1,40 @@
 /* The app actually running. Nothing to look at on purpose — the demo
-   buttons are there so a tester can burn 15 minutes in a few taps. */
+   button is there so a tester can burn the session in a few taps.
+
+   The clock counts down the session's CAP, not the app's per-open length.
+   Those are the same thing for a full open, and half of it for a quick one
+   or when only half an open is left. When it reaches zero the app locks:
+   one session never runs past one whole open (§2.4).
+
+   It reports the real minutes used, fractions included, because a
+   ten-second peek still has to cost half an open rather than round up to a
+   minute and look like a full one. */
 
 import { useEffect, useRef, useState } from 'react';
 import AppLogo from '../components/AppLogo';
+import { halfOf } from '../lib/limits';
 
-export default function AppOpen({ app, minutes, onFinish }) {
+export default function AppOpen({
+  app,
+  /* how many more minutes this session may run */
+  minutes,
+  /* minutes already spent in this session before a reopen (§2.6) */
+  carried = 0,
+  /* 'open' spends an open · 'pass' the emergency pass · 'always' neither */
+  kind = 'open',
+  /* the app's per-open length, for the line about what this costs */
+  perOpen = 15,
+  onFinish,
+}) {
   const total = minutes * 60;
   const [left, setLeft] = useState(total);
-  const burned = useRef(0);
   const done = useRef(false);
+
+  const finish = (usedMins) => {
+    if (done.current) return;
+    done.current = true;
+    onFinish(Math.max(0, usedMins));
+  };
 
   /* real seconds, so a session feels like time passing */
   useEffect(() => {
@@ -16,10 +42,8 @@ export default function AppOpen({ app, minutes, onFinish }) {
       setLeft((v) => {
         if (v <= 1) {
           clearInterval(id);
-          if (!done.current) {
-            done.current = true;
-            onFinish(minutes);
-          }
+          /* hit the cap — that's the whole open, the app locks */
+          finish(minutes);
           return 0;
         }
         return v - 1;
@@ -27,14 +51,24 @@ export default function AppOpen({ app, minutes, onFinish }) {
     }, 1000);
     return () => clearInterval(id);
     /* one timer for the life of the session */
-  }, [minutes, total, onFinish]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [minutes, total]);
 
   const clock = `${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`;
 
-  const finish = (usedMins) => {
-    if (done.current) return;
-    done.current = true;
-    onFinish(usedMins);
+  /* minutes spent so far — the clock on screen is the truth, so the demo's
+     "burn 5 min" counts exactly like sitting there for five would */
+  const spent = minutes - left / 60;
+
+  /* what this session will cost once they close it */
+  const half = halfOf(perOpen);
+  const costNote = () => {
+    if (kind === 'pass') return 'your emergency pass. five minutes, no opens spent.';
+    if (kind === 'always') return 'always allowed. this one never costs you anything.';
+    const run = carried + spent;
+    return run <= half
+      ? `still half an open — leave before ${half} min and it stays that way.`
+      : 'this one costs a whole open.';
   };
 
   return (
@@ -50,7 +84,7 @@ export default function AppOpen({ app, minutes, onFinish }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 16,
+        gap: 14,
         padding: 26,
         boxSizing: 'border-box',
       }}
@@ -70,8 +104,35 @@ export default function AppOpen({ app, minutes, onFinish }) {
         {app} · {clock} left
       </p>
 
-      <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.55)' }}>
-        rilo&apos;s counting this against your day
+      {/* carrying on a session they only just closed */}
+      {carried > 0 && (
+        <p
+          style={{
+            margin: 0,
+            padding: '5px 12px',
+            borderRadius: 999,
+            background: 'rgba(255,255,255,0.12)',
+            fontSize: 12.5,
+            fontWeight: 600,
+            color: 'rgba(255,255,255,0.8)',
+          }}
+        >
+          same session · {Math.round(carried)} min already used
+        </p>
+      )}
+
+      <p
+        style={{
+          margin: 0,
+          maxWidth: 280,
+          textAlign: 'center',
+          fontSize: 14,
+          fontWeight: 600,
+          color: 'rgba(255,255,255,0.55)',
+          lineHeight: 1.4,
+        }}
+      >
+        {costNote()}
       </p>
 
       <div style={{ flexGrow: 1 }} />
@@ -79,12 +140,7 @@ export default function AppOpen({ app, minutes, onFinish }) {
       <button
         type="button"
         className="tap"
-        onClick={() => {
-          const used = Math.min(minutes, burned.current + 5);
-          burned.current = used;
-          if (used >= minutes) finish(minutes);
-          else setLeft((v) => Math.max(0, v - 5 * 60));
-        }}
+        onClick={() => setLeft((v) => Math.max(0, v - 5 * 60))}
         style={{
           width: '100%',
           minHeight: 52,
@@ -98,13 +154,13 @@ export default function AppOpen({ app, minutes, onFinish }) {
           cursor: 'pointer',
         }}
       >
-        demo: use 5 min
+        demo: burn 5 min
       </button>
 
       <button
         type="button"
         className="tap"
-        onClick={() => finish(Math.max(1, Math.round(minutes - left / 60)))}
+        onClick={() => finish(spent)}
         style={{
           width: '100%',
           minHeight: 56,

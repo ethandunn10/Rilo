@@ -1,15 +1,27 @@
-/* "what are you opening this for?" — the check-in before a session.
-   They say why, and how long they want. Rilo holds them to both. */
+/* "what are you opening this for?" — the check-in before a session (§4).
+
+   They say why, then pick how long: quick (half an open) or full (one
+   open), using the app's own numbers. There's no free choice of minutes any
+   more — the two options ARE the two things half an open and a whole open
+   buy you.
+
+   With only half an open left, only quick is on offer (§2.5). In strict
+   mode halves are off, so only full is (§2.8).
+
+   Rilo keeps the reason either way: it's what he calls out if they burn the
+   whole open on a "quick check", and it's what the stats are built from. */
 
 import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import AppLogo from '../components/AppLogo';
-import { CHECKIN_REASONS, CHECKIN_MINUTES } from '../lib/addons';
+import Opens from '../components/Opens';
+import { checkinReasons } from '../lib/addons';
+import { halfOf } from '../lib/limits';
 
 const pill = (on) => ({
   width: '100%',
-  minHeight: 56,
+  minHeight: 54,
   boxSizing: 'border-box',
   padding: '8px 16px',
   borderRadius: 22,
@@ -24,12 +36,67 @@ const pill = (on) => ({
   justifyContent: 'center',
 });
 
-export default function WhyOpen({ app, skin, onStart, onNevermind }) {
+/* "7.5 min" reads better than "7.5m" here, and a whole number loses the .0 */
+const mins = (n) => `${Math.round(n * 10) / 10} min`;
+
+export default function WhyOpen({
+  app,
+  skin,
+  /* the app's limit and what's left of it today */
+  minutes = 15,
+  opensLeft = 1,
+  opensTotal = 3,
+  opensUsed = 0,
+  strictOn = false,
+  /* 'yes' | 'sometimes' | 'no' — sharpens the "need to post" line */
+  creator = '',
+  onStart,
+  onNevermind,
+}) {
   const [reason, setReason] = useState('');
   const [why, setWhy] = useState('');
-  const [mins, setMins] = useState(5);
+
+  /* which lengths are actually on offer */
+  const half = halfOf(minutes);
+  const canFull = opensLeft >= 1;
+  const canQuick = !strictOn && opensLeft >= 0.5;
+
+  /* default to whatever's available — full if they have it, else quick */
+  const [length, setLength] = useState(canFull && strictOn ? 'full' : canQuick ? 'quick' : 'full');
+
+  const picked = length === 'quick' && canQuick ? 'quick' : 'full';
+  const capMins = picked === 'quick' ? half : minutes;
+  const cost = picked === 'quick' ? 0.5 : 1;
 
   const ready = reason && (reason !== 'custom' || why.trim());
+
+  const choice = (id, title, sub, enabled) => (
+    <button
+      key={id}
+      type="button"
+      className="tap"
+      disabled={!enabled}
+      onClick={() => setLength(id)}
+      style={{
+        ...pill(picked === id),
+        minHeight: 58,
+        opacity: enabled ? 1 : 0.4,
+        cursor: enabled ? 'pointer' : 'default',
+      }}
+    >
+      <span style={{ fontSize: 17, fontWeight: 600 }}>{title}</span>
+      <span
+        style={{
+          fontFamily: 'Inter, system-ui, sans-serif',
+          fontSize: 12,
+          fontWeight: 600,
+          opacity: 0.75,
+        }}
+      >
+        {sub}
+      </span>
+    </button>
+  );
 
   return (
     <div
@@ -49,20 +116,21 @@ export default function WhyOpen({ app, skin, onStart, onNevermind }) {
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '48px 22px 26px',
+          padding: '44px 22px 0',
+          '--tail': '26px',
           display: 'flex',
           flexDirection: 'column',
-          gap: 12,
+          gap: 11,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <Rilo skin={skin} mood="curious" size={90} />
+          <Rilo skin={skin} mood="curious" size={88} />
           <div style={{ flexGrow: 1, minWidth: 0 }}>
             <h1
               style={{
                 margin: 0,
                 fontFamily: 'Fredoka, sans-serif',
-                fontSize: 26,
+                fontSize: 25,
                 fontWeight: 700,
                 lineHeight: 1.1,
               }}
@@ -72,8 +140,21 @@ export default function WhyOpen({ app, skin, onStart, onNevermind }) {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
-          {CHECKIN_REASONS.map((r) => (
+        {/* what's left, in the same circles as everywhere else (§3) */}
+        <div
+          style={{
+            flexShrink: 0,
+            padding: '10px 14px',
+            borderRadius: 20,
+            background: 'rgba(255,255,255,0.72)',
+            border: '2px solid rgba(255,255,255,0.95)',
+          }}
+        >
+          <Opens total={opensTotal} used={opensUsed} minutes={minutes} />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flexShrink: 0 }}>
+          {checkinReasons(creator).map((r) => (
             <button
               key={r.id}
               type="button"
@@ -81,7 +162,7 @@ export default function WhyOpen({ app, skin, onStart, onNevermind }) {
               onClick={() => setReason(r.id)}
               style={pill(reason === r.id)}
             >
-              <span style={{ fontSize: 18, fontWeight: 600 }}>{r.label}</span>
+              <span style={{ fontSize: 17, fontWeight: 600 }}>{r.label}</span>
               <span
                 style={{
                   fontFamily: 'Inter, system-ui, sans-serif',
@@ -116,29 +197,24 @@ export default function WhyOpen({ app, skin, onStart, onNevermind }) {
           )}
         </div>
 
-        <p style={{ margin: '4px 0 0', fontSize: 13, fontWeight: 700, color: '#2C4A36' }}>
+        <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 700, color: '#2C4A36' }}>
           how long do you need?
         </p>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          {CHECKIN_MINUTES.map((m) => (
-            <button
-              key={m}
-              type="button"
-              className="tap"
-              onClick={() => setMins(m)}
-              style={{
-                ...pill(mins === m),
-                alignItems: 'center',
-                justifyContent: 'center',
-                minHeight: 50,
-              }}
-            >
-              <span style={{ fontSize: 18, fontWeight: 600 }}>{m} min</span>
-            </button>
-          ))}
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flexShrink: 0 }}>
+          {choice('quick', 'quick', `½ open · ${mins(half)}`, canQuick)}
+          {choice('full', 'full', `1 open · ${mins(minutes)}`, canFull)}
         </div>
 
-        <div style={{ flexGrow: 1, minHeight: 8 }} />
+        <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#2C4A36', lineHeight: 1.35 }}>
+          {strictOn
+            ? 'strict mode: no halves. any session costs a whole open.'
+            : !canFull
+              ? `half an open left, so this one maxes out at ${mins(half)}.`
+              : `leave by ${mins(half)} and it only costs half an open.`}
+        </p>
+
+        <div style={{ flexGrow: 1, minHeight: 6 }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <span style={{ display: 'flex', borderRadius: 12, overflow: 'hidden' }}>
@@ -148,7 +224,16 @@ export default function WhyOpen({ app, skin, onStart, onNevermind }) {
             type="button"
             className="tap"
             disabled={!ready}
-            onClick={() => onStart({ reason, why: why.trim(), mins })}
+            onClick={() =>
+              onStart({
+                reason,
+                why: why.trim(),
+                /* what they asked for, and what it costs */
+                length: picked,
+                mins: capMins,
+                cost,
+              })
+            }
             style={{
               flexGrow: 1,
               height: 56,
@@ -157,13 +242,13 @@ export default function WhyOpen({ app, skin, onStart, onNevermind }) {
               background: ready ? '#FFFFFF' : 'rgba(255,255,255,0.45)',
               color: ready ? '#12301A' : 'rgba(18,48,26,0.45)',
               fontFamily: 'Fredoka, sans-serif',
-              fontSize: 19,
+              fontSize: 18,
               fontWeight: 600,
               cursor: ready ? 'pointer' : 'default',
               boxShadow: '0 10px 30px rgba(10,40,20,0.25)',
             }}
           >
-            {ready ? `open for ${mins} min` : 'pick a reason'}
+            {ready ? `open for ${mins(capMins)}` : 'pick a reason'}
           </button>
         </div>
 

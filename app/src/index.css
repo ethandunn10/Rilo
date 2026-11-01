@@ -350,6 +350,37 @@ body {
   scrollbar-color: rgba(18, 48, 26, 0.22) transparent;
 }
 
+/* Most scrolling screens are `display: flex; flex-direction: column` with a
+   fixed height. Flex children shrink by default, so a card that grows — the
+   plan while you're adding rows to it, a long list of limits — gets
+   SQUASHED instead of making the page taller, and there's nothing to scroll
+   to. Content in a scroller should always push it taller.
+
+   `flex-grow` spacers still grow, so the screens that push their footer
+   down with one are unaffected, and this is inert on scrollers that aren't
+   flex containers. */
+.scroll-y > * {
+  flex-shrink: 0;
+}
+
+/* THE ONE THAT ACTUALLY BIT US.
+   Chrome and Safari do not include a flex-column scroller's padding-bottom
+   in its scrollable area once the content overflows. So `padding-bottom:
+   124px` meant to clear the tab bar silently vanished, and the last card —
+   the plan's "done" button — sat behind the tab bar with no way to scroll
+   to it. A trailing flex ITEM is counted, where the padding is not.
+
+   So screens with a tab bar set `--tail` instead of a bottom padding, and
+   this pseudo-element becomes the space. Defaults to 0, so every other
+   scroller is untouched. */
+.scroll-y::after {
+  content: '';
+  display: block;
+  flex: 0 0 auto;
+  width: 100%;
+  height: var(--tail, 0px);
+}
+
 .scroll-y::-webkit-scrollbar {
   width: 6px;
 }

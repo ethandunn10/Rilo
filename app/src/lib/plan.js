@@ -1,9 +1,14 @@
-/* The numbers behind Rilo's job: where the time goes, the 30-day plan, the
-   per-app limits for the current week, and the end-of-day XP.
+/* Where the time goes, and the end-of-day XP.
 
    The web can't read real Screen Time, so the baseline is generated from
-   what the tester told us in onboarding. Everything downstream — the plan,
-   the limits, the shield — is derived from that one baseline. */
+   what the tester told us in onboarding. Everything downstream reads off
+   that one baseline.
+
+   The LIMITS themselves are not in here any more — the four per-app
+   settings, opens in halves, the pass, borrowing, the plan check and the
+   weekly step-down all live in lib/limits.js. What's left here is the
+   baseline (so percentages have something to be a percentage OF) and the
+   daily XP, which is scored against the daily goal. */
 
 /* how the blocked time splits between apps, before normalising */
 const SHARE_WEIGHT = { tiktok: 35, instagram: 25, youtube: 20, snapchat: 15 };
@@ -24,54 +29,11 @@ function blockedShare(appList) {
   return Math.min(MAX_BLOCKED_SHARE, sum / (sum + OTHER_WEIGHT));
 }
 
-/* how long one sitting lasts. They pick; opens are worked out from it. */
-/* sittings come in clean five-minute lengths */
-export const SESSION_CHOICES = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
-/* nobody wants to be told they get 33 goes at something */
-export const MAX_OPENS = 15;
-export const SESSION_MINUTES = 10;
-
-/* the emergency pass: one a day on free, two on pro */
-export const FREE_PASSES = 1;
-export const PRO_PASSES = 2;
-export const PASSES_PER_DAY = FREE_PASSES;
-export const PASS_MINUTES = 5;
-
-export function passesFor(isPro) {
-  return isPro ? PRO_PASSES : FREE_PASSES;
-}
-
 /* free blocks two apps; pro blocks as many as they like */
 export const FREE_MAX_APPS = 2;
 
 export function watchedFor(appList, isPro) {
   return isPro ? appList : appList.slice(0, FREE_MAX_APPS);
-}
-
-/* how long off the blocked apps earns a break */
-export const BREAK_EARNED_AFTER = 60;
-
-/* apps Rilo will never block */
-export const NEVER_BLOCK = ['messages', 'phone'];
-
-/* how fast they want to get there. Straight to the goal is one week at
-   the target; the others close the gap a step at a time. */
-export const PACES = [
-  { id: 'straight', weeks: 1, label: 'straight to it', note: 'your goal from day one. hardest.' },
-  { id: 'two', weeks: 2, label: '2 weeks', note: 'halfway, then all the way.' },
-  { id: 'steady', weeks: 4, label: '4 weeks', note: 'a small step down each week. easiest.' },
-];
-
-export const PLAN_WEEKS = 4;
-
-const DEFAULT_PACE = PACES[2]; /* 4 weeks */
-
-export function weeksFor(pace) {
-  return (PACES.find((p) => p.id === pace) ?? DEFAULT_PACE).weeks;
-}
-
-export function paceLabel(pace) {
-  return (PACES.find((p) => p.id === pace) ?? DEFAULT_PACE).label;
 }
 
 export const weight = (app) => SHARE_WEIGHT[app] ?? SHARE_DEFAULT;
@@ -137,116 +99,55 @@ export function buildBreakdown(appList, totalMins, allowed = true) {
   };
 }
 
-/* ---------- the 30-day plan ----------
-   Each week closes another quarter of the gap. 5h -> 2h gives
-   4h15, 3h30, 2h45, 2h. */
-export function weekGoals(startMins, targetMins, pace = 'steady') {
-  const weeks = weeksFor(pace);
-  if (weeks <= 1) return [targetMins];
-  const gap = startMins - targetMins;
-  return Array.from({ length: weeks }, (_, i) =>
-    Math.round(startMins - (gap * (i + 1)) / weeks),
-  );
-}
+/* ---------- the daily goal ----------
+   The goal is a scoreboard, not a lock (§8). It's one number the user
+   sets, it never steps itself down, and nothing in the app is blocked
+   because of it. What tightens over time is the per-app limits, one thing
+   a week — see the step-down in lib/limits.js.
 
-/* All of the cut comes out of the blocked apps. */
-export function blockedGoalFor(totalGoal, startMins, blockedBaseline) {
-  return Math.round(blockedBaseline - (startMins - totalGoal));
-}
-
-/* The lowest goal that's actually reachable. Rilo can only cut time on the
-   apps they blocked, so whatever's left on the phone is the floor — asking
-   them to block more apps to "fix" their goal was backwards. */
-export function goalFloorMins(startMins, blockedBaseline) {
-  const untouchable = Math.max(0, startMins - blockedBaseline);
-  /* round up to a clean half hour, and never offer less than 30 min */
-  return Math.max(30, Math.ceil(untouchable / 30) * 30);
-}
-
-export function goalFloorHours(startMins, blockedBaseline) {
-  return goalFloorMins(startMins, blockedBaseline) / 60;
-}
-
-/* ---------- what Rilo offers once he knows the goal ----------
-   The same budget, cut up different ways: lots of short looks, or a few
-   proper sittings. They pick the trade-off; he does the arithmetic. */
-export function sittingOptions(breakdown, startMins, totalGoal, current) {
-  const blockedGoal = Math.max(
-    5,
-    blockedGoalFor(totalGoal, startMins, breakdown?.blocked ?? startMins),
-  );
-
-  const out = [];
-  const seen = new Set();
-  for (const mins of SESSION_CHOICES) {
-    const opens = Math.floor(blockedGoal / mins);
-    /* one go a day isn't a choice, and fifteen is already plenty */
-    if (opens < 2 || opens > MAX_OPENS) continue;
-    if (seen.has(opens)) continue;
-    seen.add(opens);
-    out.push({ mins, opens });
-    if (out.length === 4) break;
-  }
-
-  /* a goal small enough that nothing fits still needs one row */
-  if (!out.length) out.push({ mins: 5, opens: Math.max(1, Math.floor(blockedGoal / 5)) });
-
-  /* keep whatever they already picked on the list, so it stays selected */
-  if (current && !out.some((o) => o.mins === current)) {
-    out.push({ mins: current, opens: Math.max(1, Math.floor(blockedGoal / current)) });
-    out.sort((a, b) => a.mins - b.mins);
-  }
-  return out;
-}
-
-/* ---------- this week's limits, per app ---------- */
-export function limitsFor(
-  breakdown,
-  startMins,
-  totalGoal,
-  strictOn = false,
-  sessionMins = SESSION_MINUTES,
-) {
-  const blockedGoal = Math.max(0, blockedGoalFor(totalGoal, startMins, breakdown.blocked));
-  const len = SESSION_CHOICES.includes(sessionMins) ? sessionMins : SESSION_MINUTES;
-
-  return breakdown.apps.map((a) => {
-    const minutes = Math.max(0, Math.round(blockedGoal * a.share));
-    /* the minutes decide how many sittings fit, not the other way round */
-    let opens = Math.floor(minutes / len);
-    if (strictOn) opens = Math.floor(opens / 2);
-    return { app: a.app, minutes, opens: Math.max(1, opens) };
-  });
-}
+   The only floor is a sane one: half an hour. The old floor existed
+   because the goal used to be cut up into per-app minute budgets, and
+   those couldn't go below the time Rilo didn't control. Nothing is cut up
+   any more, so the goal is free to be whatever they want to aim at. */
+export const GOAL_FLOOR_HOURS = 0.5;
 
 /* the two small nudges that still pay out on the spot */
 export const NUDGE_HOBBY = 10;
 export const NUDGE_TIRED = 5;
 
-/* ---------- end of day ---------- */
+/* ---------- end of day ----------
+   XP comes from being under the daily goal (§8). A day over the goal
+   simply scores nothing — it doesn't take XP away. Losing the streak is
+   the cost of going over; being docked on top of it just made people feel
+   like the app was punishing them for a bad Tuesday. */
 export function dayXp({ used, goal, streak }) {
   const hit = used <= goal;
-  let xp = 0;
+  if (!hit) return { xp: 0, hit: false, streak: 0 };
 
-  if (hit) {
-    xp += Math.round(goal - used); /* a point a minute under */
-    xp += 25;
-    xp += Math.min(50, 5 * (streak + 1));
-  } else {
-    xp -= Math.min(50, Math.round(used - goal));
-  }
+  const under = Math.round(goal - used); /* a point a minute under */
+  const xp = under + 25 + Math.min(50, 5 * (streak + 1));
 
-  return { xp, hit, streak: hit ? streak + 1 : 0 };
+  return { xp, hit: true, streak: streak + 1 };
 }
 
 export const WEEK_BONUS = 100;
 export const PLAN_BONUS = 500;
 
-/* ---------- when Rilo should push strict mode ---------- */
-export function shouldSuggestStrict(history, fiveMoreDays) {
-  const last5 = history.slice(-5);
-  const overDays = last5.filter((d) => !d.hit).length;
-  if (last5.length >= 3 && overDays >= 3) return true;
-  /* "5 more" used twice in a day, on two days of the same week */
-  return fiveMoreDays >= 2;
+/* ---------- when Rilo should push strict mode ----------
+   Two days over the daily goal in a row and he offers it. That's early on
+   purpose: a bad Tuesday is a bad Tuesday, but two in a row is the start of
+   the pattern strict mode exists to break, and a suggestion they can say no
+   to costs them nothing.
+
+   The second signal is leaning on the ways out — days they needed the
+   emergency pass or borrowed half an open off tomorrow. Three of those and
+   the limits clearly aren't holding either. */
+export const OVER_DAYS_FOR_STRICT = 2;
+
+export function shouldSuggestStrict(history, leanDays = 0) {
+  const recent = history.slice(-OVER_DAYS_FOR_STRICT);
+  const twoInARow =
+    recent.length === OVER_DAYS_FOR_STRICT && recent.every((d) => !d.hit);
+  if (twoInARow) return true;
+  return leanDays >= 3;
 }

@@ -6,10 +6,22 @@
  *
  * In the mobile app this is where real AI and real Screen Time data go. */
 
+import {
+  ALWAYS,
+  BLOCKED,
+  LIMITED,
+  FREE,
+  DEFAULT_ALWAYS,
+  MIN_MINUTES,
+  MINUTE_STEP,
+  planCheck,
+} from '../lib/limits';
+
 /* ---------- what Rilo says when a check-in runs over ---------- */
 const OVER_LINES = {
   messages: 'you said {mins} for messages. it has been {gone}.',
   something: 'you said {mins} to look one thing up. it has been {gone}.',
+  post: 'you said {mins} to post something. it has been {gone}.',
   bored: 'you said {mins} because you were bored. it has been {gone}.',
   custom: 'you said {mins} for "{why}". it has been {gone}.',
 };
@@ -41,29 +53,171 @@ export function comparisonFor(mins, spin = 0) {
   return `that's ${n} ${n === 1 ? c.one : c.many}`;
 }
 
-/* ---------- Rilo's own plan, "generated" ---------- */
-/* Simple rules over the profile + the mock baseline. The explanation is
-   scripted so it reads like he thought about it. */
-export function riloPlan({ startMins, goalMins, hobbies = [], goals = [], apps = [] }) {
-  const gap = Math.max(0, startMins - goalMins);
-  const steep = gap / Math.max(1, startMins) > 0.5;
+/* ---------- Rilo's own plan, "generated" (§13) ----------
+   He proposes a setting for every app off the % data, the hobbies and goals
+   they gave, their calendar, and the check-ins — then checks the result
+   against the daily goal and tightens until it fits. One short sentence of
+   reasoning per app, because a plan you don't understand isn't a plan.
 
-  const pace = steep ? 'steady' : gap > 90 ? 'two' : 'straight';
-  const sessionMins = startMins > 300 ? 20 : startMins > 180 ? 15 : 10;
+   The rules are simple on purpose; in the mobile app this is a real model.
+   What matters is that it always comes out passing the plan check. */
+/* the share of their day at which an app stops being "a bit of a habit" */
+const BIG_SHARE = 0.3;
+const MID_SHARE = 0.12;
 
-  const why = [];
-  why.push(
-    steep
-      ? `you're cutting a lot, so we'll do it over four weeks instead of all at once.`
-      : gap > 90
-        ? `that's a real cut but not a brutal one. two weeks.`
-        : `you're close already. we'll go straight to it.`,
-  );
-  if (apps.length) why.push(`${apps[0]} is where most of it goes, so that's where we start.`);
-  if (hobbies.length) why.push(`when you want to scroll, i'll point you at ${hobbies[0]}.`);
-  if (goals.length) why.push(`you said ${goals[0]}. this is the part you control.`);
+/* a sitting length that suits the app: feeds get short ones, video longer */
+const LONG_FORM = ['youtube', 'netflix', 'twitch', 'hulu', 'disney+', 'prime video'];
 
-  return { pace, sessionMins, why };
+function minutesFor(app, pct) {
+  if (LONG_FORM.includes(app)) return 20;
+  return pct >= BIG_SHARE * 100 ? 10 : 15;
+}
+
+/* the apps you'd actually post to */
+const POSTING_APPS = ['instagram', 'tiktok', 'youtube', 'x', 'threads', 'snapchat'];
+
+export function riloLimits({
+  tracked = [],
+  breakdown,
+  goalMins,
+  hobbies = [],
+  goals = [],
+  calendar = [],
+  checkins = [],
+  /* '' | 'yes' | 'sometimes' | 'no' — from the onboarding question */
+  creator = '',
+}) {
+  const posts = creator === 'yes' || creator === 'sometimes';
+  const byApp = new Map((breakdown?.apps ?? []).map((a) => [a.app, a]));
+  const total = breakdown?.total ?? 0;
+  const typical = (app) => Math.round(byApp.get(app)?.mins ?? 0);
+  const shareOf = (app) => (total ? (byApp.get(app)?.mins ?? 0) / total : 0);
+
+  const settings = {};
+  const why = {};
+
+  /* biggest first, so the apps doing the damage get the real decisions
+     while there's still room in the goal to give them */
+  const ordered = [...tracked].sort((a, b) => shareOf(b) - shareOf(a));
+
+  ordered.forEach((app) => {
+    const pct = Math.round(shareOf(app) * 100);
+
+    /* the four that ship always allowed stay that way, plus anything the
+       user already marked always allowed themselves */
+    if (DEFAULT_ALWAYS.includes(app)) {
+      settings[app] = { mode: ALWAYS, opens: 3, minutes: 15 };
+      why[app] = 'you need this one. never locked.';
+      return;
+    }
+
+    const share = shareOf(app);
+
+    /* an app that's eating a third of the day and isn't tied to anything
+       they said they cared about — block it outright */
+    /* An app can be tied to something they actually care about — a hobby, a
+       stated goal, or posting. Those don't get the doom-scroll treatment. */
+    const isPostingApp = posts && POSTING_APPS.includes(app);
+    const tiedToSomething =
+      isPostingApp ||
+      hobbies.some((h) => app.includes(h) || h.includes(app)) ||
+      goals.some((g) => /content|video|post|grow|follow/.test(g) && /tiktok|instagram|youtube/.test(app));
+
+    if (share >= BIG_SHARE && !tiedToSomething) {
+      settings[app] = { mode: LIMITED, opens: 2, minutes: minutesFor(app, pct) };
+      why[app] = `${pct}% of your screen time. two short goes a day.`;
+      return;
+    }
+
+    if (share >= MID_SHARE || isPostingApp) {
+      /* Posting needs a sitting long enough to actually post — a 10 minute
+         cap on the app you publish to is just a way to fail. Creators who
+         post constantly get a fourth go at it. */
+      const opens = creator === 'yes' && isPostingApp ? 4 : 3;
+      const mins = isPostingApp ? Math.max(20, minutesFor(app, pct)) : minutesFor(app, pct);
+      settings[app] = { mode: LIMITED, opens, minutes: mins };
+      why[app] = isPostingApp
+        ? `you post here, so this is work. ${opens} goes of ${mins} min — long enough to film, edit and put it up.`
+        : tiedToSomething
+          ? `you said you want to grow this, so you keep three goes a day.`
+          : `${pct}% of your day. three goes, then it's done.`;
+      return;
+    }
+
+    /* the small stuff isn't worth a limit — it still counts toward the day */
+    settings[app] = { mode: FREE, opens: 3, minutes: 15 };
+    why[app] = `barely a blip. it counts toward your day, nothing more.`;
+  });
+
+  /* anything the calendar says they're busy with gets a mention, so the
+     explanation reads like he looked */
+  const busy = calendar.find((c) => c.kind === 'test' || c.kind === 'practice');
+
+  /* ---- tighten until the plan check passes ---- */
+  const limitedOrder = ordered.filter((a) => settings[a]?.mode === LIMITED);
+  let guard = 0;
+
+  const check = () =>
+    planCheck({
+      appSettings: settings,
+      tracked,
+      typicalFor: typical,
+      goalMins,
+    });
+
+  while (check().over && guard < 80) {
+    guard += 1;
+    /* shave the biggest allowance first — minutes, then an open, then the
+       app goes blocked, which is the end of the road */
+    const worst = [...limitedOrder].sort(
+      (a, b) =>
+        settings[b].opens * settings[b].minutes - settings[a].opens * settings[a].minutes,
+    )[0];
+
+    /* nothing left to tighten: the biggest Free app becomes Limited */
+    if (!worst) {
+      const freeApp = ordered.find((a) => settings[a]?.mode === FREE);
+      if (!freeApp) break;
+      settings[freeApp] = { mode: LIMITED, opens: 2, minutes: 15 };
+      why[freeApp] = `your limits didn't fit your goal without this one.`;
+      limitedOrder.push(freeApp);
+      continue;
+    }
+
+    const s = settings[worst];
+    if (s.minutes - MINUTE_STEP >= MIN_MINUTES) {
+      settings[worst] = { ...s, minutes: s.minutes - MINUTE_STEP };
+    } else if (s.opens > 1) {
+      settings[worst] = { ...s, opens: s.opens - 1 };
+    } else if (s.opens > 0.5) {
+      settings[worst] = { ...s, opens: 0.5 };
+    } else {
+      settings[worst] = { ...s, mode: BLOCKED };
+      why[worst] = `there was no version of this that fit your goal. blocked.`;
+      limitedOrder.splice(limitedOrder.indexOf(worst), 1);
+    }
+  }
+
+  /* the opening line, and one closing thought that isn't about an app */
+  const lead = [];
+  const biggest = ordered.find((a) => !DEFAULT_ALWAYS.includes(a));
+  if (biggest) lead.push(`${biggest} is where most of it goes, so that's where i started.`);
+  if (hobbies[0]) lead.push(`when you want to scroll, i'll point you at ${hobbies[0]}.`);
+  if (goals[0]) lead.push(`you said ${goals[0]}. this is the part you control.`);
+  if (posts) {
+    lead.push(
+      creator === 'yes'
+        ? `you post all the time, so i left the apps you publish to longer. that's work, not scrolling.`
+        : `you post sometimes, so you get a proper sitting on those — just not an unlimited one.`,
+    );
+  }
+  if (busy) lead.push(`${busy.why}`);
+  if (checkins.length >= 3) {
+    const top = checkins[checkins.length - 1];
+    lead.push(`you mostly open these for ${top.reason === 'custom' ? top.why : top.reason}.`);
+  }
+
+  return { settings, why, lead, check: check() };
 }
 
 /* ---------- Rilo builds your day ----------

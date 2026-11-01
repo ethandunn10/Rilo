@@ -10,9 +10,9 @@ const GROUPS = [
   {
     key: 'reason',
     title: 'pop-up reason',
-    order: ["i'm bored", 'just tired', 'taking a break', 'need it', 'never mind'],
+    order: ['opened it', "i'm bored", 'just tired', 'never mind'],
   },
-  { key: 'checkin', title: 'check-in', order: ["i'm done", '5 more minutes'] },
+  { key: 'checkin', title: 'check-in (why, and how long)', order: [] },
   { key: 'paywall', title: 'paywall', order: ['start free trial', 'continue with free'] },
   {
     key: 'rilo',
@@ -27,13 +27,15 @@ const GROUPS = [
   { key: 'screentime', title: 'screen time permission', order: ['allowed', 'denied', 'tried again'] },
   { key: 'strict', title: 'strict mode', order: ['not now', 'countdown started', 'countdown cancelled'] },
   { key: 'pass', title: 'emergency passes (and what for)', order: [] },
-  { key: 'fivemore', title: '"5 more minutes"', order: ['used', 'blocked (second time)'] },
-  { key: 'unlock', title: 'what unlocked an app', order: [] },
+  { key: 'borrow', title: 'borrowed from tomorrow', order: [] },
+  { key: 'session', title: 'sessions (length and what they cost)', order: [] },
   { key: 'early', title: 'closed an app early', order: [] },
+  { key: 'limits', title: 'who made the limits', order: [] },
+  { key: 'limit', title: 'limit changes', order: [] },
+  { key: 'stepdown', title: 'weekly step-down', order: [] },
   { key: 'demo', title: 'demo panel used', order: [] },
-  { key: 'plan', title: 'plan changes', order: [] },
   { key: 'day', title: 'days', order: ['goal hit', 'went over'] },
-  { key: 'week', title: 'weeks', order: ['week cleared', 'repeated', 'plan finished'] },
+  { key: 'week', title: 'weeks', order: ['cleared', 'repeated'] },
   { key: 'levelup', title: 'level ups', order: [] },
 ];
 
@@ -131,7 +133,8 @@ export default function Results() {
       <div
         style={{
           boxSizing: 'border-box',
-          padding: '40px 20px 32px',
+          padding: '40px 20px 0',
+          '--tail': '32px',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,

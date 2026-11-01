@@ -6,24 +6,29 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 
 const PERKS = [
-  { title: 'unlimited apps', sub: 'free blocks 2' },
+  { title: 'unlimited apps', sub: 'free watches 2' },
   { title: 'where your time goes', sub: 'the per-app breakdown, unblurred' },
-  { title: 'your 30-day plan', sub: '25% closer to your goal every week' },
-  { title: 'opens + time limits per app', sub: 'free is one daily total' },
-  { title: 'strict mode', sub: 'half the opens, 24 hours to switch off' },
-  { title: '2 emergency passes a day', sub: 'free gets 1' },
+  { title: 'let rilo build your limits', sub: 'and explain every choice' },
+  { title: 'the weekly step-down', sub: 'one thing tightens each week' },
+  {
+    title: 'rilo checks in every night',
+    sub: 'thirty seconds before bed, and tomorrow is planned',
+  },
+  { title: 'strict mode', sub: 'no half opens, 24 hours to loosen anything' },
   { title: 'all 23 rilos', sub: 'a new one every level' },
   { title: 'all app themes', sub: 'bamboo, sakura, sunset, snow' },
   { title: "today's plan + full history", sub: 'every day you have logged' },
 ];
 
-/* exactly what the free tier does, in the same words as the free row */
+/* exactly what the free tier does, in the same words as the free row.
+   The limit system itself is not behind the paywall — opens, halves, the
+   emergency pass and borrowing are how the app works, for everyone. */
 const FREE_BITS = [
-  'blocks 2 apps',
-  'the wait timer and the rilo pop-up',
-  'one daily time limit across those apps',
-  'your total screen time',
-  '1 emergency pass a day',
+  'watches 2 apps',
+  'opens in halves, with the wait and the rilo pop-up',
+  'always allowed / blocked / limited / free, per app',
+  '1 emergency pass a day, and borrowing from tomorrow',
+  'your daily goal, your streak and your total screen time',
   'original rilo and the grass theme',
 ];
 
@@ -57,7 +62,15 @@ const planBase = {
   cursor: 'pointer',
 };
 
-export default function Paywall({ go, plan, setPlan, onChoose, next = 'calendaronboard' }) {
+export default function Paywall({
+  go,
+  plan,
+  setPlan,
+  onChoose,
+  /* where to go next depends on which button they tapped — taking the
+     trial detours through setting up the nightly check-in */
+  nextFor = () => 'calendaronboard',
+}) {
   return (
     <div
       style={{
@@ -323,10 +336,11 @@ export default function Paywall({ go, plan, setPlan, onChoose, next = 'calendaro
           className="tap-pw"
           onClick={() => {
             const free = plan === 'free';
-            if (onChoose) onChoose(free ? 'continue with free' : 'start free trial');
+            const which = free ? 'continue with free' : 'start free trial';
+            if (onChoose) onChoose(which);
             /* onboarding carries on to the calendar; from settings it
                just goes back to where they were */
-            go(next);
+            go(nextFor(which));
           }}
           style={{
             width: '100%',

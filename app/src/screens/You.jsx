@@ -15,14 +15,12 @@ import GoalStepper from '../components/GoalStepper';
 import StrictCard from '../components/StrictCard';
 import ProLock from '../components/ProLock';
 import ScheduleCard from '../components/ScheduleCard';
-import { FREE_MAX_APPS, goalFloorHours, hoursToMins } from '../lib/plan';
-import PlanPicker from '../components/PlanPicker';
+import { FREE_MAX_APPS, GOAL_FLOOR_HOURS, fmtMins } from '../lib/plan';
+import { fmtClock } from '../lib/addons';
+import { LIMITED, BLOCKED, ALWAYS, FREE, settingFor } from '../lib/limits';
+import AppLogo from '../components/AppLogo';
 import { levelProgress, skinInfo, UNLOCK_ALL } from '../lib/levels';
 import { THEMES } from '../lib/themes';
-
-/* the day streak the designs show — a real streak needs more than one
-   session of data, so this stays the design's number */
-const DESIGN_STREAK = 6;
 
 const card = (delay) => ({
   padding: 16,
@@ -123,24 +121,25 @@ export default function You({
   setApps,
   time,
   setTime,
-  pace,
-  setPace,
-  sessionMins,
-  setSessionMins,
-  breakdown,
-  startMins,
-  weekGoal,
+  /* ---- the limits (lib/limits) ---- */
+  check,
+  tracked = [],
+  appSettings = {},
+  pendingCount = 0,
   /* ---- add-ons (rilo-addons-test) ---- */
   bedtime = { on: false, from: '22:30', to: '07:00' },
   setBedtime = () => {},
   school = { on: false, days: [], from: '08:15', to: '15:00' },
   setSchool = () => {},
+  focus = { on: false, until: '' },
+  setFocus = () => {},
+  /* the nightly check-in (pro): the time he asks, and whether today's done */
+  night = { at: '21:00', date: '' },
+  setNight = () => {},
+  checkedInToday = false,
   buddyCount = 0,
   calendarOn = false,
-  planMode = 'rilo',
-  setPlanMode = () => {},
-  hobbies = [],
-  goalList = [],
+  streak = 0,
   xp,
   level,
   isPro,
@@ -154,6 +153,7 @@ export default function You({
   onStrictOn,
   onStrictAskOff,
   onStrictKeepOn,
+  onStrictOffNow,
   onNextDay,
   onNextDayOver,
   onNextWeek,
@@ -161,11 +161,21 @@ export default function You({
 }) {
   const prog = levelProgress(xp, level);
   const planLabel = isPro ? 'rilo pro (trial)' : 'free';
-  /* same floor as onboarding: Rilo can't cut what he doesn't watch */
-  const goalFloor = goalFloorHours(
-    hoursToMins(time.now || 5),
-    breakdown?.blocked ?? hoursToMins(time.now || 5),
-  );
+
+  /* a one-line summary of the limits, so the card means something before
+     they tap into it */
+  const count = (mode) => tracked.filter((a) => settingFor(appSettings, a).mode === mode).length;
+  const limitSummary = [
+    count(LIMITED) && `${count(LIMITED)} limited`,
+    count(BLOCKED) && `${count(BLOCKED)} blocked`,
+    count(FREE) && `${count(FREE)} free`,
+    count(ALWAYS) && `${count(ALWAYS)} always allowed`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
+  /* the three or four apps with real limits, for the row of logos */
+  const limitedApps = tracked.filter((a) => settingFor(appSettings, a).mode === LIMITED);
 
   return (
     <div
@@ -214,7 +224,8 @@ export default function You({
             gap: 12,
             margin: '0 -4px',
             /* clear the floating tab bar at the bottom */
-            padding: '0 4px 124px',
+            padding: '0 4px',
+            '--tail': '124px',
           }}
         >
           <Section first>you</Section>
@@ -279,7 +290,7 @@ export default function You({
               animation: 'rise14 .4s .08s ease-out both',
             }}
           >
-            <Stat value={DESIGN_STREAK} label="day streak" />
+            <Stat value={streak} label="day streak" />
             <Stat value={fmtSaved(stats.savedMinutes)} label="time saved" />
             <Stat value={stats.saidNo} label="times you said no" />
           </div>
@@ -413,7 +424,84 @@ export default function You({
             setBedtime={setBedtime}
             school={school}
             setSchool={setSchool}
+            focus={focus}
+            setFocus={setFocus}
           />
+
+          {/* the nightly check-in — rilo pro, set up right after the paywall.
+              This is where the time they picked can be changed. */}
+          {isPro ? (
+            <div style={card('.225s')}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <Rilo skin={chosenRilo} mood="sleepy" size={54} />
+                <div style={{ flexGrow: 1, minWidth: 0 }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontFamily: 'Fredoka, sans-serif',
+                      fontSize: 19,
+                      fontWeight: 600,
+                    }}
+                  >
+                    nightly check-in
+                  </p>
+                  <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 600, color: '#2C4A36' }}>
+                    {checkedInToday
+                      ? 'done for today. tomorrow is planned.'
+                      : `he asks at ${fmtClock(night.at || '21:00')}.`}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="time"
+                  aria-label="Check-in time"
+                  value={night.at || '21:00'}
+                  onChange={(e) => setNight({ ...night, at: e.target.value })}
+                  style={{
+                    flex: 1,
+                    height: 42,
+                    boxSizing: 'border-box',
+                    padding: '0 10px',
+                    borderRadius: 14,
+                    border: '2px solid var(--line, #12301A)',
+                    background: '#FFFFFF',
+                    fontFamily: 'Fredoka, sans-serif',
+                    fontSize: 15,
+                    fontWeight: 600,
+                    color: '#12301A',
+                  }}
+                />
+                <button
+                  type="button"
+                  className="tap"
+                  onClick={() => go('nightcheckin')}
+                  style={{
+                    minHeight: 42,
+                    padding: '0 16px',
+                    borderRadius: 999,
+                    border: '2px solid var(--line, #12301A)',
+                    background: '#12301A',
+                    color: '#FFFFFF',
+                    fontFamily: 'Fredoka, sans-serif',
+                    fontSize: 15,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                >
+                  check in now
+                </button>
+              </div>
+            </div>
+          ) : (
+            <ProLock
+              style={card('.225s')}
+              title="nightly check-in"
+              sub="thirty seconds before bed, and tomorrow is planned for you."
+              onTap={() => go('upgrade')}
+            />
+          )}
 
           {/* calendar (rilo-addons-test-2) */}
           <button
@@ -498,42 +586,116 @@ export default function You({
               onTurnOn={onStrictOn}
               onAskOff={onStrictAskOff}
               onKeepOn={onStrictKeepOn}
+              onTurnOffNow={onStrictOffNow}
             />
           ) : (
             <ProLock
               style={card('.2s')}
               title="strict mode"
-              sub={'half the opens, no "5 more", 24 hours to switch off.'}
+              sub="no half opens, no borrowing, 24 hours to loosen anything."
               onTap={() => go('upgrade')}
             />
           )}
 
-          {/* daily goal */}
+          {/* the limits themselves live on their own screen — this is the
+              way in, with the plan check's verdict on the front of it (§9) */}
+          <button
+            type="button"
+            className="tap-94"
+            onClick={() => go('limits')}
+            style={{ ...card('.26s'), textAlign: 'left', cursor: 'pointer' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ flexGrow: 1, minWidth: 0 }}>
+                <span
+                  style={{
+                    display: 'block',
+                    fontFamily: 'Fredoka, sans-serif',
+                    fontSize: 19,
+                    fontWeight: 600,
+                  }}
+                >
+                  your limits
+                </span>
+                <span
+                  style={{
+                    display: 'block',
+                    marginTop: 2,
+                    fontSize: 13,
+                    fontWeight: 600,
+                    color: '#2C4A36',
+                  }}
+                >
+                  {limitSummary || 'nothing set yet'}
+                </span>
+              </span>
+              <span style={{ display: 'flex', flexShrink: 0 }}>
+                {limitedApps.slice(0, 3).map((label, i) => (
+                  <span
+                    key={label}
+                    style={{
+                      marginLeft: i ? -8 : 0,
+                      borderRadius: 10,
+                      border: i ? '2px solid var(--card)' : 0,
+                      display: 'flex',
+                      background: '#FFFFFF',
+                    }}
+                  >
+                    <AppLogo label={label} size={32} radius={10} />
+                  </span>
+                ))}
+              </span>
+            </div>
+
+            {/* the plan check, short form */}
+            {check && (
+              <span
+                style={{
+                  display: 'block',
+                  padding: '8px 11px',
+                  borderRadius: 14,
+                  background: check.over ? '#12301A' : 'rgba(18,48,26,0.06)',
+                  color: check.over ? '#FFFFFF' : '#2C4A36',
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  lineHeight: 1.35,
+                }}
+              >
+                {check.over
+                  ? `these allow ${fmtMins(check.allows)} a day — ${fmtMins(
+                      check.by,
+                    )} more than your goal.`
+                  : `these allow ${fmtMins(check.allows)} a day. that fits.`}
+              </span>
+            )}
+
+            {/* anything waiting out its 24 hours in strict mode */}
+            {pendingCount > 0 && (
+              <span
+                style={{
+                  alignSelf: 'flex-start',
+                  padding: '4px 11px',
+                  borderRadius: 999,
+                  background: '#12301A',
+                  color: '#FFFFFF',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                }}
+              >
+                {pendingCount} change{pendingCount === 1 ? '' : 's'} pending
+              </span>
+            )}
+          </button>
+
+          {/* daily goal — the scoreboard, never a lock (§8) */}
           <div style={card('.28s')}>
-            <GoalStepper time={time} setTime={setTime} floor={goalFloor} />
-          </div>
-
-          {/* how hard the plan pushes, and how long a sitting is — pro */}
-          {!isPro ? (
-            <ProLock
-              style={card('.32s')}
-              title="your 30-day plan"
-              sub="25% closer to your goal every week, with opens and time limits per app."
-              onTap={() => go('upgrade')}
-            />
-          ) : (
-          <div style={card('.32s')}>
-            <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}>
-              your plan
+            <GoalStepper time={time} setTime={setTime} floor={GOAL_FLOOR_HOURS} />
+            <p style={{ margin: 0, fontSize: 12.5, fontWeight: 600, color: '#2C4A36' }}>
+              drives rilo&apos;s mood, your xp and your streak. it never blocks
+              an app — your limits do that.
             </p>
-            <PlanPicker
-              pace={pace}
-              setPace={setPace}
-              sessionMins={sessionMins}
-              setSessionMins={setSessionMins}
-            />
           </div>
-          )}
 
           <Section>account</Section>
 

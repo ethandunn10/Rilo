@@ -1,11 +1,18 @@
-/* TimeBack — exact port of designs/TimeBack.dc.html
-   The screen-time / goal numbers live in App so the choice survives the flow. */
+/* TimeBack — port of designs/TimeBack.dc.html.
+   The screen-time / goal numbers live in App so the choice survives the flow.
 
-import { useState } from 'react';
+   This is where the DAILY GOAL gets set, and that's all it sets. The goal is
+   a scoreboard (§8): it drives Rilo's mood, the xp, the streak and the
+   weekly step-down, and it never blocks anything. The limits that DO block
+   things come next, on the limits screen.
+
+   There used to be a 30-day plan ladder here, stepping the goal down a
+   quarter of the gap each week. That's gone — the goal is one number now,
+   and what tightens over time is the per-app limits, one thing a week. */
+
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
-import PlanPicker from '../components/PlanPicker';
-import { weekGoals, blockedGoalFor, goalFloorHours, hoursToMins, fmtMins } from '../lib/plan';
+import { GOAL_FLOOR_HOURS, fmtMins } from '../lib/plan';
 
 const MAX = 10;
 
@@ -51,37 +58,16 @@ const statCard = {
             boxShadow: '0 3px 0 var(--line)',
 };
 
-export default function TimeBack({
-  go,
-  time,
-  setTime,
-  skin,
-  breakdown,
-  apps,
-  setApps,
-  pace,
-  setPace,
-  sessionMins,
-  setSessionMins,
-  isPro = false,
-  planMode = 'rilo',
-  setPlanMode = () => {},
-  hobbies = [],
-  goalList = [],
-}) {
+export default function TimeBack({ go, time, setTime, skin, check }) {
   const { now, goal } = time;
   const saved = Math.max(0, now - goal);
   const weekHours = Math.round(saved * 7 * 10) / 10;
   const sessions = Math.round(saved * 365).toLocaleString('en-US');
 
-  const startMins = hoursToMins(now);
-  const blockedBase = breakdown?.blocked ?? startMins;
-  const goals = weekGoals(startMins, hoursToMins(goal), pace);
-  /* they can't aim below the time Rilo doesn't control */
-  const floor = goalFloorHours(startMins, blockedBase);
+  /* the only floor is a sane one — nothing is cut up into per-app budgets
+     any more, so the goal can be whatever they want to aim at */
+  const floor = GOAL_FLOOR_HOURS;
   const atFloor = goal <= floor;
-
-  const [editing, setEditing] = useState(false);
 
   const nowUp = () => setTime({ ...time, now: Math.min(MAX, now + 0.5) });
   const nowDown = () => setTime({ ...time, now: Math.max(goal + 0.5, now - 0.5) });
@@ -107,7 +93,8 @@ export default function TimeBack({
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '48px 24px 34px',
+          padding: '48px 24px 0',
+          '--tail': '34px',
           display: 'flex',
           flexDirection: 'column',
           gap: 14,
@@ -254,35 +241,36 @@ export default function TimeBack({
               <div style={bar(goal, 'linear-gradient(90deg, #4CC160, #2E8B3E)')} />
             </div>
 
-            {/* Rilo only controls the apps they blocked, so say where the
-                floor is instead of sending them off to block more. */}
+            {/* the goal is a scoreboard, so say so plainly here too */}
             <p
               style={{
                 margin: 0,
                 fontSize: 13,
                 fontWeight: 600,
-                color: atFloor ? '#FFD9A8' : '#C9E6CE',
+                color: atFloor ? '#B4631A' : '#2C4A36',
                 lineHeight: 1.3,
               }}
             >
               {atFloor
-                ? `that's as low as it goes with these apps. block another to aim lower.`
-                : `lowest you can go with these apps: ${fmt(floor)}.`}
+                ? `${fmt(floor)} is as low as it goes.`
+                : `this never locks an app. it's what you're aiming at.`}
             </p>
           </div>
         </div>
 
-        {/* the 30-day plan is rilo pro; free just has the limit above */}
-        {isPro && (
+        {/* What the limits currently allow, against the goal they just set
+            (§9). It's only a heads-up here — the next screen is where they
+            actually set the limits, and the same check lives there. */}
+        {check && (
           <div
             style={{
-              padding: 20,
+              padding: 18,
               borderRadius: 26,
               background: '#12301A',
               color: '#FFFFFF',
               display: 'flex',
               flexDirection: 'column',
-              gap: 4,
+              gap: 6,
               boxShadow: '0 14px 34px rgba(10,40,20,0.25)',
               animation: 'rise .5s .2s ease-out both',
             }}
@@ -297,89 +285,29 @@ export default function TimeBack({
                 color: '#9FD8A9',
               }}
             >
-              your {goals.length === 1 ? '1-week' : `${goals.length}-week`} plan
+              next: your limits
             </p>
-  
-            <button
-              type="button"
-              className="tap"
-              onClick={() => setEditing((v) => !v)}
+            <p
               style={{
-                alignSelf: 'stretch',
-                minHeight: 46,
-                marginTop: 4,
-                padding: '0 18px',
-                borderRadius: 999,
-                border: 0,
-                background: '#FFFFFF',
-                color: '#12301A',
+                margin: 0,
                 fontFamily: 'Fredoka, sans-serif',
-                fontSize: 16,
+                fontSize: 19,
                 fontWeight: 600,
-                cursor: 'pointer',
-                boxShadow: '0 4px 0 rgba(0,0,0,0.28)',
+                lineHeight: 1.3,
               }}
             >
-              {editing ? 'done' : 'change my plan'}
-            </button>
-  
-            {editing && (
-              <PlanPicker
-                pace={pace}
-                setPace={setPace}
-                sessionMins={sessionMins}
-                setSessionMins={setSessionMins}
-                dark
-              />
-            )}
-  
-            {goals.map((g, i) => (
-              <div
-                key={g + '-' + i}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '7px 0',
-                  borderBottom:
-                    i === goals.length - 1 ? 0 : '1px solid rgba(255,255,255,0.14)',
-                }}
-              >
-                <span
-                  style={{
-                    width: 58,
-                    flexShrink: 0,
-                    fontSize: 13,
-                    fontWeight: 700,
-                    color: '#9FD8A9',
-                  }}
-                >
-                  week {i + 1}
-                </span>
-                <span
-                  style={{
-                    flexGrow: 1,
-                    fontFamily: 'Fredoka, sans-serif',
-                    fontSize: 20,
-                    fontWeight: 600,
-                  }}
-                >
-                  {fmtMins(g)} a day
-                </span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: '#C9E6CE' }}>
-                  {fmtMins(Math.max(0, blockedGoalFor(g, startMins, blockedBase)))} on apps
-                </span>
-              </div>
-            ))}
-  
-            <p style={{ margin: '4px 0 0', fontSize: 15, fontWeight: 600, color: '#C9E6CE' }}>
-              {goals.length === 1
-                ? "straight in at your goal. no easing in."
-                : `you hit your goal in ${goals.length * 7} days.`}
+              {check.over
+                ? `right now your limits would allow ${fmtMins(check.allows)} a day. we'll tighten them until they fit.`
+                : `i'll set opens on each app so the day actually fits in ${fmtMins(
+                    check.goal,
+                  )}.`}
+            </p>
+            <p style={{ margin: 0, fontSize: 13.5, fontWeight: 600, color: '#C9E6CE' }}>
+              a limited app gets x opens a day, y minutes each. leave early
+              and it only costs half an open.
             </p>
           </div>
         )}
-
 
         <div
           style={{
@@ -427,7 +355,7 @@ export default function TimeBack({
           <button
           type="button"
           className="tap-92"
-          onClick={() => go('home')}
+          onClick={() => go('limitsonboard')}
           style={{
             flexGrow: 1,
             minWidth: 0,
@@ -447,7 +375,7 @@ export default function TimeBack({
             boxShadow: '0 4px 0 var(--line)',
           }}
         >
-          let's get it back
+          set my limits
         </button>
         </div>
       </div>

@@ -471,6 +471,52 @@ export function isNonAnswer(text) {
   return NON_ANSWER.test(t);
 }
 
+/* ---------- "are you a content creator, or post pretty often?" ----------
+   A yes / sometimes / no question, answered out loud in whatever words
+   people actually use.
+
+   Order matters, and it goes middle, no, yes:
+     - An explicit frequency wins over a negation, because "i'm not a
+       creator but i post sometimes" is a sometimes, not a no. So does a
+       degree qualifier: "i barely post" and "i don't post much" both mean
+       a little, which is not the same as never.
+     - The "no" family then beats the "yes" family, so "i don't post" can't
+       be read as a yes off the word "post" sitting in it.
+   Where it's genuinely ambiguous ("no, not much") it lands on sometimes,
+   which is the kinder error: they get room to post, and the About you
+   screen right after lets them correct it either way.
+
+   Returns '' when it can't tell at all, and Rilo asks once more. */
+export function creatorIn(text) {
+  const t = (text || '').toLowerCase();
+
+  if (
+    /\b(?:sometimes|occasionally|rarely|kinda|sorta)\b|now and then|once in a while|every so often|here and there|not much|not often|a few times|couple times|a bit|don'?t post much|dont post much|hardly|barely/.test(
+      t,
+    )
+  ) {
+    return 'sometimes';
+  }
+
+  if (
+    /\b(?:no|nope|nah|never|lurk|lurker)\b|not really|just watch|only watch|i watch|don'?t post|dont post|do not post|never post|not a creator/.test(
+      t,
+    )
+  ) {
+    return 'no';
+  }
+
+  if (
+    /\b(?:yes|yeah|yep|yup|ya|sure|definitely|creator|influencer|youtuber|tiktoker|streamer|content)\b|all the time|every day|everyday|daily|a lot|lots|constantly|i post|post a lot|make videos|making videos|make content|film/.test(
+      t,
+    )
+  ) {
+    return 'yes';
+  }
+
+  return '';
+}
+
 /* what you said on the pop-up → which screen */
 export function reasonIn(text) {
   const t = text.toLowerCase();

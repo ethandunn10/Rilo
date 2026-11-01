@@ -4,8 +4,7 @@
 import { useState } from 'react';
 import AppLogo from './AppLogo';
 import AppSheet from './AppSheet';
-import { STARTING_APPS } from '../lib/apps';
-import { NEVER_BLOCK } from '../lib/plan';
+import { STARTING_APPS, SYSTEM_APPS } from '../lib/apps';
 
 const CHECK = (
   <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
@@ -81,7 +80,8 @@ function AppRow({ label, on, onPick }) {
 
 export default function AppPicker({ apps, setApps, style, maxApps = Infinity, onMaxed }) {
   const [sheet, setSheet] = useState(false);
-  /* Rilo won't block the apps you need to reach people */
+  /* phone, messages, maps and camera are always allowed, not watched —
+     they live on the limits screen, where that can be changed */
   const [refused, setRefused] = useState('');
 
   const { on, extra } = apps;
@@ -92,7 +92,7 @@ export default function AppPicker({ apps, setApps, style, maxApps = Infinity, on
   const addApp = (label) => {
     const t = label.trim().toLowerCase();
     if (!t) return;
-    if (NEVER_BLOCK.some((n) => t.includes(n))) {
+    if (SYSTEM_APPS.includes(t)) {
       setRefused(t);
       setSheet(false);
       return;
@@ -182,7 +182,8 @@ export default function AppPicker({ apps, setApps, style, maxApps = Infinity, on
             color: '#12301A',
           }}
         >
-          keep texting open. you&apos;ll need it.
+          {refused} is always allowed already. change that on your limits
+          screen if you really want to.
         </p>
       )}
 

@@ -6,7 +6,12 @@
    Six of the apps the spec lists are NOT in Simple Icons any more — minecraft,
    clash royale, hulu, disney+, amazon and prime video were all removed
    upstream over trademark concerns. Those fall back to the spec's letter
-   icon, with the brand colour kept so they still read correctly. */
+   icon, with the brand colour kept so they still read correctly.
+
+   The four always-allowed apps (phone, messages, maps, camera) are Apple's
+   own, so they aren't in Simple Icons either. They get letter tiles in the
+   iOS system colours. They're in the catalog because the user can change
+   what's always allowed, so they have to be visible and settable. */
 
 import {
   siTiktok,
@@ -34,6 +39,12 @@ const icon = (si) => ({ path: si.path, hex: `#${si.hex}` });
 
 /* label is what the app is called in the UI (lowercase, like the designs) */
 export const APP_CATALOG = [
+  /* the four that ship always-allowed (lib/limits DEFAULT_ALWAYS) */
+  { label: 'phone', logo: null, hex: '#34C759' },
+  { label: 'messages', logo: null, hex: '#30B94D' },
+  { label: 'maps', logo: null, hex: '#1A73E8' },
+  { label: 'camera', logo: null, hex: '#636366' },
+
   { label: 'tiktok', logo: icon(siTiktok) },
   { label: 'instagram', logo: icon(siInstagram) },
   { label: 'youtube', logo: icon(siYoutube) },
@@ -64,6 +75,11 @@ export const APP_CATALOG = [
 
 /* the 5 rows PickApps starts with, same as the design */
 export const STARTING_APPS = ['tiktok', 'instagram', 'youtube', 'snapchat', 'x'];
+
+/* The four always-allowed apps are tracked without being picked: they show
+   up in the limits list so they can be changed, but they're never part of
+   "apps rilo watches" and never count against the free app cap. */
+export const SYSTEM_APPS = ['phone', 'messages', 'maps', 'camera'];
 
 const BY_LABEL = new Map(APP_CATALOG.map((a) => [a.label, a]));
 
@@ -136,7 +152,21 @@ export function tileColor(hex, alpha = 0.12) {
    Row order matches PickApps: the starting five, then anything added. */
 
 export function pickedApps(apps) {
-  return STARTING_APPS.concat(apps.extra).filter((label) => apps.on[label]);
+  return STARTING_APPS.concat(apps.extra)
+    .filter((label) => apps.on[label])
+    .filter((label) => !SYSTEM_APPS.includes(label));
+}
+
+/* Every app with a setting: the ones they picked, plus the always-allowed
+   four and anything they've added to that list themselves. The limits
+   screen runs off this, not off pickedApps. */
+export function trackedApps(apps, appSettings = {}) {
+  const picked = pickedApps(apps);
+  const always = Object.keys(appSettings).filter(
+    (label) => !picked.includes(label) && appSettings[label]?.mode === 'always',
+  );
+  const system = SYSTEM_APPS.filter((label) => !always.includes(label));
+  return picked.concat(system, always);
 }
 
 /* 1st, 2nd, 3rd, 4th ... for "4th time today" */

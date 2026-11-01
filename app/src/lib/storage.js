@@ -22,17 +22,30 @@ export const DEFAULT_STATE = {
       'grow my content': true,
     },
     extra: { hobby: [], goal: [] },
+    /* Do they post? '' = not asked, then 'yes' | 'sometimes' | 'no'.
+       It changes real things: a creator's instagram or tiktok IS their
+       work, so Rilo keeps more opens on it instead of treating it as pure
+       scrolling, and the check-in offers "need to post" in their words. */
+    creator: '',
   },
   apps: {
     /* nothing pre-checked — they pick what Rilo blocks */
     on: {},
     extra: [],
   },
+  /* now = what they're on today, goal = the daily goal, in hours.
+     The goal is the scoreboard (lib/plan §8) — it never locks anything. */
   time: { now: 4, goal: 2 },
-  /* how hard the plan pushes: easy | steady | straight (lib/plan) */
-  pace: 'steady',
-  /* how long one sitting on a blocked app lasts; opens follow from it */
-  sessionMins: 15,
+
+  /* ---------- the limits (lib/limits) ----------
+     One entry per tracked app: { mode, opens, minutes }. Anything missing
+     falls back to Limited on the default numbers, except the four that ship
+     always allowed (phone, messages, maps, camera). This is the ONLY thing
+     that blocks an app. */
+  appSettings: {},
+  /* how the limits were made: 'rilo' | 'own' */
+  limitMode: 'rilo',
+
   /* which price they had selected on the paywall */
   plan: 'year',
   /* which button they actually tapped: null until they choose */
@@ -47,11 +60,9 @@ export const DEFAULT_STATE = {
   theme: 'grass',
   /* real "4th time today" counts, per app, reset each day */
   opens: { date: today(), counts: {} },
-  /* how many times they took "5 more minutes" today — the 2nd+ makes Rilo angry */
-  extras: { date: today(), count: 0 },
   stats: { savedMinutes: 0, saidNo: 0 },
 
-  /* ---------- screen time + the 30-day plan (lib/plan) ---------- */
+  /* ---------- screen time baseline + the week counter ---------- */
 
   /* null = not asked yet, true = allowed, false = carried on without it */
   screenTime: null,
@@ -60,62 +71,91 @@ export const DEFAULT_STATE = {
   /* the generated baseline: where their time goes today */
   breakdown: null,
 
-  /* which week of the plan they're on, and how it's going */
+  /* which week they're on, and how it's going */
   program: {
     week: 1,
     /* days finished in the current week, and how many went over */
     daysDone: 0,
     daysOver: 0,
-    /* weeks that had to be run again */
-    repeats: 0,
     done: false,
   },
 
   /* everything that resets at midnight */
   day: {
     date: today(),
-    /* minutes spent in each blocked app today */
+    /* minutes spent in each non-always-allowed app today */
     used: {},
-    /* opens spent per app */
-    opens: {},
-    /* emergency passes used today, and what for */
+    /* opens spent per app, in halves — 0.5, 1, 1.5 ... */
+    opensUsed: {},
+    /* the one emergency pass: 0 or 1 */
     passes: 0,
-    /* "5 more minutes" is once a day, across every app */
-    fiveMore: 0,
-    /* minutes since they last had a blocked app open, for "taking a break" */
+    /* the half open borrowed off tomorrow today, if they did: { app } */
+    borrowed: null,
+    /* the last session that ended, so reopening inside two minutes carries
+       it on instead of costing a second open:
+       { app, endedAt, mins, charged } */
+    lastSession: null,
+    /* minutes since they last had a limited/free app open, for "chilling" */
     sinceBlocked: 999,
-    /* when a blocked app was last open (ms), for "taking a break" */
+    /* when one was last open (ms) */
     lastBlockedAt: null,
   },
+
+  /* tomorrow's IOU: the app half an open comes off, and the day it's due */
+  borrow: { date: '', app: '' },
+
+  /* loosening changes waiting out their 24 hours in strict mode (lib/limits) */
+  pending: [],
+
+  /* the weekly step-down: one tightening a week on the biggest app */
+  step: {
+    /* the week number the current offer belongs to */
+    week: 0,
+    /* which app it's aimed at — they can swap it */
+    app: '',
+    /* 'idle' | 'offered' | 'accepted' | 'skipped' */
+    status: 'idle',
+    /* true once the plan fits and they're living inside it */
+    done: false,
+    /* skipping in strict mode counts as loosening: 24h before it lands */
+    skipAt: null,
+  },
+
+  /* a focus block: apps locked until a time today */
+  focus: { on: false, until: '' },
 
   /* one entry per finished day: { date, used, goal, hit } */
   history: [],
   streak: 0,
-  /* days this week where they used "5 more" twice */
-  fiveMoreDays: 0,
+  /* days they needed the pass or a borrow — the "not following through"
+     signal Rilo uses to recommend strict mode */
+  leanDays: 0,
 
-  /* strict mode */
   /* ---------- add-ons (rilo-addons-test) ---------- */
   /* why they opened a blocked app, and for how long — kept for stats */
   checkins: [],
-  /* emergency passes they've banked this week, earned by good days */
-  passBank: { week: '', left: 1, earnedToday: false },
   /* rilo goes to sleep, apps lock */
   bedtime: { on: false, from: '22:30', to: '07:00' },
   /* locked on a schedule, not location */
   school: { on: false, days: ['mon', 'tue', 'wed', 'thu', 'fri'], from: '08:15', to: '15:00' },
   /* buddies: invite codes only, no profiles, no search */
   buddies: { code: '', friends: [] },
-  /* how the plan was made: 'rilo' | 'own' */
-  planMode: 'rilo',
   /* today's schedule on the plan tab: rilo's, or theirs */
   schedule: { mode: 'rilo', rows: [] },
-  /* their calendar, read only — DEMO ONLY, nothing is connected */
-  calendar: { on: false, which: '' },
-  /* the last nightly check-in, and what it put on tomorrow */
-  night: { date: '', said: null, tasks: [] },
+  /* their calendar, read only — DEMO ONLY, nothing is connected.
+     `sources` is the other apps rilo can read for the same reason: notes,
+     reminders, tasks. Same deal — read only, never written to. */
+  calendar: { on: false, which: '', sources: [] },
+  /* The nightly check-in (rilo pro). `at` is the time they picked on the
+     way in — he nudges from then on, but the button is always there so
+     they can check in whenever they want. */
+  night: { date: '', said: null, tasks: [], at: '21:00' },
   /* demo panel: a fake clock, null means use the real one */
   demoClock: null,
+  /* ---------- strict mode: the bundle (§12) ----------
+     On: no halves, loosening takes 24h, the step-down happens by itself, no
+     borrowing, a 15-second wait. Turning it ON is instant; turning it OFF
+     takes 24 hours, which is `endingAt`. */
   strict: {
     on: false,
     /* 1 | 3 | 7 days */
@@ -129,6 +169,29 @@ export const DEFAULT_STATE = {
     suggestedOn: '',
   },
 };
+
+/* A clean day. Opens and the emergency pass reset at midnight and unused
+   opens never carry over (§2.7) — the only thing that crosses midnight is
+   the borrow IOU, which lives outside `day`. */
+export function freshDay(date = today()) {
+  return {
+    date,
+    used: {},
+    opensUsed: {},
+    passes: 0,
+    borrowed: null,
+    lastSession: null,
+    sinceBlocked: 999,
+    lastBlockedAt: null,
+  };
+}
+
+/* tomorrow, as a YYYY-MM-DD key */
+export function tomorrow(from = new Date()) {
+  const d = new Date(from);
+  d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
 
 /* One-time reset (Oct 29).
    Demo testing left browsers wearing a high-level skin (samurai). The main

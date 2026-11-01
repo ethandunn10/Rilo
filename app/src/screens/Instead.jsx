@@ -125,7 +125,7 @@ export default function Instead({ go, skin }) {
               justifyContent: 'center',
             }}
           >
-            5 more min
+            not now
           </span>
         </div>
       </div>

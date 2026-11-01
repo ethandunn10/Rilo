@@ -10,6 +10,7 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
 import ChipPicker from '../components/ChipPicker';
+import { CREATOR_ANSWERS } from '../lib/profile';
 
 const cardStyle = (delay) => ({
   padding: 16,
@@ -121,6 +122,63 @@ export default function AboutYou({ go, about, setAbout, name, setName, skin, tal
                 color: '#12301A',
               }}
             />
+          </div>
+
+          {/* Posting changes the maths. For a creator, time in instagram or
+              tiktok is the work — Rilo shouldn't limit it like doom
+              scrolling, and the check-in should offer "need to post" as a
+              first-class reason instead of making them type it. */}
+          <div style={cardStyle('.08s')}>
+            <p
+              style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}
+            >
+              do you post?
+            </p>
+            <p style={{ margin: '-4px 0 0', fontSize: 13, fontWeight: 600, color: '#2C4A36' }}>
+              if these apps are how you make things, i&apos;ll plan around that.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+              {CREATOR_ANSWERS.map((a) => {
+                const on = about.creator === a.id;
+                return (
+                  <button
+                    key={a.id}
+                    type="button"
+                    className="tap"
+                    aria-pressed={on}
+                    onClick={() => setAbout({ ...about, creator: a.id })}
+                    style={{
+                      width: '100%',
+                      minHeight: 52,
+                      boxSizing: 'border-box',
+                      padding: '8px 16px',
+                      borderRadius: 20,
+                      border: '2px solid var(--line, #12301A)',
+                      background: on ? '#12301A' : 'rgba(255,255,255,0.92)',
+                      color: on ? '#FFFFFF' : '#12301A',
+                      fontFamily: 'Fredoka, sans-serif',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <span style={{ fontSize: 17, fontWeight: 600 }}>{a.label}</span>
+                    <span
+                      style={{
+                        fontFamily: 'Inter, system-ui, sans-serif',
+                        fontSize: 12,
+                        fontWeight: 600,
+                        opacity: 0.75,
+                      }}
+                    >
+                      {a.sub}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           <ChipPicker about={about} setAbout={setAbout} cardStyle={cardStyle} />

@@ -7,19 +7,26 @@
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import AppLogo from '../components/AppLogo';
+import Opens from '../components/Opens';
 import { fmtClock } from '../lib/addons';
-import { fmtMins } from '../lib/plan';
+import { BLOCKED, LIMITED } from '../lib/limits';
 
 export default function Shield({
   app,
   skin,
-  left,
-  sessionMins = 15,
+  /* what lib/limits lockFor() said about this app right now */
+  lock,
+  minutes = 15,
+  opensTotal = 0,
+  opensUsed = 0,
   schedule = { locked: false, kind: null, until: null },
   onTalk,
   onClose,
 }) {
-  const locked = left?.locked || schedule.locked;
+  const locked = Boolean(lock?.locked);
+  const mode = lock?.setting?.mode;
+  /* the circles only make sense for a Limited app that still has opens */
+  const showOpens = mode === LIMITED && !schedule.locked && !locked;
 
   return (
     <div
@@ -64,7 +71,8 @@ export default function Shield({
           </span>
         </div>
 
-        <Rilo skin={skin} mood={locked ? 'angry' : 'coach'} size={180} />
+        {/* kind, not mean, when the day is simply over (§7) */}
+        <Rilo skin={skin} mood={locked ? 'letdown' : 'coach'} size={180} />
 
         <h1
           style={{
@@ -76,7 +84,7 @@ export default function Shield({
             lineHeight: 1.15,
           }}
         >
-          rilo locked {app}
+          {locked ? `rilo locked ${app}` : `${app}?`}
         </h1>
 
         <p
@@ -92,15 +100,29 @@ export default function Shield({
           {schedule.locked
             ? schedule.kind === 'bedtime'
               ? `bedtime. open again at ${fmtClock(schedule.until)}`
-              : `school hours. open again at ${fmtClock(schedule.until)}`
-            : locked
-            ? 'locked till tomorrow'
-            : left.shared
-              ? `${fmtMins(left.minutes)} left today`
-              : `${left.opens} open${left.opens === 1 ? '' : 's'} left · ${fmtMins(
-                  Math.min(sessionMins, left.minutes),
-                )}${left.opens === 1 ? '' : ' each'}`}
+              : schedule.kind === 'school'
+                ? `school hours. open again at ${fmtClock(schedule.until)}`
+                : `focus block. open again at ${fmtClock(schedule.until)}`
+            : mode === BLOCKED
+              ? 'blocked. your pass still works.'
+              : locked
+                ? 'no opens left. fresh ones at midnight.'
+                : 'tap through and i’ll ask what for.'}
         </p>
+
+        {/* the same circles as the limit card and the pop-up (§3) */}
+        {showOpens && (
+          <div
+            style={{
+              padding: '9px 14px',
+              borderRadius: 18,
+              background: 'rgba(255,255,255,0.72)',
+              border: '1.5px solid rgba(255,255,255,0.95)',
+            }}
+          >
+            <Opens total={opensTotal} used={opensUsed} minutes={minutes} align="center" />
+          </div>
+        )}
 
         <div style={{ flexGrow: 1 }} />
 

@@ -2,10 +2,16 @@
    Screens slide in left/right like an iPhone push/pop: the incoming screen
    comes in from the edge while the outgoing one slides off with a parallax.
 
-   Name, onboarding answers, XP, chosen Rilo, the per-app "nth time today"
-   counts and the You stats live here and are saved to localStorage, so a
+   Name, onboarding answers, XP, chosen Rilo, the per-app limits, today's
+   opens and the You stats live here and are saved to localStorage, so a
    refresh doesn't reset everything. Tester taps are counted in lib/track.js
-   and shown on the hidden /results screen. */
+   and shown on the hidden /results screen.
+
+   The limit system (lib/limits) is the heart of it: every tracked app is
+   always allowed, blocked, limited or free, and a Limited app's OPENS are
+   the only thing that locks it. Opens count in halves. The daily goal is a
+   scoreboard — it drives mood, xp, streaks, "time you got back" and the
+   weekly step-down, and it never blocks anything. */
 
 import { useEffect, useState } from 'react';
 import PhoneFrame from './components/PhoneFrame';
@@ -31,36 +37,37 @@ import Suggestion from './screens/Suggestion';
 import Tired from './screens/Tired';
 import Break from './screens/Break';
 import NeedIt from './screens/NeedIt';
-import Timer from './screens/Timer';
-import CheckIn from './screens/CheckIn';
 import Plan from './screens/Plan';
+import Limits from './screens/Limits';
 import Progress from './screens/Progress';
 import PickRilo from './screens/PickRilo';
 import You from './screens/You';
 import LevelUp from './screens/LevelUp';
 import Results from './screens/Results';
 
-import { loadState, saveState, clearState, DEFAULT_STATE, today } from './lib/storage';
+import {
+  loadState,
+  saveState,
+  clearState,
+  DEFAULT_STATE,
+  today,
+  tomorrow,
+  freshDay,
+} from './lib/storage';
 import { track } from './lib/track';
-import { pickedApps } from './lib/apps';
+import { pickedApps, trackedApps } from './lib/apps';
 import { HOBBIES, GOALS } from './lib/profile';
 import {
   buildBreakdown,
   hoursToMins,
-  weekGoals,
-  limitsFor,
   fmtMins,
-  PASS_MINUTES,
-  BREAK_EARNED_AFTER,
   dayXp,
   WEEK_BONUS,
   PLAN_BONUS,
   shouldSuggestStrict,
-  weeksFor,
-  passesFor,
   watchedFor,
 } from './lib/plan';
-import { levelFor, skinsUnlockedBetween, XP, UNLOCK_ALL } from './lib/levels';
+import { levelFor, skinsUnlockedBetween, UNLOCK_ALL } from './lib/levels';
 /* ---- add-ons (rilo-addons-test) ---- */
 import WhyOpen from './screens/WhyOpen';
 import ShareCard from './screens/ShareCard';
@@ -69,17 +76,44 @@ import DemoPanel from './components/DemoPanel';
 import {
   moodForUsage,
   moodNote,
-  passesAfterGoodDay,
   timeBack,
   lockReason,
   dayIndexOf,
   toMins,
-  WEEKLY_PASS_MAX,
 } from './lib/addons';
-import { overLine, comparisonFor, calendarPlan, DEMO_CALENDAR } from './demo/mockAI';
+import { overLine, comparisonFor, calendarPlan, DEMO_CALENDAR, riloLimits } from './demo/mockAI';
 import NightCheckIn from './screens/NightCheckIn';
+import NightTime from './screens/NightTime';
 import CalendarConnect from './screens/CalendarConnect';
 import { ThemeContext, themeInfo } from './lib/themes';
+
+/* ---- the limit system ---- */
+import {
+  ALWAYS,
+  LIMITED,
+  FREE,
+  PASS_MINUTES,
+  PASSES_PER_DAY,
+  CONTINUE_MS,
+  clampOpens,
+  clampMinutes,
+  settingFor,
+  countsTowardDay,
+  opensTotalFor,
+  opensUsedFor,
+  opensAvailFor,
+  sessionCapMins,
+  opensSpent,
+  canBorrow as canBorrowFor,
+  lockFor,
+  planCheck,
+  isLoosening,
+  describeChange,
+  makePending,
+  stepDownTargetFor,
+  stepDownFor,
+  stepDownDone,
+} from './lib/limits';
 
 /* the hidden results screen: /results, or #results if rewrites aren't on */
 function wantsResults() {
@@ -88,10 +122,9 @@ function wantsResults() {
   return path === '/results' || window.location.hash === '#results';
 }
 
-/* How much time saying no is worth. A doom-scroll block is treated as 15
-   minutes, so refusing outright banks 15, finishing a shorter session banks
-   whatever you didn't spend, and taking 5 more costs 5. */
-const BLOCK_MINUTES = 15;
+/* How much time saying no is worth. Refusing a session outright banks the
+   open they didn't spend, which is the app's own per-open length. */
+const SAID_NO_MINUTES = 15;
 
 /* The Rilo who walks you through onboarding: always the original. */
 const OG_SKIN = 'original';
@@ -120,19 +153,6 @@ export default function App() {
   const [about, setAbout] = useState(saved.about);
   const [apps, setApps] = useState(saved.apps);
   const [time, setTime] = useState(saved.time);
-  const [pace, setPace] = useState(saved.pace);
-  const [sessionMins, setSessionMins] = useState(saved.sessionMins);
-
-  const choosePace = (id) => {
-    setPace(id);
-    /* a shorter plan can't leave them on a week that no longer exists */
-    setProgram((p) => ({ ...p, week: Math.min(p.week, weeksFor(id)) }));
-    track('plan', `pace: ${id}`);
-  };
-  const chooseSession = (mins) => {
-    setSessionMins(mins);
-    track('plan', `${mins} min sittings`);
-  };
   const [plan, setPlan] = useState(saved.plan);
   const [planChoice, setPlanChoice] = useState(saved.planChoice);
   const [xp, setXp] = useState(saved.xp);
@@ -144,10 +164,24 @@ export default function App() {
   /* app theme — grass is free, the rest are Rilo Pro (lib/themes) */
   const [theme, setTheme] = useState(saved.theme);
   const [opens, setOpens] = useState(saved.opens);
-  const [extras, setExtras] = useState(saved.extras);
   const [stats, setStats] = useState(saved.stats);
 
-  /* ---------- screen time + the 30-day plan ---------- */
+  /* ---------- the limits (lib/limits) ---------- */
+  const [appSettings, setAppSettings] = useState(saved.appSettings);
+  const [limitMode, setLimitMode] = useState(saved.limitMode);
+  /* tomorrow's IOU from a borrow: { date, app } */
+  const [borrow, setBorrow] = useState(saved.borrow);
+  /* loosening changes waiting out their 24 hours in strict mode */
+  const [pending, setPending] = useState(saved.pending);
+  /* the weekly step-down */
+  const [step, setStep] = useState(saved.step);
+  /* a focus block: apps locked until a time today */
+  const [focus, setFocus] = useState(saved.focus);
+  /* what Rilo said about his own plan, when he made it */
+  const [riloWhy, setRiloWhy] = useState({});
+  const [riloLead, setRiloLead] = useState([]);
+
+  /* ---------- screen time baseline + the week counter ---------- */
   const [screenTime, setScreenTime] = useState(saved.screenTime);
   const [triedAgain, setTriedAgain] = useState(saved.triedAgain);
   const [breakdown, setBreakdown] = useState(saved.breakdown);
@@ -155,52 +189,66 @@ export default function App() {
   const [day, setDay] = useState(saved.day);
   const [history, setHistory] = useState(saved.history);
   const [streak, setStreak] = useState(saved.streak);
-  const [fiveMoreDays, setFiveMoreDays] = useState(saved.fiveMoreDays);
+  const [leanDays, setLeanDays] = useState(saved.leanDays);
   const [strict, setStrict] = useState(saved.strict);
 
   /* ---------- add-ons (rilo-addons-test) ---------- */
   const [checkins, setCheckins] = useState(saved.checkins);
-  const [passBank, setPassBank] = useState(saved.passBank);
   const [bedtime, setBedtime] = useState(saved.bedtime);
   const [school, setSchool] = useState(saved.school);
   const [buddies, setBuddies] = useState(saved.buddies);
-  const [planMode, setPlanMode] = useState(saved.planMode);
   /* today's schedule on the plan tab */
   const [schedulePlan, setSchedulePlan] = useState(saved.schedule);
   const [calendar, setCalendar] = useState(saved.calendar);
   const [night, setNight] = useState(saved.night);
   /* DEMO ONLY: a fake clock so bedtime and school can be tested */
   const [demoClock, setDemoClock] = useState(saved.demoClock);
-  /* the promise they made on the check-in, for this session */
+  /* the reason they gave on the check-in, for this session */
   const [promise, setPromise] = useState(null);
-  /* a pass they just earned, celebrated once */
-  const [passWon, setPassWon] = useState(false);
-  /* "you said 5 minutes for messages. it has been 22." */
+  /* "you said quick check on messages, and you used the whole open" */
   const [overNote, setOverNote] = useState('');
 
-  /* the app + length of the session being "opened" right now */
-  const [session, setSession] = useState({ app: null, minutes: 5 });
+  /* The session being "opened" right now.
+       app      which app
+       cap      how many more minutes it may run
+       carried  minutes already spent in this session before a reopen
+       charged  opens this session has already cost
+       kind     'open' spends an open · 'pass' spends the emergency pass
+       minutes  the app's per-open length, for the arithmetic at the end */
+  const [session, setSession] = useState({
+    app: null,
+    cap: 5,
+    carried: 0,
+    charged: 0,
+    kind: 'open',
+    minutes: 15,
+  });
   /* the iOS notification Rilo sends from the shield */
   const [banner, setBanner] = useState(false);
   /* "you closed 7 min early" — shown on Home once, after a short session */
   const [savedNote, setSavedNote] = useState(null);
   /* came through Talk in onboarding → About you says "here's what i got" */
   const [talked, setTalked] = useState(false);
+  /* ticks once a second while anything is pending, so countdowns move and
+     a change lands the moment its 24 hours are up */
+  const [, setTick] = useState(0);
 
   useEffect(() => {
     saveState({
-      name, about, apps, time, pace, sessionMins, plan, planChoice, isPro,
-      xp, level, chosenRilo, theme, opens, extras, stats,
+      name, about, apps, time, plan, planChoice, isPro,
+      xp, level, chosenRilo, theme, opens, stats,
+      appSettings, limitMode, borrow, pending, step, focus,
       screenTime, triedAgain, breakdown, program, day, history, streak,
-      fiveMoreDays, strict,
-      checkins, passBank, bedtime, school, buddies, planMode, demoClock,
+      leanDays, strict,
+      checkins, bedtime, school, buddies, demoClock,
       schedule: schedulePlan,
       calendar,
       night,
     });
-  }, [name, about, apps, time, pace, sessionMins, plan, planChoice, isPro, xp, level, chosenRilo, theme, opens,
-      extras, stats, screenTime, triedAgain, breakdown, program, day, history, streak,
-      fiveMoreDays, strict, checkins, passBank, bedtime, school, buddies, planMode,
+  }, [name, about, apps, time, plan, planChoice, isPro, xp, level, chosenRilo, theme, opens,
+      stats, appSettings, limitMode, borrow, pending, step, focus,
+      screenTime, triedAgain, breakdown, program, day, history, streak,
+      leanDays, strict, checkins, bedtime, school, buddies,
       demoClock, schedulePlan, calendar, night]);
 
   /* The web can't read real Screen Time, so the baseline comes from the
@@ -211,7 +259,7 @@ export default function App() {
     setBreakdown(buildBreakdown(picked, total, allowed));
   };
 
-  /* Blocking another app, or changing their hours, changes where the time
+  /* Watching another app, or changing their hours, changes where the time
      goes — so the breakdown is rebuilt instead of going stale. */
   const pickedKey = watchedFor(pickedApps(apps), isPro).join(',');
   useEffect(() => {
@@ -221,36 +269,37 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pickedKey, time.now, screenTime, isPro]);
 
-  /* ---------- this week's numbers ----------
-     Everything the shield and the pop-up need: the goal for the week they're
-     on, the per-app time and open limits, and what's left of each today. */
+  /* ---------- today's numbers ---------- */
+  const dateKey = today();
   const startMins = hoursToMins(time.now || 5);
-  /* Free is one flat daily limit, so there's no plan to step down and
-     only one week. Pro gets the 30-day plan. */
-  const planWeeks = isPro ? weeksFor(pace) : 1;
-  const goalsByWeek = isPro
-    ? weekGoals(startMins, hoursToMins(time.goal), pace)
-    : [hoursToMins(time.goal)];
-  const weekGoal = goalsByWeek[Math.min(program.week, planWeeks) - 1];
+  /* The goal is one number they set. It does not step itself down and it
+     never locks anything (§8). */
+  const goalMins = hoursToMins(time.goal);
 
-  const limits = breakdown
-    ? limitsFor(breakdown, startMins, weekGoal, strict.on, sessionMins)
-    : [];
+  /* every app Rilo watches, plus the always-allowed ones */
+  const watched = watchedFor(pickedApps(apps), isPro);
+  const tracked = trackedApps(apps, appSettings).filter(
+    (a) => watched.includes(a) || settingFor(appSettings, a).mode === ALWAYS,
+  );
 
-  const limitFor = (app) => limits.find((l) => l.app === app) ?? null;
+  /* what they typically spend on an app, from the baseline — this is what
+     the plan check counts for a Free app, and what the step-down ranks by */
+  const byApp = new Map((breakdown?.apps ?? []).map((a) => [a.app, a]));
+  const typicalFor = (app) => Math.round(byApp.get(app)?.mins ?? 0);
+  const pctFor = (app) => byApp.get(app)?.pct ?? null;
+  const shareFor = (app) => byApp.get(app)?.share ?? 0;
 
-  const usedTotalToday = Object.values(day.used).reduce((n, m) => n + m, 0);
+  /* The daily total: everything except the always-allowed apps (§8). */
+  const usedTotalToday = Object.entries(day.used).reduce(
+    (n, [app, mins]) => (countsTowardDay(appSettings, app) ? n + mins : n),
+    0,
+  );
 
-  /* Declared up here because the derived values below read it. Leaving it
-     further down meant weekAhead touched it before it existed, which only
-     blew up once a calendar was actually connected. */
-  const watched = pickedApps(apps);
-
-  /* ---------- add-ons: clock, locks, mood, time back ---------- */
+  /* ---------- the clock, the windows, the mood ---------- */
   /* DEMO ONLY: demoClock stands in for the phone's real clock */
   const now = new Date();
   const nowMins = demoClock ? toMins(demoClock) : now.getHours() * 60 + now.getMinutes();
-  const schedule = lockReason({ bedtime, school, nowMins, dayIndex: dayIndexOf(now) });
+  const schedule = lockReason({ bedtime, school, focus, nowMins, dayIndex: dayIndexOf(now) });
   const asleep = schedule.kind === 'bedtime';
 
   const minsSinceBlocked = day.lastBlockedAt
@@ -259,13 +308,13 @@ export default function App() {
 
   const riloMood = moodForUsage({
     used: usedTotalToday,
-    goal: weekGoal,
+    goal: goalMins,
     sinceBlockedMins: minsSinceBlocked,
     asleep,
   });
   const riloNote = moodNote({
     used: usedTotalToday,
-    goal: weekGoal,
+    goal: goalMins,
     sinceBlockedMins: minsSinceBlocked,
     asleep,
   });
@@ -284,79 +333,374 @@ export default function App() {
     return on.concat(about.extra?.[kind] ?? []);
   };
 
-  const passesLeft = Math.max(0, (passBank.left ?? 1) - (day.passes ?? 0));
+  /* one pass a day, no earning extras (§5) */
+  const passesLeft = Math.max(0, PASSES_PER_DAY - (day.passes ?? 0));
 
-  /* the thirty seconds at night: evening, and not already done today */
-  const askTonight = nowMins >= 20 * 60 && night.date !== today();
+  /* ---------- the nightly check-in (§ rilo pro) ----------
+     They have it if they're Pro. The button is always there once they do —
+     checking in at 4pm because you know how the day went is fine. `due`
+     only controls the nudge: their chosen time has passed and they haven't
+     done it yet today. */
+  const canCheckIn = isPro;
+  const checkedInToday = night.date === dateKey;
+  const checkInDue = canCheckIn && !checkedInToday && nowMins >= toMins(night.at || '21:00');
 
   /* what the calendar means for the week ahead */
   const weekAhead = calendar.on ? calendarPlan(DEMO_CALENDAR, watched) : [];
 
-  const leftFor = (app) => {
-    /* Free has no per-app allowance — the whole day is one pot, shared by
-       every app they block, and nothing counts opens. */
-    if (!isPro) {
-      const minsLeft = Math.max(0, weekGoal - usedTotalToday);
-      return { opens: Infinity, minutes: minsLeft, locked: minsLeft <= 0, shared: true };
-    }
-    const lim = limitFor(app);
-    if (!lim) return { opens: 0, minutes: 0, locked: true };
-    const opensUsed = day.opens[app] ?? 0;
-    const minsUsed = day.used[app] ?? 0;
-    const opensLeft = Math.max(0, lim.opens - opensUsed);
-    const minsLeft = Math.max(0, lim.minutes - minsUsed);
-    return {
-      opens: opensLeft,
-      minutes: minsLeft,
-      /* whichever runs out first locks it for the day */
-      locked: opensLeft <= 0 || minsLeft <= 0,
-    };
+  /* ---------- the plan check (§9) ---------- */
+  const check = planCheck({ appSettings, tracked, typicalFor, goalMins });
+
+  /* ---------- per-app state, all from lib/limits ---------- */
+  const settingOf = (app) => settingFor(appSettings, app);
+
+  const totalOpensFor = (app) =>
+    opensTotalFor({ setting: settingOf(app), app, day, borrow, dateKey });
+
+  const lockOf = (app) =>
+    lockFor({ app, appSettings, day, borrow, dateKey, strictOn: strict.on, schedule });
+
+  const availOf = (app) =>
+    opensAvailFor({ setting: settingOf(app), app, day, borrow, dateKey });
+
+  const borrowableFor = (app) =>
+    canBorrowFor({
+      setting: settingOf(app),
+      app,
+      day,
+      borrow,
+      dateKey,
+      strictOn: strict.on,
+      passesLeft,
+    });
+
+  /* ---------- changing a limit ----------
+     Stricter is instant in both modes. Looser is instant in normal mode and
+     waits 24 hours in strict mode (§12). */
+  const applySetting = (app, next) => {
+    setAppSettings((s) => ({ ...s, [app]: next }));
   };
 
-  /* Spending an open: the session runs, then the minutes land on the day. */
-  const startSessionFor = (appName, minutes) => {
-    setDay((d) => ({
-      ...d,
-      opens: { ...d.opens, [appName]: (d.opens[appName] ?? 0) + 1 },
-    }));
-    setSession({ app: appName, minutes });
+  const setAppSetting = (app, raw) => {
+    const next = {
+      mode: raw.mode,
+      opens: clampOpens(raw.opens),
+      minutes: clampMinutes(raw.minutes),
+    };
+    const prev = settingOf(app);
+    if (prev.mode === next.mode && prev.opens === next.opens && prev.minutes === next.minutes) {
+      return;
+    }
+
+    if (strict.on && isLoosening(prev, next)) {
+      /* one pending change per app — a new one replaces the old */
+      setPending((list) =>
+        (list ?? []).filter((p) => p.app !== app).concat([makePending({ app, prev, next })]),
+      );
+      track('limit', `pending 24h: ${describeChange(app, prev, next)}`);
+      return;
+    }
+
+    applySetting(app, next);
+    /* making their own change makes it their own plan */
+    setLimitMode('own');
+    track('limit', describeChange(app, prev, next));
+  };
+
+  const cancelPending = (id) => {
+    setPending((list) => (list ?? []).filter((p) => p.id !== id));
+    track('limit', 'pending change cancelled');
+  };
+
+  const applyPending = (p) => {
+    if (p.kind === 'setting') applySetting(p.app, p.next);
+    track('limit', `landed: ${p.label}`);
+  };
+
+  /* a pending change lands the moment its 24 hours are up */
+  useEffect(() => {
+    const waiting = (pending ?? []).length > 0 || Boolean(strict.endingAt) || Boolean(step.skipAt);
+    if (!waiting) return;
+
+    const id = setInterval(() => {
+      const at = Date.now();
+      setTick((v) => v + 1);
+
+      const due = (pending ?? []).filter((p) => p.at <= at);
+      if (due.length) {
+        due.forEach(applyPending);
+        setPending((list) => (list ?? []).filter((p) => p.at > at));
+      }
+
+      if (strict.endingAt && strict.endingAt <= at) {
+        setStrict((st) => ({ ...st, on: false, endingAt: null }));
+      }
+
+      if (step.skipAt && step.skipAt <= at) {
+        setStep((s) => ({ ...s, skipAt: null, status: 'skipped' }));
+      }
+    }, 1000);
+
+    return () => clearInterval(id);
+    /* applyPending reads the same state these deps track */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pending, strict.endingAt, step.skipAt]);
+
+  /* The first time they reach the limits screen there's nothing set, so
+     Rilo builds a plan rather than handing them an empty form. They can
+     still take it apart, or tap "make your own" and start from scratch. */
+  const noLimitsYet = Object.keys(appSettings).length === 0;
+  useEffect(() => {
+    if (!noLimitsYet) return;
+    if (!breakdown || !tracked.length) return;
+    if (nav.entries[nav.entries.length - 1] !== 'limitsonboard') return;
+    makeRiloPlan();
+    /* makeRiloPlan reads the same state these deps track */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noLimitsYet, breakdown, nav.entries, tracked.length]);
+
+  /* ---------- the weekly step-down (§11) ---------- */
+  const stepApp =
+    step.app && tracked.includes(step.app)
+      ? step.app
+      : stepDownTargetFor({ appSettings, tracked, shareFor });
+
+  const stepProposal = stepApp ? stepDownFor(settingOf(stepApp)) : null;
+  const stepFinished = step.done || stepDownDone({ check, history });
+
+  /* a day ahead of the new week, they get a preview; at the turn, the offer */
+  const stepPhase =
+    stepFinished || !stepProposal
+      ? null
+      : step.status === 'offered' && step.week === program.week
+        ? 'offered'
+        : program.daysDone >= 6
+          ? 'preview'
+          : null;
+
+  const stepSwappable = tracked
+    .filter((a) => a !== stepApp)
+    .filter((a) => {
+      const m = settingOf(a).mode;
+      return m === LIMITED || m === FREE;
+    })
+    .slice(0, 6);
+
+  const acceptStepDown = (appName = stepApp) => {
+    const target = appName;
+    const proposal = stepDownFor(settingOf(target));
+    if (!proposal) return;
+    /* a step-down is always a tightening, so it lands straight away in
+       both modes — no 24 hour wait on making things harder */
+    applySetting(target, {
+      mode: proposal.to.mode,
+      opens: clampOpens(proposal.to.opens),
+      minutes: clampMinutes(proposal.to.minutes),
+    });
+    setStep((s) => ({ ...s, app: target, status: 'accepted', skipAt: null }));
+    track('stepdown', `accepted: ${target} ${proposal.say}`);
+  };
+
+  const skipStepDown = () => {
+    if (strict.on) {
+      /* skipping is a loosening, so it waits like any other (§11) */
+      setStep((s) => ({ ...s, skipAt: Date.now() + 24 * 60 * 60 * 1000 }));
+      track('stepdown', 'skip pending 24h');
+      return;
+    }
+    setStep((s) => ({ ...s, status: 'skipped', skipAt: null }));
+    track('stepdown', 'skipped');
+  };
+
+  const swapStepDown = (appName) => {
+    setStep((s) => ({ ...s, app: appName, status: 'offered', skipAt: null }));
+    track('stepdown', `moved to ${appName}`);
+  };
+
+  /* Offered at the start of each new week. In strict mode it just happens. */
+  const offerStepDown = (week) => {
+    const target = stepDownTargetFor({ appSettings, tracked, shareFor });
+    if (!target || stepFinished) {
+      setStep((s) => ({ ...s, done: stepFinished }));
+      return;
+    }
+    if (strict.on) {
+      acceptStepDown(target);
+      setStep((s) => ({ ...s, week, app: target, status: 'accepted', skipAt: null }));
+      return;
+    }
+    setStep((s) => ({ ...s, week, app: target, status: 'offered', skipAt: null }));
+    track('stepdown', `offered: ${target}`);
+  };
+
+  /* ---------- sessions ----------
+     Opens are charged when a session ENDS, not when it starts, because the
+     cost depends on how long it actually ran — and because reopening inside
+     two minutes carries the same session on rather than starting a new one
+     (§2.6). `day.lastSession` is what makes that possible. */
+
+  const continuationFor = (appName) => {
+    const last = day.lastSession;
+    if (!last || last.app !== appName) return null;
+    if (Date.now() - last.endedAt > CONTINUE_MS) return null;
+    return last;
+  };
+
+  /* Start (or carry on) a session on a Limited app.
+     `wanted` is the length they asked for on the check-in; the real cap is
+     whatever their remaining opens actually buy. */
+  const startOpenSession = (appName, wanted) => {
+    const setting = settingOf(appName);
+
+    /* Is there a session to carry on? Reopening inside two minutes continues
+       the last one rather than costing a second open (§2.6).
+
+       But a carried session that has ALREADY spent its whole open is over,
+       not continuable — §2.4 caps a single session at one open, it doesn't
+       cap the day. Treating it as a continuation is what made every retry
+       inside two minutes bounce back to the pop-up with opens still left.
+       If that's the case we drop the carry and this is simply a new
+       session, on a new open. */
+    let carry = continuationFor(appName);
+    if (carry) {
+      const roomInCarry =
+        sessionCapMins({
+          avail: availOf(appName) + carry.charged,
+          minutes: setting.minutes,
+          strictOn: strict.on,
+        }) - carry.mins;
+      if (roomInCarry <= 0) carry = null;
+    }
+
+    const carried = carry?.mins ?? 0;
+    const charged = carry?.charged ?? 0;
+
+    /* add back what this session already cost, so carrying on doesn't look
+       like a second session with less to spend */
+    const avail = availOf(appName) + charged;
+    const full = sessionCapMins({ avail, minutes: setting.minutes, strictOn: strict.on });
+
+    /* one session never runs past one whole open (§2.4) */
+    const cap = Math.min(wanted ?? full, full) - carried;
+
+    if (cap <= 0) {
+      /* genuinely out of opens — the pop-up is the right place for that,
+         because that's where the pass and the borrow live */
+      track('session', `${appName}: no opens left`);
+      go('intercept');
+      return;
+    }
+
+    setSession({
+      app: appName,
+      cap,
+      carried,
+      charged,
+      kind: 'open',
+      minutes: setting.minutes,
+    });
     goTo('appopen');
   };
 
-  /* They said why and for how long. Rilo keeps both. */
-  const startCheckedIn = (appName, { reason, why, mins }) => {
-    const entry = { app: appName, reason, why, promised: mins, at: Date.now(), date: today() };
+  /* They said why and which length they wanted. Rilo keeps both. */
+  const startCheckedIn = (appName, { reason, why, mins, length, cost }) => {
+    const entry = {
+      app: appName,
+      reason,
+      why,
+      promised: mins,
+      length,
+      cost,
+      at: Date.now(),
+      date: dateKey,
+    };
     setPromise(entry);
     setCheckins((list) => list.concat([entry]).slice(-60));
-    track('checkin', reason === 'custom' ? `custom: ${why}` : reason);
-    startSessionFor(appName, mins);
+    track('checkin', `${length} · ${reason === 'custom' ? `custom: ${why}` : reason}`);
+    startOpenSession(appName, mins);
+  };
+
+  /* the emergency pass: five minutes, no opens spent (§5) */
+  const spendEmergencyPass = (appName, why) => {
+    if (passesLeft <= 0) return;
+    setDay((d) => ({ ...d, passes: (d.passes ?? 0) + 1 }));
+    track('pass', why || 'no reason given');
+    setSession({
+      app: appName,
+      cap: PASS_MINUTES,
+      carried: 0,
+      charged: 0,
+      kind: 'pass',
+      minutes: settingOf(appName).minutes,
+    });
+    goTo('appopen');
+  };
+
+  /* borrow half an open off tomorrow (§6) */
+  const borrowFromTomorrow = (appName) => {
+    if (!borrowableFor(appName)) return;
+    setDay((d) => ({ ...d, borrowed: { app: appName } }));
+    setBorrow({ date: tomorrow(), app: appName });
+    track('borrow', `${appName}: ½ open off tomorrow`);
+    /* the half open is theirs now — straight to the check-in */
+    go('whyopen');
   };
 
   const finishSession = (appName, minutesUsed) => {
-    /* closing early doesn't spend the rest of the sitting — those minutes
-       stay in today's budget, so they get another go later. */
-    const unspent = Math.max(0, session.minutes - minutesUsed);
-    setDay((d) => ({
-      ...d,
-      used: { ...d.used, [appName]: (d.used[appName] ?? 0) + minutesUsed },
-      /* when they last had a blocked app open, for the "earn it" rule */
-      lastBlockedAt: Date.now(),
-      sinceBlocked: 0,
-    }));
-    if (unspent > 0) {
-      setStats((st) => ({ ...st, savedMinutes: st.savedMinutes + unspent }));
-      track('early', `${appName}: left ${unspent} min on the table`);
-      setSavedNote({ app: appName, mins: unspent });
+    const used = Math.max(0, minutesUsed);
+    const total = session.carried + used;
+
+    if (session.kind === 'open') {
+      const spend = opensSpent({
+        mins: total,
+        minutes: session.minutes,
+        strictOn: strict.on,
+      });
+      const delta = Math.max(0, spend - session.charged);
+
+      setDay((d) => ({
+        ...d,
+        used: { ...d.used, [appName]: (d.used[appName] ?? 0) + used },
+        opensUsed: { ...d.opensUsed, [appName]: (d.opensUsed[appName] ?? 0) + delta },
+        /* so a reopen inside two minutes carries this session on */
+        lastSession: { app: appName, endedAt: Date.now(), mins: total, charged: spend },
+        lastBlockedAt: Date.now(),
+        sinceBlocked: 0,
+      }));
+
+      track(
+        'session',
+        `${appName}: ${Math.round(total)}m, cost ${spend} open${spend === 1 ? '' : 's'}`,
+      );
+    } else {
+      /* a pass session spends no opens, and never becomes a continuation —
+         the app is already out of opens, so carrying on would be nonsense */
+      setDay((d) => ({
+        ...d,
+        used: { ...d.used, [appName]: (d.used[appName] ?? 0) + used },
+        lastSession: null,
+        lastBlockedAt: Date.now(),
+        sinceBlocked: 0,
+      }));
+    }
+
+    /* closing early banks the minutes they didn't spend */
+    const unspent = Math.max(0, session.cap - used);
+    if (unspent >= 1) {
+      setStats((st) => ({ ...st, savedMinutes: st.savedMinutes + Math.round(unspent) }));
+      track('early', `${appName}: left ${Math.round(unspent)} min on the table`);
+      setSavedNote({ app: appName, mins: Math.round(unspent) });
     } else {
       setSavedNote(null);
     }
 
-    /* did they keep the promise they made on the way in? */
+    /* Did they do what they said? Rilo calls it out when a "quick check"
+       turns into the whole open (§4). */
     if (promise) {
-      const gone = Math.round((Date.now() - promise.at) / 60000);
-      const over = gone > promise.promised;
+      const gone = Math.round(total);
+      const over = session.kind === 'open' && gone > promise.promised;
       setCheckins((list) =>
-        list.map((c) => (c.at === promise.at ? { ...c, used: minutesUsed, gone, over } : c)),
+        list.map((c) => (c.at === promise.at ? { ...c, used, gone, over } : c)),
       );
       if (over) {
         track('checkin', `over: said ${promise.promised}m, took ${gone}m`);
@@ -377,42 +721,20 @@ export default function App() {
     goTo('home', 'back');
   };
 
-  const useEmergencyPass = (appName, why) => {
-    setDay((d) => ({ ...d, passes: (d.passes ?? 0) + 1 }));
-    track('pass', why || 'no reason given');
-    startSessionFor(appName, PASS_MINUTES);
-  };
-
-  const tapFiveMore = (alreadyUsed) => {
-    track('fivemore', alreadyUsed ? 'blocked (second time)' : 'used');
-    if (alreadyUsed) return;
-    setDay((d) => {
-      const n = (d.fiveMore ?? 0) + 1;
-      if (n === 2) setFiveMoreDays((v) => v + 1);
-      return { ...d, fiveMore: n };
-    });
-  };
-
   /* ---------- ending a day ----------
      The only place XP is handed out. Results, not taps. */
   const [dayResult, setDayResult] = useState(null);
 
   const endDay = (forceOver = false) => {
-    const used = forceOver ? weekGoal + 45 : usedTotalToday;
-    const res = dayXp({ used, goal: weekGoal, streak });
+    const used = forceOver ? goalMins + 45 : usedTotalToday;
+    const res = dayXp({ used, goal: goalMins, streak });
 
     let gained = res.xp;
     const over = !res.hit;
 
-    /* a day under goal earns an emergency pass, up to the weekly cap */
-    if (res.hit) {
-      setPassBank((b) => {
-        const next = passesAfterGoodDay(b.left ?? 1);
-        if (next > (b.left ?? 1)) setPassWon(true);
-        return { ...b, left: next };
-      });
-      track('pass', 'earned one by hitting the goal');
-    }
+    /* did they lean on the ways out today? that's the strict-mode signal */
+    const leaned = (day.passes ?? 0) > 0 || Boolean(day.borrowed);
+    if (leaned) setLeanDays((v) => v + 1);
 
     /* a week is 7 days; more than 2 bad days and it runs again */
     const daysDone = program.daysDone + 1;
@@ -423,97 +745,77 @@ export default function App() {
     if (daysDone >= 7) {
       if (daysOver > 2) {
         repeated = true;
-        nextProgram = {
-          ...program,
-          daysDone: 0,
-          daysOver: 0,
-          repeats: program.repeats + 1,
-        };
+        nextProgram = { ...program, daysDone: 0, daysOver: 0 };
         track('week', 'repeated');
       } else {
         gained += WEEK_BONUS;
-        const nextWeek = program.week + 1;
-        const finished = nextWeek > planWeeks;
-        if (finished) gained += PLAN_BONUS;
-        nextProgram = {
-          ...program,
-          week: finished ? planWeeks : nextWeek,
-          daysDone: 0,
-          daysOver: 0,
-          done: finished,
-        };
-        track('week', finished ? 'plan finished' : 'week cleared');
+        nextProgram = { ...program, week: program.week + 1, daysDone: 0, daysOver: 0 };
+        track('week', 'cleared');
       }
-      setFiveMoreDays(0);
+      /* either way a new week means a new step-down */
+      offerStepDown(nextProgram.week);
+      setLeanDays(0);
+      /* once the plan fits and they're living in it, stop tightening */
+      if (stepFinished) {
+        gained += PLAN_BONUS;
+        setStep((s) => ({ ...s, done: true, status: 'idle' }));
+      }
     }
 
     track('day', res.hit ? 'goal hit' : 'went over');
 
     setStreak(res.streak);
     setProgram(nextProgram);
-    setHistory((h) => [...h, { date: day.date, used, goal: weekGoal, hit: res.hit }].slice(-30));
+    setHistory((h) => [...h, { date: day.date, used, goal: goalMins, hit: res.hit }].slice(-30));
     awardXp(gained);
 
-    /* fresh day */
-    setDay({
-      date: today(),
-      used: {},
-      opens: {},
-      passes: 0,
-      fiveMore: 0,
-      sinceBlocked: 999,
-    });
+    /* fresh day: opens and the pass reset, unused opens don't carry (§2.7) */
+    setDay(freshDay(dateKey));
+    collectBorrow();
 
     setDayResult({
       used,
-      goal: weekGoal,
+      goal: goalMins,
       hit: res.hit,
       xp: gained,
       streak: res.streak,
-      under: Math.max(0, weekGoal - used),
+      under: Math.max(0, goalMins - used),
       repeated,
     });
     goTo('daysummary');
   };
 
-  /* Seven clean days in one tap, so a tester can see a week clear. */
+  /* Seven clean days in one tap, so a tester can see a week clear and the
+     step-down arrive. */
   const runWeek = () => {
     let st = streak;
-    let prog = program;
     let gained = 0;
     const days = [];
+    const under = Math.max(0, goalMins - 20);
 
     for (let i = 0; i < 7; i += 1) {
-      const res = dayXp({ used: Math.max(0, weekGoal - 20), goal: weekGoal, streak: st });
+      const res = dayXp({ used: under, goal: goalMins, streak: st });
       st = res.streak;
       gained += res.xp;
-      days.push({ date: today(), used: Math.max(0, weekGoal - 20), goal: weekGoal, hit: true });
-      prog = { ...prog, daysDone: prog.daysDone + 1 };
+      days.push({ date: dateKey, used: under, goal: goalMins, hit: true });
     }
 
-    /* a full clean week clears it */
     gained += WEEK_BONUS;
-    const nextWeek = prog.week + 1;
-    const finished = nextWeek > planWeeks;
-    if (finished) gained += PLAN_BONUS;
+    const nextWeek = program.week + 1;
 
-    track('week', finished ? 'plan finished' : 'week cleared');
+    track('week', 'cleared');
     setStreak(st);
     setHistory((h) => [...h, ...days].slice(-30));
-    setProgram({
-      ...prog,
-      week: finished ? planWeeks : nextWeek,
-      daysDone: 0,
-      daysOver: 0,
-      done: finished,
-    });
-    setFiveMoreDays(0);
+    setProgram({ ...program, week: nextWeek, daysDone: 0, daysOver: 0 });
+    setLeanDays(0);
     awardXp(gained);
-    setDay({ date: today(), used: {}, opens: {}, passes: 0, fiveMore: 0, sinceBlocked: 999 });
+    setDay(freshDay(dateKey));
+    collectBorrow();
+    offerStepDown(nextWeek);
 
     setDayResult({
-      used: Math.max(0, weekGoal - 20),
-      goal: weekGoal,
+      used: under,
+      goal: goalMins,
       hit: true,
       xp: gained,
       streak: st,
@@ -523,16 +825,45 @@ export default function App() {
     goTo('daysummary');
   };
 
+  /* ---------- time travel (demo) ---------- */
+
+  /* The borrow IOU is the only thing that crosses midnight. The day it's
+     due it comes off that app's opens; the midnight after, it's paid. */
+  const collectBorrow = () => {
+    setBorrow((b) => {
+      if (!b.app) return b;
+      if (b.date === dateKey) return { date: '', app: '' };
+      return { ...b, date: dateKey };
+    });
+  };
+
+  const skipToMidnight = () => {
+    setDay(freshDay(dateKey));
+    collectBorrow();
+    track('demo', 'skipped to midnight');
+  };
+
+  /* Land everything that was waiting out its 24 hours. */
+  const skip24h = () => {
+    (pending ?? []).forEach(applyPending);
+    setPending([]);
+    if (strict.on && strict.endingAt) {
+      setStrict((st) => ({ ...st, on: false, endingAt: null }));
+    }
+    if (step.skipAt) setStep((s) => ({ ...s, skipAt: null, status: 'skipped' }));
+    track('demo', 'skipped 24 hours');
+  };
+
   /* ---------- strict mode ---------- */
   const strictOn = (days, when) => {
+    /* turning it on is instant (§12) */
     setStrict((st) => ({ ...st, on: true, days, when, endingAt: null }));
     track('strict', `on · ${days}d · ${when}`);
   };
 
   /* turning it off runs for another 24 hours first */
   const strictAskOff = () => {
-    const at = Date.now() + 24 * 60 * 60 * 1000;
-    setStrict((st) => ({ ...st, endingAt: at }));
+    setStrict((st) => ({ ...st, endingAt: Date.now() + 24 * 60 * 60 * 1000 }));
     track('strict', 'countdown started');
   };
 
@@ -541,20 +872,71 @@ export default function App() {
     track('strict', 'countdown cancelled');
   };
 
-  /* the 24 hours are up */
-  useEffect(() => {
-    if (!strict.on || !strict.endingAt) return;
-    const wait = strict.endingAt - Date.now();
-    if (wait <= 0) {
-      setStrict((st) => ({ ...st, on: false, endingAt: null }));
-      return;
+  /* Off right now, no countdown. Rilo asks whether they'd rather wait the
+     24 hours out first, but if they say no that's the end of it — being
+     unable to leave a setting you chose is a trap, not a feature. */
+  const strictOffNow = () => {
+    setStrict((st) => ({ ...st, on: false, endingAt: null }));
+    track('strict', 'turned off immediately');
+  };
+
+  /* ---------- Rilo's plan, and their own (§13) ---------- */
+  const makeRiloPlan = () => {
+    const out = riloLimits({
+      tracked,
+      breakdown,
+      goalMins,
+      hobbies: profileList('hobby'),
+      goals: profileList('goal'),
+      calendar: weekAhead,
+      checkins,
+      creator: about.creator,
+    });
+
+    /* Rilo tightening things is always instant; if his plan loosens
+       something in strict mode, that part waits like anything else. */
+    if (strict.on) {
+      const loosened = [];
+      const instant = {};
+      Object.entries(out.settings).forEach(([app, next]) => {
+        const prev = settingOf(app);
+        if (isLoosening(prev, next)) loosened.push({ app, prev, next });
+        else instant[app] = next;
+      });
+      setAppSettings((s) => ({ ...s, ...instant }));
+      if (loosened.length) {
+        setPending((list) =>
+          (list ?? [])
+            .filter((p) => !loosened.some((l) => l.app === p.app))
+            .concat(loosened.map((l) => makePending(l))),
+        );
+      }
+    } else {
+      setAppSettings((s) => ({ ...s, ...out.settings }));
     }
-    const t = setTimeout(
-      () => setStrict((st) => ({ ...st, on: false, endingAt: null })),
-      Math.min(wait, 2 ** 31 - 1),
-    );
-    return () => clearTimeout(t);
-  }, [strict.on, strict.endingAt]);
+
+    setRiloWhy(out.why);
+    setRiloLead(out.lead);
+    setLimitMode('rilo');
+    track('limits', `rilo built a plan · allows ${out.check.allows}m`);
+  };
+
+  /* "make your own" starts from a clean slate: nothing is pre-limited, so
+     there's nothing to undo first. */
+  const makeOwnPlan = () => {
+    setAppSettings((s) => {
+      const next = { ...s };
+      tracked.forEach((app) => {
+        if (settingFor(s, app).mode === ALWAYS) return;
+        next[app] = { mode: FREE, opens: 3, minutes: 15 };
+      });
+      return next;
+    });
+    setRiloWhy({});
+    setRiloLead([]);
+    setLimitMode('own');
+    track('limits', 'made their own');
+  };
 
   /* Ignore taps while a slide is already running. */
   const goTo = (next, dir = 'forward') =>
@@ -593,34 +975,47 @@ export default function App() {
   const settle = () =>
     setNav((n) => (n.entries.length > 1 ? { entries: [n.entries[1]], dir: n.dir } : n));
 
-  /* never default to an app they didn't pick */
-  const currentApp = session.app && apps.on[session.app] ? session.app : watched[0] ?? 'the feed';
+  /* never default to an app they aren't tracking */
+  const currentApp = session.app && tracked.includes(session.app) ? session.app : tracked[0] ?? 'the feed';
 
   /* "pretend you opened X": bump that app's real count for today */
   const openApp = (label) => {
-    const dayKey = today();
-    const fresh = opens.date !== dayKey;
+    const fresh = opens.date !== dateKey;
     const counts = fresh ? {} : opens.counts;
     const next = (counts[label] ?? 0) + 1;
 
-    setOpens({ date: dayKey, counts: { ...counts, [label]: next } });
-    setSession({ app: label, minutes: sessionMins });
+    setOpens({ date: dateKey, counts: { ...counts, [label]: next } });
+    setSession((s) => ({ ...s, app: label }));
+
+    /* an always-allowed app has no shield and no pop-up — it just opens */
+    if (settingOf(label).mode === ALWAYS) {
+      setSession({
+        app: label,
+        cap: 15,
+        carried: 0,
+        charged: 0,
+        kind: 'always',
+        minutes: 15,
+      });
+      goTo('appopen');
+      return;
+    }
+
     go('shield');
   };
 
-  const openCount = (opens.date === today() ? opens.counts[currentApp] : 0) ?? 0;
+  const openCount = (opens.date === dateKey ? opens.counts[currentApp] : 0) ?? 0;
 
-  /* how many times they've already taken "5 more" today */
-  const extrasToday = extras.date === today() ? extras.count : 0;
-
-  const startSession = (minutes) => {
-    setSession((s) => ({ app: s.app ?? currentApp, minutes }));
-    go('timer');
+  /* The reason screens (bored / tired / a break) still end in a session, and
+     a session still costs an open — so they all go through the check-in. */
+  const startSession = () => {
+    if (settingOf(currentApp).mode === LIMITED) go('whyopen');
+    else openApp(currentApp);
   };
 
   const saidNo = () => {
     setStats((s) => ({
-      savedMinutes: s.savedMinutes + BLOCK_MINUTES,
+      savedMinutes: s.savedMinutes + SAID_NO_MINUTES,
       saidNo: s.saidNo + 1,
     }));
   };
@@ -639,10 +1034,29 @@ export default function App() {
     setPendingSkin(null);
     setChosenRilo(DEFAULT_STATE.chosenRilo);
     setTheme(DEFAULT_STATE.theme);
-    setOpens({ date: today(), counts: {} });
-    setExtras({ date: today(), count: 0 });
+    setOpens({ date: dateKey, counts: {} });
     setStats({ savedMinutes: 0, saidNo: 0 });
-    setSession({ app: null, minutes: 5 });
+    /* the whole limit system back to factory */
+    setAppSettings(DEFAULT_STATE.appSettings);
+    setLimitMode(DEFAULT_STATE.limitMode);
+    setBorrow(DEFAULT_STATE.borrow);
+    setPending([]);
+    setStep(DEFAULT_STATE.step);
+    setFocus(DEFAULT_STATE.focus);
+    setRiloWhy({});
+    setRiloLead([]);
+    setStrict(DEFAULT_STATE.strict);
+    setDay(freshDay(dateKey));
+    setHistory([]);
+    setStreak(0);
+    setLeanDays(0);
+    setProgram(DEFAULT_STATE.program);
+    setCheckins([]);
+    setPromise(null);
+    setOverNote('');
+    setSavedNote(null);
+    setDemoClock(null);
+    setSession({ app: null, cap: 5, carried: 0, charged: 0, kind: 'open', minutes: 15 });
     /* straight back to Welcome, no slide — it's a new tester */
     setNav({ entries: ['welcome'], dir: 'forward' });
   };
@@ -654,6 +1068,28 @@ export default function App() {
       </PhoneFrame>
     );
   }
+
+  /* everything the limits screen needs, in one place */
+  const limitsProps = {
+    skin: chosenRilo,
+    tracked,
+    appSettings,
+    onSetApp: setAppSetting,
+    time,
+    setTime,
+    day,
+    check,
+    pending,
+    onCancelPending: cancelPending,
+    strictOn: strict.on,
+    limitMode,
+    riloWhy,
+    riloLead,
+    onRiloPlan: makeRiloPlan,
+    onOwnPlan: makeOwnPlan,
+    pctFor,
+    totalOpensFor,
+  };
 
   const render = (screen) => {
     switch (screen) {
@@ -734,30 +1170,25 @@ export default function App() {
 
       case 'timeback':
         return (
-          <TimeBack
+          <TimeBack go={go} time={time} setTime={setTime} skin={OG_SKIN} check={check} />
+        );
+
+      /* the plan itself: every app's setting, and the plan check */
+      case 'limitsonboard':
+        return (
+          <Limits
+            {...limitsProps}
             go={go}
-            time={time}
-            setTime={setTime}
-            skin={OG_SKIN}
-            breakdown={breakdown}
-            apps={apps}
-            setApps={setApps}
-            pace={pace}
-            setPace={choosePace}
-            sessionMins={sessionMins}
-            setSessionMins={chooseSession}
-            isPro={isPro}
-            planMode={planMode}
-            setPlanMode={setPlanMode}
-            hobbies={profileList('hobby')}
-            goalList={profileList('goal')}
+            onContinue={() => go('home')}
           />
         );
+      case 'limits':
+        return <Limits {...limitsProps} go={go} />;
+
       case 'paywall':
       case 'upgrade':
         return (
           <Paywall
-            next={screen === 'upgrade' ? 'home' : 'calendaronboard'}
             go={go}
             plan={plan}
             setPlan={setPlan}
@@ -768,6 +1199,30 @@ export default function App() {
               /* prototype: the trial button is what makes someone Pro */
               setIsPro(trial);
             }}
+            /* The nightly check-in is a Pro thing, so taking the trial goes
+               straight to setting it up — that's the moment it's been sold,
+               and asking later means it never gets turned on. Free skips it. */
+            nextFor={(which) => {
+              const trial = which === 'start free trial';
+              if (screen === 'upgrade') return trial ? 'nighttime' : 'home';
+              return trial ? 'nightonboard' : 'calendaronboard';
+            }}
+          />
+        );
+
+      /* "when should i check in?" — pro only, right after the paywall */
+      case 'nighttime':
+      case 'nightonboard':
+        return (
+          <NightTime
+            go={go}
+            skin={OG_SKIN}
+            night={night}
+            setNight={(n) => {
+              setNight(n);
+              track('night', `check-in set for ${n.at}`);
+            }}
+            next={screen === 'nighttime' ? 'home' : 'calendaronboard'}
           />
         );
 
@@ -778,11 +1233,17 @@ export default function App() {
             go={go}
             name={name}
             about={about}
-            apps={apps}
             xp={xp}
+            level={level}
             skin={chosenRilo}
             onOpenApp={openApp}
-            leftFor={leftFor}
+            tracked={tracked}
+            appSettings={appSettings}
+            lockOf={lockOf}
+            totalOpensFor={totalOpensFor}
+            usedToday={usedTotalToday}
+            goalMins={goalMins}
+            streak={streak}
             savedNote={savedNote}
             onClearSavedNote={() => setSavedNote(null)}
             isPro={isPro}
@@ -791,27 +1252,35 @@ export default function App() {
             overNote={overNote}
             onClearOverNote={() => setOverNote('')}
             passesLeft={passesLeft}
-            passWon={passWon}
-            onClearPassWon={() => setPassWon(false)}
-            schedule={schedule}
             backToday={back.today}
-            askTonight={askTonight}
+            canCheckIn={canCheckIn}
+            checkInDue={checkInDue}
+            checkedInToday={checkedInToday}
             onNightCheckIn={() => go('nightcheckin')}
-            weekAhead={weekAhead}
+            strictOn={strict.on}
+            /* the weekly step-down surfaces here */
+            stepApp={stepApp}
+            stepProposal={stepProposal}
+            stepPhase={stepPhase}
+            stepDone={stepFinished}
+            stepSkipAt={step.skipAt}
+            stepSwappable={stepSwappable}
+            onStepAccept={() => acceptStepDown()}
+            onStepSkip={skipStepDown}
+            onStepSwap={swapStepDown}
             suggestStrict={
-              isPro &&
               !strict.on &&
-              strict.suggestedOn !== today() &&
-              shouldSuggestStrict(history, fiveMoreDays)
+              strict.suggestedOn !== dateKey &&
+              shouldSuggestStrict(history, leanDays)
             }
             onStrictYes={() => {
-              setStrict((st) => ({ ...st, suggestedOn: today() }));
+              setStrict((st) => ({ ...st, suggestedOn: dateKey }));
               strictOn(7, 'all');
             }}
             onStrictNo={() => {
               setStrict((st) => ({
                 ...st,
-                suggestedOn: today(),
+                suggestedOn: dateKey,
                 declined: (st.declined ?? 0) + 1,
               }));
               track('strict', 'not now');
@@ -830,25 +1299,37 @@ export default function App() {
           />
         );
 
-      case 'whyopen':
+      case 'whyopen': {
+        const setting = settingOf(currentApp);
+        const carry = continuationFor(currentApp);
         return (
           <WhyOpen
             app={currentApp}
             skin={chosenRilo}
+            minutes={setting.minutes}
+            opensTotal={totalOpensFor(currentApp)}
+            opensUsed={opensUsedFor(currentApp, day)}
+            /* carrying on a recent session gets back what it already cost */
+            opensLeft={availOf(currentApp) + (carry?.charged ?? 0)}
+            strictOn={strict.on}
+            creator={about.creator}
             onStart={(pick) => startCheckedIn(currentApp, pick)}
             onNevermind={() => {
               track('checkin', 'never mind');
+              saidNo();
               go('home', 'back');
             }}
           />
         );
+      }
 
       case 'nightcheckin':
         return (
           <NightCheckIn
             skin={chosenRilo}
             onDone={({ said, tasks }) => {
-              setNight({ date: today(), said, tasks });
+              /* keep the time they chose — only the day's answers change */
+              setNight((n) => ({ ...n, date: dateKey, said, tasks }));
               /* tomorrow's tasks go straight onto the plan */
               setSchedulePlan((sp) => ({
                 mode: sp.mode,
@@ -916,8 +1397,10 @@ export default function App() {
           <Shield
             app={currentApp}
             skin={chosenRilo}
-            left={leftFor(currentApp)}
-            sessionMins={sessionMins}
+            lock={lockOf(currentApp)}
+            minutes={settingOf(currentApp).minutes}
+            opensTotal={totalOpensFor(currentApp)}
+            opensUsed={opensUsedFor(currentApp, day)}
             schedule={schedule}
             onTalk={() => setBanner(true)}
             onClose={() => go('home', 'back')}
@@ -928,43 +1411,43 @@ export default function App() {
         return (
           <AppOpen
             app={currentApp}
-            minutes={session.minutes}
+            minutes={session.cap}
+            carried={session.carried}
+            kind={session.kind}
+            perOpen={session.minutes}
             onFinish={(mins) => finishSession(currentApp, mins)}
           />
         );
 
-      case 'intercept':
+      case 'intercept': {
+        const lock = lockOf(currentApp);
+        const setting = settingOf(currentApp);
         return (
           <Intercept
             go={go}
             app={currentApp}
-            openCount={Math.max(1, openCount)}
-            opensToday={day.opens[currentApp] ?? 0}
-            left={leftFor(currentApp)}
-            sessionMins={sessionMins}
-            passesPerDay={passesFor(isPro)}
-            day={day}
-            strictOn={strict.on}
-            breakEarned={
-              !day.lastBlockedAt ||
-              (Date.now() - day.lastBlockedAt) / 60000 >= BREAK_EARNED_AFTER
-            }
             skin={chosenRilo}
+            openCount={Math.max(1, openCount)}
+            opensToday={Math.ceil(opensUsedFor(currentApp, day))}
+            lock={lock}
+            minutes={setting.minutes}
+            opensTotal={totalOpensFor(currentApp)}
+            opensUsed={opensUsedFor(currentApp, day)}
+            opensLeft={availOf(currentApp)}
+            strictOn={strict.on}
+            passesLeft={passesLeft}
+            canBorrow={borrowableFor(currentApp)}
             onReason={(reason) => {
               track('reason', reason);
               if (reason === 'never mind') saidNo();
             }}
-            onUnlock={(why, mins) => {
-              track('unlock', why);
-              /* "5 more minutes" and the pass are already a stated length;
-                 everything else goes through the check-in first */
-              if (mins) startSessionFor(currentApp, mins);
-              else go('whyopen');
-            }}
-            onPass={(why) => useEmergencyPass(currentApp, why)}
-            onFiveMore={tapFiveMore}
+            onOpen={() => go('whyopen')}
+            onPass={(why) => spendEmergencyPass(currentApp, why)}
+            onBorrow={() => borrowFromTomorrow(currentApp)}
           />
         );
+      }
+
       case 'suggestion':
         return (
           <Suggestion
@@ -1006,49 +1489,6 @@ export default function App() {
           />
         );
 
-      case 'timer':
-        return (
-          <Timer
-            app={currentApp}
-            minutes={session.minutes}
-            skin={chosenRilo}
-            onEnd={() => go('checkin')}
-          />
-        );
-
-      case 'checkin':
-        return (
-          <CheckIn
-            go={go}
-            app={currentApp}
-            minutes={session.minutes}
-            skin={chosenRilo}
-            angry={extrasToday >= 1}
-            onDone={() => {
-              track('checkin', "i'm done");
-              /* xp comes from the day's result now, not this tap */
-              /* finishing a shorter session banks the time not spent */
-              setStats((s) => ({
-                savedMinutes: s.savedMinutes + Math.max(0, BLOCK_MINUTES - session.minutes),
-                saidNo: s.saidNo + 1,
-              }));
-            }}
-            onMore={() => {
-              track('checkin', '5 more minutes');
-              setExtras({ date: today(), count: extrasToday + 1 });
-              /* no xp here either — see endDay */
-              setStats((s) => ({
-                savedMinutes: Math.max(0, s.savedMinutes - 5),
-                saidNo: s.saidNo,
-              }));
-            }}
-            onExtra={(mins) => {
-              setSession((s) => ({ ...s, minutes: mins }));
-              go('timer');
-            }}
-          />
-        );
-
       case 'plan':
         /* today's plan is rilo pro */
         return (
@@ -1063,8 +1503,11 @@ export default function App() {
             goals={profileList('goal')}
             school={school}
             bedtime={bedtime}
-            scrollMins={weekGoal}
+            scrollMins={goalMins}
             weekAhead={weekAhead}
+            /* the plan check belongs on the plan screen too (§9) */
+            check={check}
+            onLimits={() => go('limits')}
           />
         );
       case 'progress':
@@ -1076,12 +1519,16 @@ export default function App() {
             level={level}
             breakdown={breakdown}
             program={program}
-            weekGoal={weekGoal}
-            planWeeks={planWeeks}
+            goalMins={goalMins}
+            usedToday={usedTotalToday}
+            history={history}
+            streak={streak}
+            stats={stats}
             isPro={isPro}
             back={back}
             backSays={backSays}
             checkins={checkins}
+            check={check}
           />
         );
       case 'pickrilo':
@@ -1107,23 +1554,24 @@ export default function App() {
             setApps={setApps}
             time={time}
             setTime={setTime}
-            pace={pace}
-            setPace={choosePace}
-            sessionMins={sessionMins}
-            setSessionMins={chooseSession}
-            breakdown={breakdown}
-            startMins={startMins}
-            weekGoal={weekGoal}
+            check={check}
+            tracked={tracked}
+            appSettings={appSettings}
+            pendingCount={(pending ?? []).length}
             bedtime={bedtime}
             setBedtime={setBedtime}
             school={school}
             setSchool={setSchool}
+            focus={focus}
+            setFocus={setFocus}
+            night={night}
+            setNight={(n) => {
+              setNight(n);
+              track('night', `check-in moved to ${n.at}`);
+            }}
+            checkedInToday={checkedInToday}
             buddyCount={(buddies.friends ?? []).length}
             calendarOn={calendar.on}
-            planMode={planMode}
-            setPlanMode={setPlanMode}
-            hobbies={profileList('hobby')}
-            goalList={profileList('goal')}
             xp={xp}
             level={level}
             isPro={isPro}
@@ -1138,10 +1586,12 @@ export default function App() {
               go('upgrade');
             }}
             stats={stats}
+            streak={streak}
             strict={strict}
             onStrictOn={strictOn}
             onStrictAskOff={strictAskOff}
             onStrictKeepOn={strictKeepOn}
+            onStrictOffNow={strictOffNow}
             onNextDay={() => endDay(false)}
             onNextDayOver={() => endDay(true)}
             onNextWeek={runWeek}
@@ -1219,9 +1669,14 @@ export default function App() {
         <DemoPanel
           demoClock={demoClock}
           used={usedTotalToday}
-          goal={weekGoal}
-          passes={passesLeft}
+          goal={goalMins}
           fmtMins={fmtMins}
+          tracked={tracked}
+          appSettings={appSettings}
+          passesLeft={passesLeft}
+          canBorrow={borrowableFor(currentApp)}
+          strictOn={strict.on}
+          pendingCount={(pending ?? []).length}
           onClock={(at) => {
             setDemoClock(at);
             track('demo', `clock ${at ?? 'real'}`);
@@ -1229,20 +1684,88 @@ export default function App() {
           onUsage={(how) => {
             const target =
               how === 'under'
-                ? Math.round(weekGoal * 0.5)
+                ? Math.round(goalMins * 0.5)
                 : how === 'close'
-                  ? Math.round(weekGoal * 0.92)
-                  : Math.round(weekGoal * 1.4);
-            const first = watched[0] ?? 'tiktok';
+                  ? Math.round(goalMins * 0.92)
+                  : Math.round(goalMins * 1.4);
+            /* put it on the first app that actually counts toward the day */
+            const first =
+              tracked.find((a) => countsTowardDay(appSettings, a)) ?? tracked[0] ?? 'tiktok';
             setDay((d) => ({ ...d, used: { [first]: target } }));
             track('demo', `usage ${how}`);
           }}
-          onOpenBlocked={() => openApp(watched[0] ?? 'tiktok')}
+          /* run a real session of a chosen length on a chosen app */
+          onSimulate={(app, mins) => {
+            setSession((s) => ({ ...s, app }));
+            const setting = settingOf(app);
+            const carry = continuationFor(app);
+            const carried = carry?.mins ?? 0;
+            const charged = carry?.charged ?? 0;
+            const avail = availOf(app) + charged;
+            const full = sessionCapMins({
+              avail,
+              minutes: setting.minutes,
+              strictOn: strict.on,
+            });
+
+            if (full - carried <= 0) {
+              track('demo', `${app}: no room, shield instead`);
+              openApp(app);
+              return;
+            }
+
+            const run = Math.min(mins, full - carried);
+            setSession({
+              app,
+              cap: run,
+              carried,
+              charged,
+              kind: 'open',
+              minutes: setting.minutes,
+            });
+            /* finish it immediately at that length, so a tester doesn't sit
+               through fifteen real minutes to see what it costs */
+            setDay((d) => {
+              const total = carried + run;
+              const spend = opensSpent({
+                mins: total,
+                minutes: setting.minutes,
+                strictOn: strict.on,
+              });
+              const delta = Math.max(0, spend - charged);
+              return {
+                ...d,
+                used: { ...d.used, [app]: (d.used[app] ?? 0) + run },
+                opensUsed: { ...d.opensUsed, [app]: (d.opensUsed[app] ?? 0) + delta },
+                lastSession: { app, endedAt: Date.now(), mins: total, charged: spend },
+                lastBlockedAt: Date.now(),
+                sinceBlocked: 0,
+              };
+            });
+            track('demo', `${app}: simulated ${mins}m`);
+          }}
+          onPass={(app) => {
+            setSession((s) => ({ ...s, app }));
+            spendEmergencyPass(app, 'demo panel');
+          }}
+          onBorrow={(app) => {
+            setSession((s) => ({ ...s, app }));
+            borrowFromTomorrow(app);
+          }}
+          onToggleStrict={() => {
+            if (strict.on) strictAskOff();
+            else strictOn(strict.days ?? 7, strict.when ?? 'all');
+          }}
+          onSkip24h={skip24h}
+          onMidnight={skipToMidnight}
           onNextDay={() => endDay(false)}
           onNextWeek={runWeek}
+          onOpenBlocked={() => openApp(tracked[0] ?? 'tiktok')}
+          onLimits={() => go('limits')}
           onShareCard={() => go('sharecard')}
           onBuddies={() => go('buddies')}
           onNight={() => go('nightcheckin')}
+          onNightTime={() => go('nighttime')}
           onCalendar={() => go('calendar')}
           onReset={startOver}
         />
