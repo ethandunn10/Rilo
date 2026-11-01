@@ -282,21 +282,26 @@ export default function WhyOpen({
               </button>
             ))}
 
-            {/* he argues once, then gets out of the way */}
+            {/* He argues once, then gets out of the way — and the way out
+                has to be READABLE. This was white text on 22% white over a
+                pale sky, which is to say invisible. It's the app's normal
+                secondary button now: opaque, dark text, dark border. */}
             <button
               type="button"
               className="tap"
               onClick={() => setStage(reason === 'custom' ? 'what' : 'length')}
               style={{
-                minHeight: 48,
+                minHeight: 50,
+                boxSizing: 'border-box',
                 borderRadius: 999,
-                border: '2px solid rgba(255,255,255,0.7)',
-                background: 'rgba(255,255,255,0.22)',
-                color: '#FFFFFF',
+                border: '2px solid var(--line, #12301A)',
+                background: 'rgba(255,255,255,0.92)',
+                color: '#12301A',
                 fontFamily: 'Fredoka, sans-serif',
                 fontSize: 16,
                 fontWeight: 600,
                 cursor: 'pointer',
+                boxShadow: '0 3px 0 var(--line, #12301A)',
               }}
             >
               no, open {app} anyway

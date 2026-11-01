@@ -59,6 +59,15 @@ const QUICK = {
   chat: [...HOBBIES.slice(0, 4), ...GOALS.slice(0, 3)],
 };
 
+/* Most questions take more than one answer — nobody has exactly one hobby,
+   and people scroll after school AND in bed. So the chips are a
+   multi-select: tap as many as you like, they go green, and nothing is
+   sent until you hit send.
+
+   "do you post?" is the exception. yes / sometimes / no are mutually
+   exclusive, so tapping one there replaces the other. */
+const PICK_ONE = new Set(['creator']);
+
 /* what he says when the answer was a shrug */
 const NUDGE = {
   name: 'come on, what do your friends call you?',
@@ -117,6 +126,8 @@ export default function Talk({
   const [speaking, setSpeaking] = useState(true);
   const [thinking, setThinking] = useState(false);
   const [draft, setDraft] = useState('');
+  /* quick answers tapped but not sent yet */
+  const [picked, setPicked] = useState([]);
   /* something he wants to check before taking it: a name he might have
      misread, or a word that looks like a typo */
   const [confirm, setConfirm] = useState(null);
@@ -152,6 +163,23 @@ export default function Talk({
 
   const q = qs[Math.min(step, qs.length - 1)];
   const quick = done || confirm ? [] : QUICK[q.id] ?? [];
+  const one = PICK_ONE.has(q.id);
+
+  const toggle = (label) =>
+    setPicked((list) => {
+      if (one) return list.includes(label) ? [] : [label];
+      return list.includes(label) ? list.filter((x) => x !== label) : list.concat([label]);
+    });
+
+  /* everything they've chosen, in one answer. Picks are canonical words
+     from our own lists, so they skip the spell-check and the shrug nudge;
+     anything they typed themselves still gets both. */
+  const ready = picked.length > 0 || draft.trim().length > 0;
+  const send = () => {
+    if (!ready) return;
+    const all = [...picked, draft.trim()].filter(Boolean).join(', ');
+    answer(all, { asTyped: picked.length > 0 });
+  };
   const keys = KEYBOARD[q.id] ?? KEYBOARD.chat;
   const finish = () =>
     go(mode === 'chat' ? 'home' : 'aboutyou', mode === 'chat' ? 'back' : 'forward');
@@ -159,6 +187,7 @@ export default function Talk({
   const askNext = (next) => {
     stepRef.current = next;
     setDraft('');
+    setPicked([]);
     setStep(next);
     riloSays(qs[next].ask, qs[next].mood);
   };
@@ -244,6 +273,7 @@ export default function Talk({
       setThinking(false);
       riloSays(reply, checkName ? 'curious' : 'proud');
       setDraft('');
+      setPicked([]);
 
       /* wait for a yes before taking a name he might have misread */
       if (checkName) {
@@ -346,7 +376,7 @@ export default function Talk({
         <div
           key={bubble}
           style={{
-            marginTop: 16,
+            marginTop: 12,
             maxWidth: 320,
             padding: '14px 18px',
             borderRadius: 22,
@@ -386,17 +416,20 @@ export default function Talk({
           />
         </div>
 
-        <div style={{ marginTop: 10 }}>
+        {/* He takes the room that was empty. The stage adds its own
+            padding for the rings, so a bigger number here mostly fills
+            space that was already reserved. */}
+        <div style={{ marginTop: 2 }}>
           <RiloStage
             skin={skin}
             mood={mood}
-            size={168}
+            size={210}
             state={speaking || thinking ? 'talking' : 'idle'}
             onTap={() => !speaking && !thinking && riloSays(bubble)}
           />
         </div>
 
-        <div style={{ flexGrow: 1, minHeight: 4 }} />
+        <div style={{ flexGrow: 1, minHeight: 0 }} />
 
         {/* he wants to check something before taking it */}
         {confirm && !done && (
@@ -485,31 +518,35 @@ export default function Talk({
           {/* tap instead of type, wherever that's possible */}
           {quick.length > 0 && (
             <div className="scroll-x" style={{ display: 'flex', gap: 7, paddingBottom: 2 }}>
-              {quick.map((label) => (
-                <button
-                  key={label}
-                  type="button"
-                  className="tap"
-                  onClick={() => answer(label, { asTyped: true })}
-                  style={chip}
-                >
-                  {label}
-                </button>
-              ))}
+              {quick.map((label) => {
+                const on = picked.includes(label);
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    className="tap"
+                    aria-pressed={on}
+                    onClick={() => toggle(label)}
+                    style={on ? chipOn : chip}
+                  >
+                    {on ? `✓ ${label}` : label}
+                  </button>
+                );
+              })}
             </div>
           )}
 
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              answer(draft);
+              send();
             }}
             style={{ display: 'flex', alignItems: 'center', gap: 8 }}
           >
             <input
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder={keys.placeholder}
+              placeholder={picked.length ? 'anything else? or just send' : keys.placeholder}
               enterKeyHint="send"
               autoComplete={keys.autoComplete ?? 'off'}
               autoCapitalize={keys.autoCapitalize}
@@ -536,18 +573,18 @@ export default function Talk({
               type="submit"
               className="tap"
               aria-label="send"
-              disabled={!draft.trim()}
+              disabled={!ready}
               style={{
                 width: 52,
                 height: 52,
                 flexShrink: 0,
                 borderRadius: '50%',
                 border: 0,
-                background: draft.trim() ? '#12301A' : 'rgba(18,48,26,0.18)',
+                background: ready ? '#12301A' : 'rgba(18,48,26,0.18)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                cursor: draft.trim() ? 'pointer' : 'default',
+                cursor: ready ? 'pointer' : 'default',
                 transition: 'background .18s ease',
               }}
             >
@@ -596,6 +633,16 @@ const chip = {
   color: '#12301A',
   cursor: 'pointer',
   whiteSpace: 'nowrap',
+};
+
+/* picked: green, so a glance tells you what's going to be sent.
+   Full `border` rather than `borderColor` — React warns about mixing a
+   shorthand with a longhand for the same property across a rerender. */
+const chipOn = {
+  ...chip,
+  background: '#2E8B3E',
+  border: '2px solid var(--line, #12301A)',
+  color: '#FFFFFF',
 };
 
 const bigBtn = {

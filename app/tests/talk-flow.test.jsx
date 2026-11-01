@@ -96,11 +96,22 @@ is('the field cleared', $('input').value === '');
 await tapChip('yep');
 is('confirming moves to the hobby question', await saysSoon('not on your phone'), `"${bubble()}"`);
 
-console.log('\n2. a hobby — TAPPED, no typing at all:');
+console.log('\n2. hobbies — TAP SEVERAL, then send:');
 is('chips are offered', buttons().some((b) => b.textContent.trim() === 'basketball'));
+/* tapping must NOT submit on its own any more */
 await tapChip('basketball');
-is('it took it', bubble().includes('basketball'), `"${bubble()}"`);
-is('and saved it', about.on.basketball === true);
+is('one tap does not send', bubble().includes('not on your phone'), `"${bubble()}"`);
+is('the chip reads as picked', buttons().some((b) => b.textContent.trim() === '✓ basketball'));
+is('send is enabled by a pick alone', !$('button[type="submit"]').disabled);
+await tapChip('✓ basketball');
+is('tapping again unpicks it', !buttons().some((b) => b.textContent.trim() === '✓ basketball'));
+is('and send goes back to disabled', $('button[type="submit"]').disabled);
+/* now pick two and send them together */
+await tapChip('basketball');
+await tapChip('soccer');
+await clickSend();
+is('both were taken', bubble().includes('basketball') && bubble().includes('soccer'), `"${bubble()}"`);
+is('both saved', about.on.basketball === true && about.on.soccer === true);
 is('on to the goal question', await saysSoon('working toward'), `"${bubble()}"`);
 
 console.log('\n3. a goal — TYPED, sent with ENTER:');
@@ -110,14 +121,21 @@ is('enter sent it', bubble().includes('better grades'), `"${bubble()}"`);
 is('and saved it', about.on['better grades'] === true);
 is('on to the posting question', await saysSoon('content creator'), `"${bubble()}"`);
 
-console.log('\n4. do you post — TAPPED:');
+console.log('\n4. do you post — one answer only, then send:');
+await tapChip('yes, all the time');
 await tapChip('sometimes');
+is('picking a second answer replaces the first (not both)',
+  !buttons().some((b) => b.textContent.trim() === '✓ yes, all the time')
+  && buttons().some((b) => b.textContent.trim() === '✓ sometimes'));
+await clickSend();
 is('it took it', bubble().includes('posting sometimes'), `"${bubble()}"`);
 is('and saved it', about.creator === 'sometimes', `"${about.creator}"`);
 is('on to the last question', await saysSoon('scrolling the most'), `"${bubble()}"`);
 
-console.log('\n5. when — TAPPED, then it should finish:');
+console.log('\n5. when — a tap AND some typing together:');
 await tapChip('at night');
+await type('and on the bus');
+await clickSend();
 is('he wraps up', await saysSoon("that's all i needed"), `"${bubble()}"`);
 is('and the way forward appears', await chipSoon('next step'));
 is('the composer is gone', !$('input'));
