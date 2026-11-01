@@ -14,6 +14,119 @@
    instead of a browser afterthought.
 */
 
+/* ---------- near-enough matching ----------
+   People mistype and speech-to-text mishears. "noght" should still get
+   you to night, so a typo that's one letter off a word Rilo knows turns
+   into a question rather than a shrug. */
+
+function editDistance(a, b) {
+  /* full matrix, because swapped letters ("tierd" for "tired") need the
+     row before last to be counted as a single mistake */
+  const d = Array.from({ length: a.length + 1 }, (_, i) =>
+    Array.from({ length: b.length + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0)),
+  );
+
+  for (let i = 1; i <= a.length; i++) {
+    for (let j = 1; j <= b.length; j++) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + cost);
+      if (i > 1 && j > 1 && a[i - 1] === b[j - 2] && a[i - 2] === b[j - 1]) {
+        d[i][j] = Math.min(d[i][j], d[i - 2][j - 2] + 1);
+      }
+    }
+  }
+  return d[a.length][b.length];
+}
+
+/* ---------- the words Rilo knows ----------
+   These were nearly lost: stripping the microphone out of this file took
+   them with it, and since didYouMean() reads VOCAB on EVERY answer, every
+   single submit threw a ReferenceError. The throw happened inside the
+   form's onSubmit, so React swallowed it and the screen simply did
+   nothing — no text sent, no error, Enter and the button equally dead. */
+
+/* The words worth correcting, per question. Only plain words — nothing
+   Rilo already catches with a pattern. */
+const VOCAB = {
+  when: [
+    'night', 'nights', 'late', 'bed', 'bedtime', 'sleep', 'school', 'class',
+    'classes', 'lunch', 'morning', 'mornings', 'homework', 'study', 'studying',
+    'bored', 'boring', 'evening', 'afternoon', 'weekend', 'weekends', 'dinner',
+    'breakfast', 'practice', 'work',
+  ],
+  hobby: [
+    'basketball', 'soccer', 'football', 'golf', 'gym', 'lifting', 'running',
+    'track', 'skating', 'skateboard', 'swimming', 'gaming', 'fortnite',
+    'minecraft', 'valorant', 'filming', 'editing', 'photography', 'camera',
+    'drawing', 'painting', 'sketching', 'music', 'singing', 'guitar', 'piano',
+    'drums', 'reading', 'books', 'writing', 'coding', 'programming', 'cooking',
+    'baking', 'friends', 'fishing', 'hunting', 'boxing', 'wrestling', 'tennis',
+    'volleyball', 'baseball', 'hockey', 'dancing', 'chess', 'karate',
+  ],
+  goal: [
+    'grades', 'school', 'college', 'study', 'fitness', 'muscle', 'stronger',
+    'followers', 'content', 'business', 'startup', 'sleep', 'reading', 'books',
+    'instrument', 'guitar', 'piano', 'varsity', 'tryouts', 'money', 'saving',
+    'coding', 'programming', 'family', 'parents', 'siblings',
+  ],
+};
+
+/* ---------- understanding what you said ---------- */
+
+const HOBBY_WORDS = {
+  basketball: /basketball|hoop|hooping|ball(ing)?\b|free throws/,
+  soccer: /soccer|futbol/,
+  football: /football/,
+  golf: /golf/,
+  gym: /gym|lift|lifting|work(ing)? ?out|weights/,
+  running: /\brun(ning)?\b|track|cross country|jog/,
+  skating: /skat|skateboard/,
+  swimming: /swim/,
+  gaming: /gam(e|es|ing)|xbox|playstation|ps5|fortnite|minecraft|valorant|2k/,
+  'making videos': /video|filming|film|youtube|edit(ing)?|content|tiktoks?\b/,
+  photography: /photo|camera|pictures/,
+  drawing: /draw|art\b|sketch|paint/,
+  music: /music|sing|beats|rap/,
+  guitar: /guitar/,
+  piano: /piano/,
+  reading: /read(ing)?\b|books?/,
+  writing: /writ(e|ing)/,
+  coding: /cod(e|ing)|program|apps?\b|computer/,
+  cooking: /cook|bak(e|ing)/,
+  'hanging with friends': /friends|hang(ing)? out/,
+};
+
+const GOAL_WORDS = {
+  'better grades': /grades|school|gpa|ap\b|test|study|class/,
+  'get fit': /fit|in shape|muscle|strong|weight|abs/,
+  'grow my content': /grow|followers|content|page|views|audience|brand/,
+  'build something': /build|startup|business|company|app|make money online/,
+  'sleep more': /sleep|bed/,
+  'read more': /read more|more books/,
+  'learn an instrument': /instrument|guitar|piano|drums/,
+  'make a team': /make (the )?team|varsity|tryouts|starting lineup|\bstarter\b/,
+  'less phone': /less phone|phone less|screen ?time|off my phone|stop scrolling/,
+  'save money': /save|money|saving/,
+  'learn to code': /learn (to )?code|coding|programming/,
+  'spend time with family': /family|parents|siblings|brother|sister/,
+};
+
+function tokens(text) {
+  return text
+    .toLowerCase()
+    .split(/[^a-z']+/)
+    .filter(Boolean);
+}
+
+/* One mistake in most words, two only in long ones. Looser than this and
+   near-misses start colliding — "fishing" was being read as "filming". */
+function near(word, target) {
+  if (word === target) return true;
+  if (target.length < 5) return false;
+  if (Math.abs(word.length - target.length) > 2) return false;
+  return editDistance(word, target) <= (target.length <= 7 ? 1 : 2);
+}
+
 /* "noght" on the when question -> { typo: 'noght', meant: 'night' }.
    Nothing is returned when they spelled it right, or when nothing in the
    list is close, so Rilo only asks when he has a real guess. */
