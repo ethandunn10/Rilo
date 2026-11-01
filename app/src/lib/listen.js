@@ -14,6 +14,42 @@ import { useEffect, useRef, useState } from 'react';
 const SR =
   typeof window !== 'undefined' ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 
+/* Both speech recognition and getUserMedia are gated on a SECURE CONTEXT:
+   https, or localhost. On a plain http:// page — a LAN dev address like
+   http://192.168.1.44:5181, say — the constructor still exists, so a naive
+   `Boolean(SR)` check says "voice is supported", the UI offers a button,
+   and starting it fails silently. That's a dead button, which is worse than
+   no button, so an insecure page counts as no voice up front.
+
+   `navigator.mediaDevices` isn't even defined off a secure context, which
+   is why the permission check below can't catch this on its own. */
+const SECURE = typeof window === 'undefined' ? true : window.isSecureContext !== false;
+
+/* Can we offer talking, and if not, why not? Kept pure and exported so the
+   three cases (https, plain http, no speech API) can be checked without a
+   browser. */
+export function voiceSupport(hasSpeech, secure) {
+  if (!hasSpeech) return { ok: false, why: 'this browser can’t do voice input' };
+  if (!secure) return { ok: false, why: 'voice needs a secure (https) page' };
+  return { ok: true, why: '' };
+}
+
+/* iOS (and every browser on it, since they're all WebKit) will only start
+   speech recognition from inside a user gesture. A timer can't do it. So
+   screens that would otherwise re-open the mic by themselves between
+   questions have to ask for a tap instead. */
+export const needsGesture =
+  typeof navigator !== 'undefined' &&
+  (/iP(hone|od|ad)/.test(navigator.userAgent || '') ||
+    /^((?!chrome|android|crios|fxios).)*safari/i.test(navigator.userAgent || ''));
+
+const SUPPORT = voiceSupport(Boolean(SR), SECURE);
+const HAS_SPEECH = SUPPORT.ok;
+
+/* Why voice is off, in words, so a screen can say so instead of going
+   quiet. Empty when voice is available. */
+export const voiceOffReason = SUPPORT.why;
+
 /* Remember a refusal. iOS Safari has no permissions API to ask up front, so
    the only way to know is to try once — after that the app must stop
    offering voice entirely rather than asking again every screen. */
@@ -44,7 +80,7 @@ function rememberBlocked() {
 }
 
 export function useListen() {
-  const [supported] = useState(Boolean(SR));
+  const [supported] = useState(HAS_SPEECH);
   /* mic refused or missing — the whole app hides its voice bits when true */
   const [blocked, setBlockedState] = useState(wasBlocked);
 
@@ -64,7 +100,7 @@ export function useListen() {
   const lastText = useRef('');
   const onDone = useRef(null);
   const gotAudio = useRef(false);
-  /* start() awaits the permission prompt, so two quick taps could both
+  /* Two quick taps could both
      get past the `listening` check and build two recognisers — one of
      which immediately aborts the other. */
   const starting = useRef(false);
@@ -87,52 +123,48 @@ export function useListen() {
     };
   }, []);
 
-  /* Ask for the mic up front. Chrome shows its prompt here, so a denial is
-     reported properly instead of the recogniser dying half a second later. */
-  const permission = async () => {
-    if (gotAudio.current) return true;
-    if (!navigator.mediaDevices?.getUserMedia) {
-      setGranted(true);
-      return true;
-    }
-    /* Check a mic actually exists before prompting. Safari will happily put
-       up a permission dialog on a machine with no input device, which is
-       the one thing worse than not offering voice at all. */
-    try {
-      const devices = await navigator.mediaDevices.enumerateDevices?.();
-      if (devices && devices.length && !devices.some((d) => d.kind === 'audioinput')) {
-        setBlocked(true);
-        setProblem('no mic found — you can type instead.');
-        return false;
-      }
-    } catch {
-      /* can't enumerate — fall through and let the prompt decide */
-    }
+  /* Is there even a microphone? `enumerateDevices` reports each device's
+     `kind` without permission, so this can run on mount — which is the
+     point: it must NOT run on the tap. See the note on start() below. */
+  useEffect(() => {
+    let alive = true;
+    if (!navigator.mediaDevices?.enumerateDevices) return undefined;
+    navigator.mediaDevices
+      .enumerateDevices()
+      .then((devices) => {
+        if (!alive || !devices?.length) return;
+        if (!devices.some((d) => d.kind === 'audioinput')) {
+          setBlocked(true);
+          setProblem('no mic found — you can type instead.');
+        }
+      })
+      .catch(() => {
+        /* can't enumerate — let a real attempt decide */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
-    setAsking(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((t) => t.stop());
-      gotAudio.current = true;
-      setGranted(true);
-      setAsking(false);
-      return true;
-    } catch {
-      setAsking(false);
-      setBlocked(true);
-      setProblem('no mic access — you can type instead.');
-      return false;
-    }
-  };
+  /* NOT async, and nothing is awaited before r.start(). That matters:
+     iOS Safari only lets speech recognition begin from inside a user
+     gesture, and an `await` ends the gesture. This used to pre-flight
+     getUserMedia and await it, which is why "talk instead" did nothing at
+     all on a phone — the tap was already spent by the time it tried.
 
-  const start = async (done) => {
-    if (!SR || listening || starting.current) return;
-    starting.current = true;
-    setProblem('');
-    if (!(await permission())) {
-      starting.current = false;
+     A denial is still reported properly: it arrives as onerror
+     'not-allowed', handled below with the same message the pre-flight used
+     to show. iOS manages speech permission itself anyway, so asking for raw
+     mic access first was buying nothing and costing us the feature. */
+  const start = (done) => {
+    if (listening || starting.current) return;
+    /* say why, instead of looking broken */
+    if (!HAS_SPEECH) {
+      setProblem(`${voiceOffReason} — typing works everywhere.`);
       return;
     }
+    starting.current = true;
+    setProblem('');
 
     onDone.current = done;
     finalText.current = '';
@@ -163,6 +195,7 @@ export function useListen() {
       r.onerror = (e) => {
         /* an error can fire without onend — never leave it stuck "listening" */
         setListening(false);
+        setAsking(false);
         rec.current = null;
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
           gotAudio.current = false;
@@ -178,6 +211,13 @@ export function useListen() {
         }
       };
 
+      /* the mic is genuinely live now, so the prompt (if any) is answered */
+      r.onstart = () => {
+        gotAudio.current = true;
+        setGranted(true);
+        setAsking(false);
+      };
+
       r.onend = () => {
         setListening(false);
         rec.current = null;
@@ -189,9 +229,12 @@ export function useListen() {
       };
 
       rec.current = r;
+      /* first run on a device shows the permission prompt */
+      if (!gotAudio.current) setAsking(true);
       r.start();
       setListening(true);
     } catch {
+      setAsking(false);
       setProblem("couldn't start the mic. type instead.");
     } finally {
       starting.current = false;
@@ -256,9 +299,11 @@ export function useListen() {
     setText,
     start,
     stop,
-    /* ask for the mic on its own, so the screen can explain itself first */
-    request: permission,
     problem,
+    /* '' when voice works; otherwise why it doesn't */
+    voiceOff: voiceOffReason,
+    /* true where the mic can only be opened by a tap, never by a timer */
+    needsGesture,
     setProblem,
   };
 }

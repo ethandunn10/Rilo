@@ -212,9 +212,11 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
           >
             {mic.listening
               ? `tap to stop · ${left}s`
-              : typing
-                ? 'type it below, or tap rilo to say it'
-                : 'hold the thought, tap to talk'}
+              : mic.voiceOff
+                ? `${mic.voiceOff} — type it below`
+                : typing
+                  ? 'type it below, or tap rilo to say it'
+                  : 'hold the thought, tap to talk'}
           </p>
         )}
 
@@ -314,9 +316,11 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
             put it in tomorrow&apos;s plan
           </button>
         ) : (
-          <button type="button" className="tap" onClick={() => setTyping((v) => !v)} style={ghost}>
-            {typing ? 'talk instead' : 'type instead'}
-          </button>
+          mic.hasSpeech && (
+            <button type="button" className="tap" onClick={() => setTyping((v) => !v)} style={ghost}>
+              {typing ? 'talk instead' : 'type instead'}
+            </button>
+          )
         )}
 
         {/* DEMO ONLY: see the whole thing without a mic */}

@@ -163,7 +163,7 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
       mic.setText('');
       setDraft('');
       riloSays(NUDGE[q.id] ?? "give me something real, even if it's small.", 'coach');
-      if (usedMic.current && !keyboardMode.current) {
+      if (usedMic.current && !keyboardMode.current && !mic.needsGesture) {
         later(() => {
           if (!keyboardMode.current) startMic();
         }, 900);
@@ -276,8 +276,11 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
 
   const startMic = () => {
     if (!mic.supported) {
+      /* No voice here. Stay on the keyboard — and mic.start() sets a
+         `problem` line explaining why, so this isn't a silent no-op. */
       keyboardMode.current = true;
       setTyping(true);
+      if (!mic.hasSpeech) mic.start();
       return;
     }
 
@@ -336,7 +339,15 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
     setStep(next);
     const line = qs[next].ask;
     riloSays(line, qs[next].mood);
-    if ((usedMic.current || resumeWanted.current) && !keyboardMode.current) {
+    /* Re-open the mic for the next question by itself — but only where a
+       timer is allowed to. On iOS it isn't (see needsGesture), and trying
+       just produces an error they didn't cause; there, the line under Rilo
+       asks for a tap instead. */
+    if (
+      (usedMic.current || resumeWanted.current) &&
+      !keyboardMode.current &&
+      !mic.needsGesture
+    ) {
       clearAutoStart();
       autoStart.current = setTimeout(() => {
         autoStart.current = null;
@@ -632,6 +643,10 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
               next step
             </button>
           </>
+        ) : !mic.hasSpeech ? (
+          /* No voice on this page at all — don't offer a button that can
+             only fail. The line under this says why. */
+          null
         ) : (
           <button
             type="button"
@@ -705,11 +720,15 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
             ? mic.problem
             : mic.asking
               ? 'allow the mic up there and he starts listening.'
-              : !mic.supported
-                ? "no mic here, so just type. rilo still gets it."
-                : typing
-                  ? 'type your answer, or tap talk instead to say it out loud.'
-                  : "tap rilo to talk, tap him again when you're done."}
+              : mic.voiceOff
+                ? `${mic.voiceOff} — so type it. rilo still gets it.`
+                : !mic.supported
+                  ? 'no mic here, so just type. rilo still gets it.'
+                  : typing
+                    ? 'type your answer, or tap talk instead to say it out loud.'
+                    : mic.needsGesture
+                      ? 'tap rilo for each answer, and again when you’re done.'
+                      : "tap rilo to talk, tap him again when you're done."}
         </p>
         )}
       </div>
