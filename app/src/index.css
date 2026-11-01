@@ -64,6 +64,25 @@ body {
   background: #EEF8EE;
 }
 
+/* On a phone the page itself must not scroll — only the app's own
+   scrollers do. Without this, focusing a field lets the browser drag the
+   whole layout upward to "reveal" it, which is what put the app half off
+   the screen with the keyboard over the top of it. PhoneFrame adds this
+   class only in full-screen (phone) mode, so the desk frame can still
+   scroll the page normally if the window is short. */
+body.app-locked {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  width: 100%;
+}
+
+body.app-locked .stage-wrap {
+  min-height: 0;
+  height: 100%;
+  align-items: flex-start;
+}
+
 /* phone: be the app.
    `dvh` (not `vh`) so the stage tracks Safari's collapsing URL bar instead
    of being 100px taller than the window and hiding its own bottom edge.

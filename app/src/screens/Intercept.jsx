@@ -16,8 +16,6 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import AppLogo from '../components/AppLogo';
 import Opens from '../components/Opens';
-import { MicButton, WaveBars } from '../components/TalkBits';
-import { useListen } from '../lib/listen';
 import {
   BLOCKED,
   LIMITED,
@@ -96,7 +94,6 @@ export default function Intercept({
   const [countdown, setCountdown] = useState(wait);
   const [passWhat, setPassWhat] = useState(false);
   const [typed, setTyped] = useState('');
-  const mic = useListen();
   const timer = useRef(null);
 
   const limited = lock?.setting?.mode === LIMITED;
@@ -303,7 +300,6 @@ export default function Intercept({
 
         {passWhat ? (
           <AskWhat
-            mic={mic}
             typed={typed}
             setTyped={setTyped}
             onSubmit={(text) => text.trim() && onPass(text.trim())}
@@ -446,7 +442,7 @@ export default function Intercept({
 }
 
 /* "what for?" — talk or type, same as everywhere else in the app */
-function AskWhat({ mic, typed, setTyped, onSubmit, title }) {
+function AskWhat({ typed, setTyped, onSubmit, title }) {
   return (
     <div
       style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0 }}
@@ -512,20 +508,6 @@ function AskWhat({ mic, typed, setTyped, onSubmit, title }) {
         </button>
       </div>
 
-      {mic.usable && (
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: '#2C4A36' }}>
-            or say it
-          </span>
-          <MicButton
-            listening={mic.listening}
-            disabled={false}
-            onStart={() => mic.start((said) => said && onSubmit(said))}
-            onStop={mic.stop}
-          />
-          {mic.listening ? <WaveBars on /> : null}
-        </div>
-      )}
     </div>
   );
 }

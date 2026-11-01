@@ -7,7 +7,7 @@
    The watched-apps row shows the real count and the real logos. */
 
 import Rilo from '../components/Rilo';
-import { MicIcon } from '../components/TalkBits';
+import { ChatIcon } from '../components/TalkBits';
 import { ThemeDecor } from '../components/Sky';
 import { useTheme } from '../lib/themes';
 import TabBar from '../components/TabBar';
@@ -251,7 +251,7 @@ export default function Home({
         <button
           type="button"
           className="tap-94"
-          aria-label="talk to rilo"
+          aria-label="chat with rilo"
           onClick={() => go('talkchat')}
           style={{
             position: 'absolute',
@@ -284,8 +284,8 @@ export default function Home({
               animation: 'pulse 2.2s ease-in-out infinite',
             }}
           >
-            <MicIcon size={14} />
-            talk
+            <ChatIcon size={14} />
+            chat
           </span>
         </button>
         <div

@@ -254,7 +254,7 @@ export function pushBack({ reason, app, hobbies = [], goals = [], schedule = [],
     options.push({
       id: 'plan',
       label: upcoming.title,
-      sub: upcoming.at ? `it's on your plan for ${upcoming.at}` : 'it\'s on your plan',
+      sub: upcoming.at ? `it's on your plan for ${upcoming.at}` : "it's on your plan",
     });
   }
 
@@ -267,7 +267,7 @@ export function pushBack({ reason, app, hobbies = [], goals = [], schedule = [],
   /* 3. the goal, as a reason rather than a task */
   const goal = goals[0];
   if (goal && options.length < 3) {
-    options.push({ id: 'goal', label: `ten minutes on ${goal}`, sub: 'you said that\'s the plan' });
+    options.push({ id: 'goal', label: `ten minutes on ${goal}`, sub: "you said that's the plan" });
   }
 
   /* he always offers simply stopping — "do a hobby" is not the only

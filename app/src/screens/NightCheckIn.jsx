@@ -1,30 +1,21 @@
 /* The thirty seconds at night. Rilo asks how today went and what's on
-   tomorrow, they hold the panda and talk, and he turns it into tomorrow's
-   schedule. Same mic and same stage as the onboarding talk screen.
+   tomorrow, they type it, and he turns it into tomorrow's schedule.
 
-   DEMO ONLY: what they say is matched against patterns in demo/mockAI.js.
+   DEMO ONLY: what they write is matched against patterns in demo/mockAI.js.
    The mobile app sends this to a real model. */
 
 import { useEffect, useRef, useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
-import { RiloStage, WaveBars } from '../components/TalkBits';
-import { useListen } from '../lib/listen';
+import { RiloStage } from '../components/TalkBits';
 import { track } from '../lib/track';
 import { NIGHT_QUESTIONS, nightReply, tasksFrom, DEMO_NIGHT } from '../demo/mockAI';
-
-/* thirty seconds, like the brief says */
-const SECONDS = 30;
 
 export default function NightCheckIn({ skin, onDone, onSkip }) {
   const [step, setStep] = useState(0);
   const [said, setSaid] = useState({ today: '', tomorrow: '' });
-  /* typing first here too — talking is the button underneath */
-  const [typing, setTyping] = useState(true);
   const [draft, setDraft] = useState('');
-  const [left, setLeft] = useState(SECONDS);
   const [done, setDone] = useState(false);
-  const mic = useListen();
   const timers = useRef([]);
   const stepRef = useRef(0);
 
@@ -32,21 +23,6 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
   useEffect(() => {
     stepRef.current = step;
   }, [step]);
-
-  /* the clock only runs while the mic is on */
-  useEffect(() => {
-    if (!mic.listening) return undefined;
-    const id = setInterval(() => {
-      setLeft((v) => {
-        if (v <= 1) {
-          mic.stop();
-          return 0;
-        }
-        return v - 1;
-      });
-    }, 1000);
-    return () => clearInterval(id);
-  }, [mic.listening, mic]);
 
   const q = NIGHT_QUESTIONS[Math.min(step, NIGHT_QUESTIONS.length - 1)];
 
@@ -56,9 +32,7 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
     const at = stepRef.current;
     const key = NIGHT_QUESTIONS[at].id;
     setSaid((s) => ({ ...s, [key]: text }));
-    mic.setText('');
     setDraft('');
-    setLeft(SECONDS);
     track('night', key);
 
     if (at + 1 < NIGHT_QUESTIONS.length) {
@@ -69,22 +43,9 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
     }
   };
 
-  const startMic = () => {
-    if (done) return;
-    if (!mic.supported) {
-      setTyping(true);
-      return;
-    }
-    /* tapping him is choosing to talk — put the keyboard away so there
-       aren't two live ways to answer at once */
-    setTyping(false);
-    setLeft(SECONDS);
-    mic.start((heard) => answer(heard));
-  };
-
   const reply = nightReply(said.today);
   const tasks = tasksFrom(said.tomorrow);
-  const showText = mic.listening ? mic.text : mic.text || draft;
+  const showText = draft;
 
   return (
     <div
@@ -186,15 +147,7 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
           </p>
         </div>
 
-        <RiloStage
-          skin={skin}
-          mood={done ? reply.mood : 'curious'}
-          size={200}
-          state={mic.listening ? 'listening' : 'idle'}
-          onTap={() => (mic.listening ? mic.stop() : startMic())}
-        />
-
-        <WaveBars on={mic.listening} color="#FFFFFF" />
+        <RiloStage skin={skin} mood={done ? reply.mood : 'curious'} size={180} />
 
         {!done && (
           <p
@@ -202,23 +155,15 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
               margin: 0,
               padding: '8px 18px',
               borderRadius: 999,
-              background: mic.listening ? '#FFFFFF' : 'rgba(255,255,255,0.16)',
-              color: mic.listening ? '#2B3A6B' : '#FFFFFF',
+              background: 'rgba(255,255,255,0.16)',
+              color: '#FFFFFF',
               border: '2px solid rgba(255,255,255,0.5)',
               fontFamily: 'Fredoka, sans-serif',
-              fontSize: 17,
+              fontSize: 16,
               fontWeight: 600,
             }}
           >
-            {mic.listening
-              ? `tap to stop · ${left}s`
-              : mic.voiceOff
-                ? `${mic.voiceOff} — type it below`
-                : typing
-                  ? 'type it below, or tap rilo to say it'
-                  : mic.needsGesture
-                    ? 'tap rilo and say it — he takes it when you stop'
-                    : 'hold the thought, tap to talk'}
+            thirty seconds, that&apos;s it
           </p>
         )}
 
@@ -228,7 +173,7 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
           </p>
         )}
 
-        {typing && !done && (
+        {!done && (
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -240,7 +185,7 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
               autoFocus
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="type it instead…"
+              placeholder="type it…"
               style={{
                 flexGrow: 1,
                 minWidth: 0,
@@ -317,13 +262,7 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
           >
             put it in tomorrow&apos;s plan
           </button>
-        ) : (
-          mic.hasSpeech && (
-            <button type="button" className="tap" onClick={() => setTyping((v) => !v)} style={ghost}>
-              {typing ? 'talk instead' : 'type instead'}
-            </button>
-          )
-        )}
+        ) : null}
 
         {/* DEMO ONLY: see the whole thing without a mic */}
         {!done && (
@@ -332,8 +271,6 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
             className="tap"
             onClick={() => {
               setSaid(DEMO_NIGHT);
-              mic.cancel?.();
-              setTyping(false);
               setDone(true);
               track('night', 'demo: filled it in');
             }}
@@ -350,7 +287,7 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
               cursor: 'pointer',
             }}
           >
-            demo: answer it for me
+            demo: fill it in for me
           </button>
         )}
 
