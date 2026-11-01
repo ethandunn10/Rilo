@@ -220,6 +220,78 @@ export function riloLimits({
   return { settings, why, lead, check: check() };
 }
 
+/* ---------- what he says instead of "fine, go ahead" ----------
+   The whole point of the onboarding questions is that Rilo KNOWS things:
+   the hobby you said you never get to, the goal you said you're working
+   toward, what's actually on your plan for today. So when someone opens a
+   limited app, he spends that knowledge instead of just counting an open
+   down. He names the specific thing, not "do something else".
+
+   "need to post" is the one reason he doesn't argue with — that's work, and
+   arguing with it is how an app loses someone's trust. He still asks WHAT
+   they're posting, because "posting" is also the easiest lie to tell
+   yourself.
+
+   Ordered best-first: something on today's plan beats a hobby, because a
+   plan has a time attached and is harder to wave away. */
+export function pushBack({ reason, app, hobbies = [], goals = [], schedule = [], nowMins = 0 }) {
+  if (reason === 'post') return null;
+
+  const options = [];
+
+  /* 1. something they actually scheduled, soonest still to come */
+  const toMins = (at) => {
+    const [h, m] = String(at || '').split(':').map((n) => parseInt(n, 10));
+    return Number.isFinite(h) ? h * 60 + (m || 0) : null;
+  };
+  const upcoming = schedule
+    .map((r) => ({ ...r, mins: toMins(r.at) }))
+    .filter((r) => r.mins !== null && r.title && !/bedtime|dinner|free time|chill/i.test(r.title))
+    .sort((a, b) => a.mins - b.mins)
+    .find((r) => r.mins >= nowMins - 30);
+
+  if (upcoming) {
+    options.push({
+      id: 'plan',
+      label: upcoming.title,
+      sub: upcoming.at ? `it's on your plan for ${upcoming.at}` : 'it\'s on your plan',
+    });
+  }
+
+  /* 2. the hobby they said they never get round to */
+  const hobby = hobbies.find((h) => !upcoming || !upcoming.title.includes(h));
+  if (hobby) {
+    options.push({ id: 'hobby', label: hobby, sub: 'the thing you said you wanted time for' });
+  }
+
+  /* 3. the goal, as a reason rather than a task */
+  const goal = goals[0];
+  if (goal && options.length < 3) {
+    options.push({ id: 'goal', label: `ten minutes on ${goal}`, sub: 'you said that\'s the plan' });
+  }
+
+  /* he always offers simply stopping — "do a hobby" is not the only
+     alternative to scrolling, and pretending it is gets tiresome */
+  options.push({ id: 'break', label: 'just put it down', sub: 'no task, no points. still counts.' });
+
+  const lead =
+    reason === 'bored'
+      ? upcoming
+        ? `bored? ${upcoming.title} is on your plan.`
+        : hobby
+          ? `bored? you said you never get time for ${hobby}.`
+          : 'bored is the one i can actually help with.'
+      : reason === 'messages'
+        ? `messages, sure. that\'s thirty seconds, not ${app}.`
+        : reason === 'something'
+          ? 'one thing, then out. you know how that usually goes.'
+          : upcoming
+            ? `before you do — ${upcoming.title} is on your plan.`
+            : 'before you do.';
+
+  return { lead, options };
+}
+
 /* ---------- Rilo builds your day ----------
    Rules over the profile, their school hours and their bedtime. The
    wording is scripted; in the mobile app this is a real model looking at

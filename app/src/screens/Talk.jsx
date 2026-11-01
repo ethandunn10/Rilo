@@ -275,12 +275,16 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
   };
 
   const startMic = () => {
-    if (!mic.supported) {
-      /* No voice here. Stay on the keyboard — and mic.start() sets a
-         `problem` line explaining why, so this isn't a silent no-op. */
+    /* Only one thing may stop us here: this page genuinely cannot do voice.
+       Anything else — a refusal last time, no permission yet — is for
+       mic.start() to attempt and report on. It used to bail on
+       `!mic.supported`, which folded in a stale `blocked` flag and turned
+       the visible "talk instead" button into a no-op. A tap must always
+       either open the mic or say why it didn't. */
+    if (!mic.hasSpeech) {
       keyboardMode.current = true;
       setTyping(true);
-      if (!mic.hasSpeech) mic.start();
+      mic.start(); /* sets the `problem` line that explains it */
       return;
     }
 

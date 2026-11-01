@@ -13,6 +13,31 @@ import { useState } from 'react';
 import { fmtClock } from '../lib/addons';
 import AppLogo from './AppLogo';
 import { LIMITED, fmtOpens, halfOf, settingFor } from '../lib/limits';
+import { voiceOffReason, needsGesture } from '../lib/listen';
+
+/* Why voice is or isn't working, in plain facts. Voice depends on things
+   that are invisible from a desktop — the page's scheme, the browser engine,
+   a permission answered once and remembered — so when it misbehaves on
+   someone's phone this is the fastest way to find out what it actually
+   thinks, instead of guessing. */
+function voiceFacts() {
+  if (typeof window === 'undefined') return [];
+  const hasSR = Boolean(window.SpeechRecognition || window.webkitSpeechRecognition);
+  let refused = false;
+  try {
+    refused = localStorage.getItem('rilo.micBlocked') === '1';
+  } catch {
+    /* storage off */
+  }
+  return [
+    ['speech api', hasSR ? 'present' : 'MISSING'],
+    ['secure page', window.isSecureContext ? 'yes' : 'NO (voice needs https)'],
+    ['voice available', !voiceOffReason ? 'yes' : `no — ${voiceOffReason}`],
+    ['tap required', needsGesture ? 'yes (ios)' : 'no'],
+    ['refused before', refused ? 'yes (next tap retries)' : 'no'],
+    ['origin', window.location.origin],
+  ];
+}
 
 const row = {
   display: 'flex',
@@ -360,6 +385,19 @@ export default function DemoPanel({
         <button type="button" onClick={onCalendar} style={btn}>
           calendar
         </button>
+      </div>
+
+      {/* ---------- why voice is / isn't working ---------- */}
+      <p style={label}>voice check</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {voiceFacts().map(([k, v]) => (
+          <p key={k} style={{ margin: 0, fontSize: 11.5, fontWeight: 600, color: '#2C4A36' }}>
+            <span style={{ display: 'inline-block', minWidth: 104, color: '#3D5A46' }}>{k}</span>
+            <span style={{ fontWeight: 700, color: /NO|MISSING|^no —/.test(v) ? '#A33A2B' : '#1F6B2E' }}>
+              {v}
+            </span>
+          </p>
+        ))}
       </div>
 
       <p style={label}>start clean</p>

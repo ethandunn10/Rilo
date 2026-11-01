@@ -1313,7 +1313,21 @@ export default function App() {
             opensLeft={availOf(currentApp) + (carry?.charged ?? 0)}
             strictOn={strict.on}
             creator={about.creator}
+            /* everything he learned in onboarding, so he can argue with
+               something specific instead of nagging in general */
+            hobbies={profileList('hobby')}
+            goals={profileList('goal')}
+            schedule={schedulePlan.rows ?? []}
+            nowMins={nowMins}
             onStart={(pick) => startCheckedIn(currentApp, pick)}
+            onInstead={(option) => {
+              /* they took the alternative — that's the whole point of the
+                 app, so it banks the time and the xp */
+              track('instead', `${option.id}: ${option.label}`);
+              saidNo();
+              awardXp(option.id === 'break' ? 5 : 10);
+              go(option.id === 'break' ? 'break' : 'progress');
+            }}
             onNevermind={() => {
               track('checkin', 'never mind');
               saidNo();

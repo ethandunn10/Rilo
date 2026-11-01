@@ -107,8 +107,10 @@ export function useListen() {
 
   useEffect(() => () => rec.current?.abort?.(), []);
 
-  /* Ask the browser up front whether the mic is already refused, so screens
-     can hide their talk buttons instead of offering something that fails. */
+  /* If the browser will tell us the mic is already refused, note it — but
+     only as something to SAY, never as a reason to make a button inert.
+     Safari rejects this query outright, so it can't be relied on either
+     way. */
   useEffect(() => {
     let alive = true;
     navigator.permissions
@@ -123,45 +125,25 @@ export function useListen() {
     };
   }, []);
 
-  /* Is there even a microphone? `enumerateDevices` reports each device's
-     `kind` without permission, so this can run on mount — which is the
-     point: it must NOT run on the tap. See the note on start() below. */
-  useEffect(() => {
-    let alive = true;
-    if (!navigator.mediaDevices?.enumerateDevices) return undefined;
-    navigator.mediaDevices
-      .enumerateDevices()
-      .then((devices) => {
-        if (!alive || !devices?.length) return;
-        if (!devices.some((d) => d.kind === 'audioinput')) {
-          setBlocked(true);
-          setProblem('no mic found — you can type instead.');
-        }
-      })
-      .catch(() => {
-        /* can't enumerate — let a real attempt decide */
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
+  /* There is deliberately no up-front "is there a microphone?" probe.
+     enumerateDevices() masks each device's `kind` until permission has been
+     granted, so on WebKit it reports no audio input even when one exists —
+     which silently disabled voice on every iPhone. A genuinely missing mic
+     surfaces as onerror 'audio-capture' at the one moment it matters. */
 
-  /* NOT async, and nothing is awaited before r.start(). That matters:
-     iOS Safari only lets speech recognition begin from inside a user
-     gesture, and an `await` ends the gesture. This used to pre-flight
-     getUserMedia and await it, which is why "talk instead" did nothing at
-     all on a phone — the tap was already spent by the time it tried.
-
-     A denial is still reported properly: it arrives as onerror
-     'not-allowed', handled below with the same message the pre-flight used
-     to show. iOS manages speech permission itself anyway, so asking for raw
-     mic access first was buying nothing and costing us the feature. */
   const start = (done) => {
     if (listening || starting.current) return;
     /* say why, instead of looking broken */
     if (!HAS_SPEECH) {
       setProblem(`${voiceOffReason} — typing works everywhere.`);
       return;
+    }
+    /* A refusal earlier is not a refusal now — they may have just changed
+       it in settings. Clear the flag and let the attempt decide, so the tap
+       always DOES something rather than being quietly swallowed. */
+    if (blocked) {
+      forgetBlocked();
+      setBlockedState(false);
     }
     starting.current = true;
     setProblem('');

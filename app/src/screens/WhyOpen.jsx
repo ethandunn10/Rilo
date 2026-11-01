@@ -17,6 +17,7 @@ import Rilo from '../components/Rilo';
 import AppLogo from '../components/AppLogo';
 import Opens from '../components/Opens';
 import { checkinReasons } from '../lib/addons';
+import { pushBack } from '../demo/mockAI';
 import { halfOf } from '../lib/limits';
 
 const pill = (on) => ({
@@ -50,11 +51,20 @@ export default function WhyOpen({
   strictOn = false,
   /* 'yes' | 'sometimes' | 'no' — sharpens the "need to post" line */
   creator = '',
+  /* what Rilo knows, so he can argue with something specific */
+  hobbies = [],
+  goals = [],
+  schedule = [],
+  nowMins = 0,
   onStart,
   onNevermind,
+  /* they took him up on the alternative */
+  onInstead,
 }) {
   const [reason, setReason] = useState('');
   const [why, setWhy] = useState('');
+  /* 'reason' -> 'push' (or 'what' for posting) -> 'length' */
+  const [stage, setStage] = useState('reason');
 
   /* which lengths are actually on offer */
   const half = halfOf(minutes);
@@ -68,7 +78,13 @@ export default function WhyOpen({
   const capMins = picked === 'quick' ? half : minutes;
   const cost = picked === 'quick' ? 0.5 : 1;
 
-  const ready = reason && (reason !== 'custom' || why.trim());
+  /* what he'd say instead, built from what they told him in onboarding */
+  const argument =
+    stage === 'push' && reason ? pushBack({ reason, app, hobbies, goals, schedule, nowMins }) : null;
+
+  /* "something else" and "need to post" both have to be described */
+  const needsWords = reason === 'custom' || reason === 'post';
+  const ready = reason && (!needsWords || why.trim()) && stage === 'length';
 
   const choice = (id, title, sub, enabled) => (
     <button
@@ -153,13 +169,19 @@ export default function WhyOpen({
           <Opens total={opensTotal} used={opensUsed} minutes={minutes} />
         </div>
 
+        {stage === 'reason' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flexShrink: 0 }}>
           {checkinReasons(creator).map((r) => (
             <button
               key={r.id}
               type="button"
               className="tap"
-              onClick={() => setReason(r.id)}
+              onClick={() => {
+                setReason(r.id);
+                /* posting is the one he doesn't argue with — but he does
+                   ask what. everything else gets pushed back on first. */
+                setStage(r.id === 'post' ? 'what' : 'push');
+              }}
               style={pill(reason === r.id)}
             >
               <span style={{ fontSize: 17, fontWeight: 600 }}>{r.label}</span>
@@ -175,13 +197,23 @@ export default function WhyOpen({
               </span>
             </button>
           ))}
+        </div>
+        )}
 
-          {reason === 'custom' && (
+        {/* He doesn't argue with posting — but "i need to post" is the
+            easiest thing to tell yourself, so it has to be said out loud. */}
+        {stage === 'what' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9, flexShrink: 0 }}>
+            <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}>
+              {reason === 'post' ? 'what are you posting?' : 'what for?'}
+            </p>
             <input
               autoFocus
               value={why}
               onChange={(e) => setWhy(e.target.value)}
-              placeholder="what for?"
+              placeholder={
+                reason === 'post' ? 'the video i filmed, the photo from…' : 'say what for…'
+              }
               style={{
                 height: 50,
                 boxSizing: 'border-box',
@@ -194,28 +226,110 @@ export default function WhyOpen({
                 color: '#12301A',
               }}
             />
-          )}
-        </div>
+            <button
+              type="button"
+              className="tap"
+              disabled={!why.trim()}
+              onClick={() => setStage('length')}
+              style={{
+                ...pill(false),
+                minHeight: 50,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: why.trim() ? 1 : 0.45,
+                cursor: why.trim() ? 'pointer' : 'default',
+              }}
+            >
+              <span style={{ fontSize: 17, fontWeight: 600 }}>that's what i'm doing</span>
+            </button>
+          </div>
+        )}
 
-        <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 700, color: '#2C4A36' }}>
-          how long do you need?
-        </p>
+        {/* The argument. Everything he knows about them, spent here. */}
+        {stage === 'push' && argument && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9, flexShrink: 0 }}>
+            <p
+              style={{
+                margin: 0,
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 21,
+                fontWeight: 600,
+                lineHeight: 1.25,
+              }}
+            >
+              {argument.lead}
+            </p>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flexShrink: 0 }}>
-          {choice('quick', 'quick', `½ open · ${mins(half)}`, canQuick)}
-          {choice('full', 'full', `1 open · ${mins(minutes)}`, canFull)}
-        </div>
+            {argument.options.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                className="tap"
+                onClick={() => onInstead?.(o)}
+                style={pill(false)}
+              >
+                <span style={{ fontSize: 17, fontWeight: 600 }}>{o.label}</span>
+                <span
+                  style={{
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontSize: 12,
+                    fontWeight: 600,
+                    opacity: 0.75,
+                  }}
+                >
+                  {o.sub}
+                </span>
+              </button>
+            ))}
 
-        <p style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#2C4A36', lineHeight: 1.35 }}>
-          {strictOn
-            ? 'strict mode: no halves. any session costs a whole open.'
-            : !canFull
-              ? `half an open left, so this one maxes out at ${mins(half)}.`
-              : `leave by ${mins(half)} and it only costs half an open.`}
-        </p>
+            {/* he argues once, then gets out of the way */}
+            <button
+              type="button"
+              className="tap"
+              onClick={() => setStage(reason === 'custom' ? 'what' : 'length')}
+              style={{
+                minHeight: 48,
+                borderRadius: 999,
+                border: '2px solid rgba(255,255,255,0.7)',
+                background: 'rgba(255,255,255,0.22)',
+                color: '#FFFFFF',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'pointer',
+              }}
+            >
+              no, open {app} anyway
+            </button>
+          </div>
+        )}
+
+        {stage === 'length' && (
+          <>
+            <p style={{ margin: '2px 0 0', fontSize: 13, fontWeight: 700, color: '#2C4A36' }}>
+              how long do you need?
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, flexShrink: 0 }}>
+              {choice('quick', 'quick', `½ open · ${mins(half)}`, canQuick)}
+              {choice('full', 'full', `1 open · ${mins(minutes)}`, canFull)}
+            </div>
+
+            <p
+              style={{ margin: 0, fontSize: 12, fontWeight: 600, color: '#2C4A36', lineHeight: 1.35 }}
+            >
+              {strictOn
+                ? 'strict mode: no halves. any session costs a whole open.'
+                : !canFull
+                  ? `half an open left, so this one maxes out at ${mins(half)}.`
+                  : `leave by ${mins(half)} and it only costs half an open.`}
+            </p>
+          </>
+        )}
 
         <div style={{ flexGrow: 1, minHeight: 6 }} />
 
+        {stage === 'length' && (
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
           <span style={{ display: 'flex', borderRadius: 12, overflow: 'hidden' }}>
             <AppLogo label={app} size={44} radius={12} />
@@ -251,6 +365,7 @@ export default function WhyOpen({
             {ready ? `open for ${mins(capMins)}` : 'pick a reason'}
           </button>
         </div>
+        )}
 
         <button
           type="button"
