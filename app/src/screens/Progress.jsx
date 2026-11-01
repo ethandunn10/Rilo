@@ -221,7 +221,7 @@ export default function Progress({
           height: '100%',
           boxSizing: 'border-box',
           padding: '52px 20px 0',
-          '--tail': '116px',
+          '--tail': 'calc(116px + var(--safe-bottom, 0px))',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,

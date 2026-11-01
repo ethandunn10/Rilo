@@ -99,9 +99,11 @@ export default function TabBar({ active = 'home', go, skin = 'original' }) {
         left: 0,
         right: 0,
         bottom: 0,
-        height: 94,
+        /* grows by the home-bar inset when running standalone; 94px in a
+           normal browser tab, where the inset is zero */
+        height: 'calc(94px + var(--safe-bottom, 0px))',
         boxSizing: 'border-box',
-        padding: '8px 10px 22px',
+        padding: 'calc(8px) 10px calc(22px + var(--safe-bottom, 0px))',
         borderRadius: '26px 26px 0 0',
         background: 'var(--card)',
         borderTop: '2px solid var(--line)',

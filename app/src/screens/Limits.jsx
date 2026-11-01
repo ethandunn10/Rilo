@@ -393,7 +393,7 @@ export default function Limits({
           height: '100%',
           boxSizing: 'border-box',
           padding: '52px 20px 0',
-          '--tail': '124px',
+          '--tail': 'calc(124px + var(--safe-bottom, 0px))',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,

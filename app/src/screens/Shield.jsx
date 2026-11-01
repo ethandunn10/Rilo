@@ -41,11 +41,13 @@ export default function Shield({
       <Sky hills="mid" />
 
       <div
+        className="scroll-y"
         style={{
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '72px 26px 34px',
+          padding: '72px 26px 0',
+          '--tail': '34px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

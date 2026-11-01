@@ -228,7 +228,7 @@ export default function Plan({
           height: '100%',
           boxSizing: 'border-box',
           padding: '52px 20px 0',
-          '--tail': '128px',
+          '--tail': 'calc(128px + var(--safe-bottom, 0px))',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,

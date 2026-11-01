@@ -177,11 +177,13 @@ export default function Permission({ skin, onAllow, onDeny, onSkip, onTriedAgain
       <Sky hills="low" />
 
       <div
+        className="scroll-y"
         style={{
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '72px 24px 34px',
+          padding: '72px 24px 0',
+          '--tail': '34px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

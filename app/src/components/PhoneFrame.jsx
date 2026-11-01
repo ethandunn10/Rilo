@@ -55,8 +55,11 @@ export default function PhoneFrame({ children }) {
 function measure() {
   if (typeof window === 'undefined') return { full: false, scale: 1 };
 
-  /* below 440px wide there is no room for a frame — be the app */
-  const full = window.innerWidth < 440;
+  /* Be the app, not a picture of one, whenever a frame would be silly:
+     narrow (any phone upright) or short (a phone on its side, where the
+     frame would scale to about 40% and be unreadable). Screens scroll, so
+     filling a short viewport is always better than shrinking into one. */
+  const full = window.innerWidth < 440 || window.innerHeight < 620;
   if (full) return { full: true, scale: 1 };
 
   const scale = Math.min(

@@ -16,6 +16,8 @@ export default function Welcome({ go, skin }) {
         position: 'absolute',
         inset: 0,
         overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         background: theme.sky,
         fontFamily: 'Inter, system-ui, sans-serif',
         color: '#1B1F1A',
@@ -105,17 +107,30 @@ export default function Welcome({ go, skin }) {
         </g>
       </svg>
 
+      {/* Content column: the design pinned the title at top 56 and Rilo at
+          top 410, which only works in an 844px frame. On a phone Rilo landed
+          under the button or off the screen entirely. Scrolls now. */}
       <div
+        className="scroll-y"
         style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 56,
+          position: 'relative',
+          flexGrow: 1,
+          minHeight: 0,
+          boxSizing: 'border-box',
+          padding: '56px 28px 0',
+          '--tail': '10px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
           gap: 14,
-          padding: '0 28px',
+        }}
+      >
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: 14,
           animation: 'rise .7s ease-out both',
         }}
       >
@@ -162,25 +177,22 @@ export default function Welcome({ go, skin }) {
         </p>
       </div>
 
-      <div
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          top: 410,
-          display: 'flex',
-          justifyContent: 'center',
-        }}
-      >
+      {/* pushes Rilo to the bottom of the column when there's room, and
+          simply sits under the text when there isn't */}
+      <div style={{ flexGrow: 1, minHeight: 10 }} />
+
+      <div style={{ display: 'flex', justifyContent: 'center' }}>
         <Rilo skin={skin} mood="wave" motion="jump" size={210} />
       </div>
+      </div>
 
+      {/* pinned: always reachable */}
       <div
         style={{
-          position: 'absolute',
-          left: 24,
-          right: 24,
-          bottom: 34,
+          position: 'relative',
+          flexShrink: 0,
+          boxSizing: 'border-box',
+          padding: '8px 24px 34px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

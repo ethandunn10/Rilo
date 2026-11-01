@@ -1,4 +1,10 @@
-/* HowItWorks — exact port of designs/HowItWorks.dc.html */
+/* HowItWorks — port of designs/HowItWorks.dc.html.
+
+   The design places its blocks at fixed tops (56, 92, 486) inside an
+   844px-tall frame. A phone browser gives you roughly 650px, so the
+   headline at 486 ran straight into the pinned button and off the bottom.
+   Same shape, built as a flex column instead: the content scrolls, the
+   button stays put. */
 
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
@@ -20,22 +26,32 @@ export default function HowItWorks({ go, skin }) {
         position: 'absolute',
         inset: 0,
         overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
         fontFamily: 'Inter, system-ui, sans-serif',
         color: '#12301A',
       }}
     >
       <Sky hills="low" />
 
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 56 }}>
+      <div
+        className="scroll-y"
+        style={{
+          position: 'relative',
+          flexGrow: 1,
+          minHeight: 0,
+          boxSizing: 'border-box',
+          padding: '56px 24px 0',
+          '--tail': '14px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 18,
+        }}
+      >
         <Dots active={0} />
-      </div>
 
       <div
         style={{
-          position: 'absolute',
-          left: 24,
-          right: 24,
-          top: 92,
           padding: '22px 18px',
           borderRadius: 30,
           background: 'var(--card)',
@@ -85,10 +101,7 @@ export default function HowItWorks({ go, skin }) {
 
       <div
         style={{
-          position: 'absolute',
-          left: 28,
-          right: 28,
-          top: 486,
+          margin: '0 4px',
           display: 'flex',
           flexDirection: 'column',
           gap: 10,
@@ -119,7 +132,17 @@ export default function HowItWorks({ go, skin }) {
         </p>
       </div>
 
-      <div style={{ position: 'absolute', left: 24, right: 24, bottom: 34 }}>
+      </div>
+
+      {/* pinned: always reachable, whatever the content above does */}
+      <div
+        style={{
+          position: 'relative',
+          flexShrink: 0,
+          boxSizing: 'border-box',
+          padding: '10px 24px 34px',
+        }}
+      >
         <button
           type="button"
           className="tap"

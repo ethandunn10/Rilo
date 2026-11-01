@@ -30,11 +30,13 @@ export default function Break({ go, onStart, onSaidNo, skin }) {
       <Sky hills="mid" />
 
       <div
+        className="scroll-y"
         style={{
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '56px 22px 28px',
+          padding: '56px 22px 0',
+          '--tail': '28px',
           display: 'flex',
           flexDirection: 'column',
           gap: 14,

@@ -84,7 +84,7 @@ export default function Buddies({
           height: '100%',
           boxSizing: 'border-box',
           padding: '48px 20px 0',
-          '--tail': '104px',
+          '--tail': 'calc(104px + var(--safe-bottom, 0px))',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,

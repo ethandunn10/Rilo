@@ -225,7 +225,7 @@ export default function You({
             margin: '0 -4px',
             /* clear the floating tab bar at the bottom */
             padding: '0 4px',
-            '--tail': '124px',
+            '--tail': 'calc(124px + var(--safe-bottom, 0px))',
           }}
         >
           <Section first>you</Section>

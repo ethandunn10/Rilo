@@ -156,12 +156,32 @@ export default function Home({
       }}
     >
       <ThemeDecor />
+
+      {/* Everything above the tab bar scrolls.
+          This used to be a stack of absolutely-positioned rows at fixed
+          pixel tops (52, 104, 352, 488, 582, 648) — fine in the 844px-tall
+          frame it was drawn in, and badly broken on a real phone, where the
+          browser's chrome leaves roughly 650px and the bottom 200px of the
+          design simply did not exist. There was no scrolling to recover it
+          either, because absolutely-positioned children create no scroll
+          height. It's a normal flow column now: it fits what it fits and
+          scrolls for the rest. */}
       <div
+        className="scroll-y"
         style={{
           position: 'absolute',
-          left: 20,
-          right: 20,
-          top: 52,
+          inset: 0,
+          boxSizing: 'border-box',
+          padding: '52px 20px 0',
+          /* clears the floating tab bar (94px) with room to breathe */
+          '--tail': 'calc(112px + var(--safe-bottom, 0px))',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 14,
+        }}
+      >
+      <div
+        style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
@@ -191,11 +211,9 @@ export default function Home({
 
       <div
         style={{
-          position: 'absolute',
-          left: 20,
-          right: 20,
-          top: 104,
+          position: 'relative',
           height: 230,
+          flexShrink: 0,
           borderRadius: 30,
           overflow: 'hidden',
           background: theme.sky,
@@ -365,10 +383,6 @@ export default function Home({
 
       <div
         style={{
-          position: 'absolute',
-          left: 20,
-          right: 20,
-          top: 352,
           display: 'grid',
           gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
           gap: 10,
@@ -405,10 +419,6 @@ export default function Home({
         className="tap"
         onClick={() => go('plan')}
         style={{
-          position: 'absolute',
-          left: 20,
-          right: 20,
-          top: 488,
           padding: '16px 18px',
           borderRadius: 24,
           background: '#12301A',
@@ -458,10 +468,6 @@ export default function Home({
         onClick={() => watched.length && onOpenApp(watched[0])}
         disabled={!watched.length}
         style={{
-          position: 'absolute',
-          left: 20,
-          right: 20,
-          top: 582,
           padding: '10px 18px',
           borderRadius: 24,
           background: 'var(--card)',
@@ -499,6 +505,101 @@ export default function Home({
         </span>
         <span style={{ fontSize: 13, fontWeight: 700, color: '#1F6B2E' }}>test it</span>
       </button>
+
+      {/* spec addition: trigger the pop-up with one of THEIR apps */}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          animation: 'rise14 .5s .4s ease-out both',
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontFamily: 'Fredoka, sans-serif',
+            fontSize: 14,
+            fontWeight: 600,
+            color: '#2C4A36',
+          }}
+        >
+          {watched.length ? 'pretend you opened…' : 'set some limits on the you tab to test this'}
+        </p>
+        <div
+          className="scroll-x"
+          style={{ display: 'flex', gap: 8, paddingBottom: 2 }}
+        >
+          {watched.map((label) => {
+            const lock = lockOf ? lockOf(label) : null;
+            const setting = settingFor(appSettings, label);
+            const locked = Boolean(lock?.locked);
+            const total = totalOpensFor ? totalOpensFor(label) : 0;
+            const used = lock?.used ?? 0;
+
+            return (
+              <button
+                key={label}
+                type="button"
+                className="tap"
+                aria-label={`Pretend you opened ${label}`}
+                onClick={() => onOpenApp(label)}
+                style={{
+                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  minHeight: 54,
+                  padding: '6px 14px 6px 8px',
+                  borderRadius: 999,
+                  background: locked ? 'rgba(18,48,26,0.45)' : '#12301A',
+                  border: 0,
+                  color: '#FFFFFF',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  boxShadow: '0 8px 20px rgba(10,40,20,0.22)',
+                }}
+              >
+                <span style={{ display: 'flex', background: '#FFFFFF', borderRadius: 10 }}>
+                  <AppLogo label={label} size={36} radius={10} />
+                </span>
+                <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span
+                    style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 17, fontWeight: 600 }}
+                  >
+                    {label}
+                  </span>
+
+                  {/* the circles, the same ones as the limit card (§3) */}
+                  {setting.mode === LIMITED ? (
+                    <Opens
+                      total={total}
+                      used={used}
+                      minutes={setting.minutes}
+                      on
+                      size={11}
+                      note={false}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 12, fontWeight: 600, color: '#C9E6CE' }}>
+                      {setting.mode === BLOCKED ? 'blocked' : 'free · counts toward your day'}
+                    </span>
+                  )}
+
+                  {setting.mode === LIMITED && (
+                    <span style={{ fontSize: 11.5, fontWeight: 600, color: '#C9E6CE' }}>
+                      {locked
+                        ? 'no opens left'
+                        : `${fmtOpens(Math.max(0, total - used))} left · ${setting.minutes} min each`}
+                    </span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      </div>
 
       {/* over the time they promised on the way in */}
       {overNote && (
@@ -740,104 +841,6 @@ export default function Home({
           </div>
         </div>
       )}
-
-      {/* spec addition: trigger the pop-up with one of THEIR apps */}
-      <div
-        style={{
-          position: 'absolute',
-          left: 20,
-          right: 20,
-          top: 648,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          animation: 'rise14 .5s .4s ease-out both',
-        }}
-      >
-        <p
-          style={{
-            margin: 0,
-            fontFamily: 'Fredoka, sans-serif',
-            fontSize: 14,
-            fontWeight: 600,
-            color: '#2C4A36',
-          }}
-        >
-          {watched.length ? 'pretend you opened…' : 'set some limits on the you tab to test this'}
-        </p>
-        <div
-          className="scroll-x"
-          style={{ display: 'flex', gap: 8, paddingBottom: 2 }}
-        >
-          {watched.map((label) => {
-            const lock = lockOf ? lockOf(label) : null;
-            const setting = settingFor(appSettings, label);
-            const locked = Boolean(lock?.locked);
-            const total = totalOpensFor ? totalOpensFor(label) : 0;
-            const used = lock?.used ?? 0;
-
-            return (
-              <button
-                key={label}
-                type="button"
-                className="tap"
-                aria-label={`Pretend you opened ${label}`}
-                onClick={() => onOpenApp(label)}
-                style={{
-                  flexShrink: 0,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  minHeight: 54,
-                  padding: '6px 14px 6px 8px',
-                  borderRadius: 999,
-                  background: locked ? 'rgba(18,48,26,0.45)' : '#12301A',
-                  border: 0,
-                  color: '#FFFFFF',
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  boxShadow: '0 8px 20px rgba(10,40,20,0.22)',
-                }}
-              >
-                <span style={{ display: 'flex', background: '#FFFFFF', borderRadius: 10 }}>
-                  <AppLogo label={label} size={36} radius={10} />
-                </span>
-                <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  <span
-                    style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 17, fontWeight: 600 }}
-                  >
-                    {label}
-                  </span>
-
-                  {/* the circles, the same ones as the limit card (§3) */}
-                  {setting.mode === LIMITED ? (
-                    <Opens
-                      total={total}
-                      used={used}
-                      minutes={setting.minutes}
-                      on
-                      size={11}
-                      note={false}
-                    />
-                  ) : (
-                    <span style={{ fontSize: 12, fontWeight: 600, color: '#C9E6CE' }}>
-                      {setting.mode === BLOCKED ? 'blocked' : 'free · counts toward your day'}
-                    </span>
-                  )}
-
-                  {setting.mode === LIMITED && (
-                    <span style={{ fontSize: 11.5, fontWeight: 600, color: '#C9E6CE' }}>
-                      {locked
-                        ? 'no opens left'
-                        : `${fmtOpens(Math.max(0, total - used))} left · ${setting.minutes} min each`}
-                    </span>
-                  )}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       <TabBar active="home" go={go} variant="home" skin={skin} />
     </div>

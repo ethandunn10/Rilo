@@ -44,7 +44,12 @@ body {
 
 /* ---------- phone frame ----------
    On a phone the stage fills the screen like a real app.
-   On a laptop it sits in a centered iPhone-sized 390x844 frame. */
+   On a laptop it sits in a centered iPhone-sized 390x844 frame.
+
+   The designs are drawn at 390x844. A real phone browser is nothing like
+   that tall — Safari's chrome leaves roughly 650px on a modern iPhone, less
+   on an SE — so every screen has to fit what it can and scroll the rest.
+   The frame is a desk convenience, not the layout contract. */
 
 .stage-wrap {
   min-height: 100dvh;
@@ -59,10 +64,23 @@ body {
   background: #EEF8EE;
 }
 
-/* phone: be the app */
+/* phone: be the app.
+   `dvh` (not `vh`) so the stage tracks Safari's collapsing URL bar instead
+   of being 100px taller than the window and hiding its own bottom edge.
+   The max-width keeps a landscape phone from stretching the layout into a
+   letterbox — it stays a phone-shaped column, centred. */
 .stage-full {
-  width: 100vw;
+  width: 100%;
+  max-width: 480px;
   height: 100dvh;
+}
+
+/* The notch and the home bar. Zero in a normal browser tab; real once the
+   app is added to the home screen and runs standalone. Screens read these
+   through --tail (see .scroll-y::after) and the tab bar. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* laptop: always the exact 390x844 the designs are drawn at.

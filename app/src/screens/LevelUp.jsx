@@ -23,11 +23,13 @@ export default function LevelUp({ skin, level, onWear, onLater }) {
       <Sky hills="mid" />
 
       <div
+        className="scroll-y"
         style={{
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '72px 22px 28px',
+          padding: '72px 22px 0',
+          '--tail': '28px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

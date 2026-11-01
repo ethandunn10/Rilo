@@ -359,12 +359,16 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
     >
       <ThemeDecor />
 
+      {/* Rilo is drawn at 235px here, so on a short phone the input and the
+          "talk instead" button below him fell off the bottom. Scrolls now. */}
       <div
+        className="scroll-y"
         style={{
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '54px 22px 26px',
+          padding: '54px 22px 0',
+          '--tail': '26px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',

@@ -35,11 +35,13 @@ export default function DaySummary({ skin, result, onDone }) {
       <Sky hills="mid" />
 
       <div
+        className="scroll-y"
         style={{
           position: 'relative',
           height: '100%',
           boxSizing: 'border-box',
-          padding: '62px 22px 28px',
+          padding: '62px 22px 0',
+          '--tail': '28px',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
