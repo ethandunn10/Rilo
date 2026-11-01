@@ -100,6 +100,8 @@ export function useListen() {
   const lastText = useRef('');
   const onDone = useRef(null);
   const gotAudio = useRef(false);
+  /* did this run produce any transcript at all? */
+  const gotResult = useRef(false);
   /* Two quick taps could both
      get past the `listening` check and build two recognisers — one of
      which immediately aborts the other. */
@@ -151,15 +153,31 @@ export function useListen() {
     onDone.current = done;
     finalText.current = '';
     lastText.current = '';
+    gotResult.current = false;
     setText('');
 
     try {
       const r = new SR();
       r.lang = 'en-US';
-      r.interimResults = true;
-      r.continuous = true;
+      r.maxAlternatives = 1;
+
+      /* THE ONE THAT MADE THE BUTTON DO NOTHING ON A PHONE.
+         iOS Safari does not support continuous recognition. Setting it
+         starts the recogniser and then immediately fires `onend` with no
+         result — so the callback got an empty string, Talk's answer()
+         returned early on `if (!text) return`, and the whole tap looked
+         like a no-op: no text, no error, not even a listening state,
+         because `listening` went true and false in the same instant.
+
+         Single-shot is the right shape for answering one question anyway;
+         it just loses the "pause mid-sentence and tap when you're done"
+         nicety, which only ever worked on desktop. */
+      const singleShot = needsGesture;
+      r.continuous = !singleShot;
+      r.interimResults = !singleShot;
 
       r.onresult = (e) => {
+        gotResult.current = true;
         let interim = '';
         let fin = '';
         for (let i = 0; i < e.results.length; i++) {
@@ -207,6 +225,18 @@ export function useListen() {
         setText(out);
         const fn = onDone.current;
         onDone.current = null;
+
+        /* Nothing heard. This HAS to say something: a silent empty result
+           is indistinguishable from a broken button, which is exactly how
+           the continuous-mode bug above hid for so long. */
+        if (!out) {
+          setProblem(
+            gotResult.current
+              ? 'didn’t catch that. tap rilo to try again, or just type it.'
+              : 'the mic closed without hearing anything. tap rilo to try again, or type it.',
+          );
+        }
+
         if (fn) fn(out);
       };
 

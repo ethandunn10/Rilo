@@ -216,7 +216,9 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
                 ? `${mic.voiceOff} — type it below`
                 : typing
                   ? 'type it below, or tap rilo to say it'
-                  : 'hold the thought, tap to talk'}
+                  : mic.needsGesture
+                    ? 'tap rilo and say it — he takes it when you stop'
+                    : 'hold the thought, tap to talk'}
           </p>
         )}
 

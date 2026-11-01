@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Rilo · mic test</title>
+<style>
+  body { margin:0; padding:20px; font:16px/1.45 -apple-system,system-ui,sans-serif;
+         background:#12301A; color:#fff; }
+  h1 { font-size:20px; margin:0 0 4px; }
+  p.sub { margin:0 0 16px; opacity:.7; font-size:13px; }
+  table { border-collapse:collapse; width:100%; margin-bottom:16px; font-size:13px; }
+  td { padding:5px 0; vertical-align:top; }
+  td:first-child { opacity:.65; width:42%; }
+  b.bad { color:#FF8A7A; } b.good { color:#8EE39A; }
+  button { width:100%; min-height:56px; border:0; border-radius:999px; background:#fff;
+           color:#12301A; font:600 18px -apple-system,system-ui,sans-serif; margin-bottom:12px; }
+  #log { background:rgba(255,255,255,.08); border-radius:12px; padding:12px;
+         font:12px/1.5 ui-monospace,Menlo,monospace; white-space:pre-wrap;
+         min-height:140px; max-height:46vh; overflow:auto; }
+</style>
+</head>
+<body>
+<h1>mic test</h1>
+<p class="sub">Shares no code with the app. If talking works here but not in
+Rilo, the bug is mine. If it fails here too, it's the browser.</p>
+
+<table id="facts"></table>
+<button id="go">tap to talk</button>
+<div id="log">waiting…</div>
+
+<script>
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var ua = navigator.userAgent || '';
+  var ios = /iP(hone|od|ad)/.test(ua);
+
+  function row(k, v, bad) {
+    return '<tr><td>' + k + '</td><td><b class="' + (bad ? 'bad' : 'good') + '">' + v + '</b></td></tr>';
+  }
+  document.getElementById('facts').innerHTML =
+    row('speech api', SR ? 'present' : 'MISSING', !SR) +
+    row('secure page', window.isSecureContext ? 'yes' : 'NO — needs https', !window.isSecureContext) +
+    row('origin', location.origin, location.protocol !== 'https:') +
+    row('platform', ios ? 'ios (single-shot only)' : 'not ios', false) +
+    row('getUserMedia', navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 'present' : 'missing', !(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+
+  var out = document.getElementById('log');
+  var lines = [];
+  function log(m) {
+    lines.push(new Date().toLocaleTimeString() + '  ' + m);
+    out.textContent = lines.join('\n');
+    out.scrollTop = out.scrollHeight;
+  }
+
+  document.getElementById('go').onclick = function () {
+    if (!SR) { log('no SpeechRecognition on this browser — stop here'); return; }
+    log('tapped. building recogniser…');
+    try {
+      var r = new SR();
+      r.lang = 'en-US';
+      /* the exact setting that broke the app: ios cannot do continuous */
+      r.continuous = !ios;
+      r.interimResults = !ios;
+      log('continuous=' + r.continuous + ' interim=' + r.interimResults);
+
+      r.onstart = function () { log('onstart — mic is live'); };
+      r.onaudiostart = function () { log('onaudiostart'); };
+      r.onspeechstart = function () { log('onspeechstart — it hears you'); };
+      r.onresult = function (e) {
+        var t = '';
+        for (var i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+        log('onresult: "' + t + '"');
+      };
+      r.onerror = function (e) { log('ONERROR: ' + e.error + (e.message ? ' — ' + e.message : '')); };
+      r.onend = function () { log('onend'); };
+
+      r.start();
+      log('start() returned without throwing');
+    } catch (err) {
+      log('THREW: ' + (err && err.name) + ' — ' + (err && err.message));
+    }
+  };
+</script>
+</body>
+</html>

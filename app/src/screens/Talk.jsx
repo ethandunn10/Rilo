@@ -731,7 +731,7 @@ export default function Talk({ go, mode = 'onboarding', skin, name, setName, set
                   : typing
                     ? 'type your answer, or tap talk instead to say it out loud.'
                     : mic.needsGesture
-                      ? 'tap rilo for each answer, and again when you’re done.'
+                      ? 'tap rilo, say your answer, and he’ll take it when you stop.'
                       : "tap rilo to talk, tap him again when you're done."}
         </p>
         )}
