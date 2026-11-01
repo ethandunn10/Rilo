@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "build:rilo": "node scripts/build-rilo.mjs",
-    "dev:https": "vite --mode https"
+    "dev:https": "vite --mode https",
+    "test": "node tests/run.mjs"
   },
   "dependencies": {
     "react": "^19.3.1",
