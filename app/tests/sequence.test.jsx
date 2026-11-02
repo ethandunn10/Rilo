@@ -7,6 +7,7 @@
    they said they'd rather be doing, and that none of it strands anyone
    who has asked their phone to stop moving things. */
 
+import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 
 const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>',
@@ -155,7 +156,55 @@ is('picking nothing falls back to the days', quoted([]).unit === 'days of your o
 is('and so does a pick too big to have one of',
   insteadOf(2, ['skill']).unit === 'days of your own', 'two minutes a day is not a skill');
 
-/* ---------- reduced motion ---------- */
+/* ---------- the paywall round trip ----------
+   The last beat holds the per-app split, blurred. Tapping it opens the
+   paywall — and coming back has to land on that same beat, with the
+   percentages, not back on the hit counting up to a year again. App holds
+   the beat for exactly this reason, so here the test holds it. */
+console.log('\nlooking at the price and coming back');
+let heldBeat = 0;
+const mountHeld = async () => {
+  went = null;
+  run += 1;
+  await act(async () => {
+    root.render(React.createElement(YourNumber, {
+      key: `held-${run}`,
+      go: (n) => { went = n; },
+      skin: 'original',
+      breakdown,
+      picked: ['gym'],
+      isPro: false,
+      onBack: () => { backed += 1; },
+      next: 'yourplan',
+      beat: heldBeat,
+      setBeat: (v) => { heldBeat = typeof v === 'function' ? v(heldBeat) : v; },
+    }));
+  });
+};
+
+heldBeat = 0;
+await mountHeld();
+await click(buttonSaying('skip'));
+is('skip is remembered outside the screen', heldBeat === 2, `beat ${heldBeat}`);
+await mountHeld();
+is('the split is there', text().includes('see where your time goes'));
+await click(buttonSaying('see where your time goes'));
+is('tapping the blur opens the paywall', went === 'upgrade', `${went}`);
+is('and the beat is untouched by it', heldBeat === 2, `beat ${heldBeat}`);
+
+/* back from the paywall rebuilds this screen — the beat comes with it */
+await mountHeld();
+is('coming back lands on the percentages', text().includes('where it goes'));
+is('not on the hit', !text().includes('a day, on these apps'));
+is('the plan is still one tap away', Boolean(buttonSaying('show me the plan')));
+
+const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+is('App is what holds the beat', app.includes('beat={numberBeat}') && app.includes('setBeat={setNumberBeat}'));
+is('the paywall knows where it was opened from',
+  app.includes("setCameFrom(nav.entries[nav.entries.length - 1])"));
+is('and arriving fresh still plays from the top', app.includes('setNumberBeat(0)'));
+
+
 console.log('\nwith reduced motion on');
 reduced = true;
 await act(async () => { root.unmount(); });

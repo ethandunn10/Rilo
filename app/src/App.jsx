@@ -213,6 +213,10 @@ export default function App() {
   const [night, setNight] = useState(saved.night);
   /* the first week of questions (lib/firstWeek) */
   const [drip, setDrip] = useState(saved.drip);
+  /* which beat of the number sequence they're on. Up here rather than
+     inside the screen so that looking at the paywall and coming back
+     returns them to the beat they left, not to the start of it. */
+  const [numberBeat, setNumberBeat] = useState(0);
   /* DEMO ONLY: a fake clock so bedtime and school can be tested */
   const [demoClock, setDemoClock] = useState(saved.demoClock);
   /* the reason they gave on the check-in, for this session */
@@ -1383,6 +1387,8 @@ export default function App() {
               setAbout((a) => applyRather(a, rather, extras));
               buildPlanFor(rather);
               track('rather', rather.join(', ') || 'nothing picked');
+              /* arriving from here is the one time it plays from the top */
+              setNumberBeat(0);
               go(next);
             }}
             next="yournumber"
@@ -1397,6 +1403,8 @@ export default function App() {
             breakdown={breakdown}
             picked={rather}
             isPro={isPro}
+            beat={numberBeat}
+            setBeat={setNumberBeat}
             onBack={() => goTo('rather', 'back')}
             next="yourplan"
           />

@@ -84,9 +84,20 @@ export default function YourNumber({
   isPro = false,
   onBack,
   next = 'yourplan',
+  /* Which beat they're on, held by App when it's given.
+
+     It has to survive leaving the screen: the blurred split on the last
+     beat opens the paywall, and coming back from the paywall used to
+     remount this and start the whole sequence again — they tapped the
+     percentages, looked at the price, and landed back on a pile of planks
+     counting up to a year. Back now returns them to the beat they left. */
+  beat: beatProp,
+  setBeat: setBeatProp,
 }) {
   const reduced = useReducedMotion();
-  const [beat, setBeat] = useState(0);
+  const [ownBeat, setOwnBeat] = useState(0);
+  const beat = beatProp ?? ownBeat;
+  const setBeat = setBeatProp ?? setOwnBeat;
   const timer = useRef(null);
 
   const perDay = breakdown?.blocked ?? 0;
@@ -100,6 +111,8 @@ export default function YourNumber({
     if (beat >= BEAT_MS.length) return undefined;
     timer.current = setTimeout(() => setBeat((b) => b + 1), BEAT_MS[beat]);
     return () => clearTimeout(timer.current);
+    /* setBeat is stable either way — App's setter or useState's */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beat]);
 
   const bigDays = useCountUp(days, 1800, { run: beat === 0, reduced });
