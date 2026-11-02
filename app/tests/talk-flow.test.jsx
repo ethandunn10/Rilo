@@ -90,11 +90,14 @@ console.log('1. the name — typed, sent with the SEND BUTTON:');
 await type('ethan');
 is('button enables once there are words', !$('button[type="submit"]').disabled);
 await clickSend();
-is('it sent', bubble().includes('did i get that right'), `"${bubble()}"`);
+is('it sent', bubble().includes('nice to meet you'), `"${bubble()}"`);
 is('the name was captured', name === 'Ethan', `"${name}"`);
 is('the field cleared', $('input').value === '');
-await tapChip('yep');
-is('confirming moves to the hobby question', await saysSoon('not on your phone'), `"${bubble()}"`);
+/* no "did i get that right?" — it's editable on the you tab, and asking
+   doubled the length of the shortest question in onboarding */
+is('he does NOT ask you to confirm it', !bubble().includes('did i get that right'));
+is('no yep/nope buttons', !byText('yep') && !byText('nope'));
+is('it goes straight on to the hobby question', await saysSoon('not on your phone'), `"${bubble()}"`);
 
 console.log('\n2. hobbies — TAP SEVERAL, then send:');
 is('chips are offered', buttons().some((b) => b.textContent.trim() === 'basketball'));
@@ -121,14 +124,9 @@ is('enter sent it', bubble().includes('better grades'), `"${bubble()}"`);
 is('and saved it', about.on['better grades'] === true);
 is('on to the posting question', await saysSoon('content creator'), `"${bubble()}"`);
 
-console.log('\n4. do you post — one answer only, then send:');
-await tapChip('yes, all the time');
+console.log('\n4. do you post — single choice, so the tap IS the answer:');
 await tapChip('sometimes');
-is('picking a second answer replaces the first (not both)',
-  !buttons().some((b) => b.textContent.trim() === '✓ yes, all the time')
-  && buttons().some((b) => b.textContent.trim() === '✓ sometimes'));
-await clickSend();
-is('it took it', bubble().includes('posting sometimes'), `"${bubble()}"`);
+is('one tap sent it, no send button needed', bubble().includes('posting sometimes'), `"${bubble()}"`);
 is('and saved it', about.creator === 'sometimes', `"${about.creator}"`);
 is('on to the last question', await saysSoon('scrolling the most'), `"${bubble()}"`);
 

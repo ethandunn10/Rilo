@@ -36,7 +36,7 @@ export default function Crunching({ skin, onDone }) {
           gap: 18,
         }}
       >
-        <Rilo skin={skin} mood="curious" size={190} />
+        <Rilo skin={skin} mood="curious" size={190} talks />
 
         <p
           style={{

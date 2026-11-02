@@ -48,7 +48,7 @@ export default function DaySummary({ skin, result, onDone }) {
           gap: 14,
         }}
       >
-        <Rilo skin={skin} mood={hit ? 'proud' : 'letdown'} motion={hit ? 'jump' : 'idle'} size={180} />
+        <Rilo skin={skin} mood={hit ? 'proud' : 'letdown'} motion={hit ? 'jump' : 'idle'} size={180} talks />
 
         <h1
           style={{

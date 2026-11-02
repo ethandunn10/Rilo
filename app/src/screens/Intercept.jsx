@@ -40,8 +40,9 @@ function moodFor({ stuck, opensToday }) {
 }
 
 const card = {
-  minHeight: 80,
-  borderRadius: 24,
+  width: '100%',
+  minHeight: 64,
+  borderRadius: 20,
   background: 'rgba(255,255,255,0.62)',
   border: '1.5px solid rgba(255,255,255,0.9)',
   backdropFilter: 'blur(14px)',
@@ -50,10 +51,11 @@ const card = {
   cursor: 'pointer',
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center',
+  alignItems: 'flex-start',
   justifyContent: 'center',
   gap: 2,
-  padding: '10px 8px',
+  padding: '10px 18px',
+  textAlign: 'left',
 };
 
 const wideBtn = (ready, dark = true) => ({
@@ -197,7 +199,7 @@ export default function Intercept({
           </span>
         </div>
 
-        <Rilo skin={skin} mood={mood} size={140} />
+        <Rilo skin={skin} mood={mood} size={140} talks />
 
         <h1
           style={{
@@ -370,13 +372,10 @@ export default function Intercept({
 
             {/* something better to do, instead of any of the above */}
             {!stuck && (
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                  gap: 10,
-                }}
-              >
+              /* stacked: two cards side by side on a 390px phone left
+                 each one about 165px, with the subtitle wrapping to three
+                 lines */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
                 <button
                   type="button"
                   className="tap-ic"

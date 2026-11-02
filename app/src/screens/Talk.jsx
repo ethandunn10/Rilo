@@ -25,7 +25,6 @@ import {
   nameIn,
   creatorIn,
   joinNice,
-  didYouMean,
   isNonAnswer,
 } from '../lib/listen';
 import { track } from '../lib/track';
@@ -128,9 +127,6 @@ export default function Talk({
   const [draft, setDraft] = useState('');
   /* quick answers tapped but not sent yet */
   const [picked, setPicked] = useState([]);
-  /* something he wants to check before taking it: a name he might have
-     misread, or a word that looks like a typo */
-  const [confirm, setConfirm] = useState(null);
   const [done, setDone] = useState(false);
   const timers = useRef([]);
   const heardName = useRef('');
@@ -162,14 +158,21 @@ export default function Talk({
   }, []);
 
   const q = qs[Math.min(step, qs.length - 1)];
-  const quick = done || confirm ? [] : QUICK[q.id] ?? [];
+  const quick = done ? [] : QUICK[q.id] ?? [];
   const one = PICK_ONE.has(q.id);
 
-  const toggle = (label) =>
-    setPicked((list) => {
-      if (one) return list.includes(label) ? [] : [label];
-      return list.includes(label) ? list.filter((x) => x !== label) : list.concat([label]);
-    });
+  /* A single-choice question has nothing to confirm, so tapping an answer
+     IS the answer — no second tap on send. Multi-select still needs send,
+     because he can't know when you've finished picking. */
+  const choose = (label) => {
+    if (one) {
+      answer(label, { asTyped: true });
+      return;
+    }
+    setPicked((list) =>
+      list.includes(label) ? list.filter((x) => x !== label) : list.concat([label]),
+    );
+  };
 
   /* everything they've chosen, in one answer. Picks are canonical words
      from our own lists, so they skip the spell-check and the shrug nudge;
@@ -209,31 +212,18 @@ export default function Talk({
       return;
     }
 
-    /* "noght" → "do you mean night?" before he builds anything on it */
-    if (!opts.asTyped) {
-      const guess = didYouMean(text, asked.id);
-      if (guess) {
-        setDraft('');
-        setConfirm({ kind: 'spell', raw: text, ...guess });
-        riloSays(`do you mean ${guess.meant}?`, 'curious');
-        return;
-      }
-    }
-
     setThinking(true);
     track('talk', asked.id);
 
     let reply = '';
-    let checkName = '';
 
     if (asked.id === 'name') {
       const n = nameIn(text);
       if (n) setName(n);
       heardName.current = n;
-      checkName = n;
-      reply = n
-        ? `${n.toLowerCase()}? did i get that right?`
-        : "cool. i'll just call you friend for now.";
+      /* No "did i get that right?". It's one tap to fix on the you tab,
+         and asking doubled the length of the shortest question here. */
+      reply = n ? `nice to meet you, ${n.toLowerCase()}.` : "cool. i'll call you friend for now.";
     } else if (asked.id === 'hobby') {
       const found = hobbiesIn(text);
       setAbout((a) => applyPicks(a, found, HOBBIES));
@@ -271,15 +261,9 @@ export default function Talk({
 
     later(() => {
       setThinking(false);
-      riloSays(reply, checkName ? 'curious' : 'proud');
+      riloSays(reply, 'proud');
       setDraft('');
       setPicked([]);
-
-      /* wait for a yes before taking a name he might have misread */
-      if (checkName) {
-        setConfirm({ kind: 'name', name: checkName });
-        return;
-      }
 
       const next = at + 1;
       later(
@@ -431,52 +415,6 @@ export default function Talk({
 
         <div style={{ flexGrow: 1, minHeight: 0 }} />
 
-        {/* he wants to check something before taking it */}
-        {confirm && !done && (
-          <div style={{ display: 'flex', gap: 8, paddingBottom: 6 }}>
-            <button
-              type="button"
-              className="tap"
-              onClick={() => {
-                const c = confirm;
-                setConfirm(null);
-                if (c.kind === 'spell') {
-                  answer(c.raw.replace(new RegExp(c.typo, 'i'), c.meant), { asTyped: true });
-                } else {
-                  askNext(stepRef.current + 1);
-                }
-              }}
-              style={{ ...pillBtn, height: 48, padding: '0 26px', fontSize: 18 }}
-            >
-              yep
-            </button>
-            <button
-              type="button"
-              className="tap"
-              onClick={() => {
-                const c = confirm;
-                setConfirm(null);
-                if (c.kind === 'spell') {
-                  answer(c.raw, { asTyped: true });
-                  return;
-                }
-                setName('');
-                heardName.current = '';
-                setDraft('');
-                riloSays('my bad. type it for me?', 'coach');
-              }}
-              style={{
-                ...pillBtn,
-                height: 48,
-                padding: '0 26px',
-                fontSize: 18,
-                background: 'transparent',
-              }}
-            >
-              nope
-            </button>
-          </div>
-        )}
       </div>
 
       {/* ---------- pinned: the way forward, whatever the keyboard does ---------- */}
@@ -526,7 +464,7 @@ export default function Talk({
                     type="button"
                     className="tap"
                     aria-pressed={on}
-                    onClick={() => toggle(label)}
+                    onClick={() => choose(label)}
                     style={on ? chipOn : chip}
                   >
                     {on ? `✓ ${label}` : label}

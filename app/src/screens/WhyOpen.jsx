@@ -140,7 +140,7 @@ export default function WhyOpen({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <Rilo skin={skin} mood="curious" size={88} />
+          <Rilo skin={skin} mood="curious" size={88} talks />
           <div style={{ flexGrow: 1, minWidth: 0 }}>
             <h1
               style={{

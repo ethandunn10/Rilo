@@ -252,7 +252,7 @@ export default function Progress({
             animation: 'rise14 .4s .06s ease-out both',
           }}
         >
-          <Rilo skin={skin} mood="proud" motion="jump" size={84} />
+          <Rilo skin={skin} mood="proud" motion="jump" size={84} talks />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexGrow: 1 }}>
             <p
               style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 24, fontWeight: 700 }}

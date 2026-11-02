@@ -51,7 +51,7 @@ export default function StepDown({
   if (done) {
     return (
       <div style={{ ...style, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Rilo skin={skin} mood="proud" size={58} />
+        <Rilo skin={skin} mood="proud" size={58} talks />
         <div style={{ flexGrow: 1, minWidth: 0 }}>
           <p
             style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}
@@ -71,7 +71,7 @@ export default function StepDown({
   return (
     <div style={style}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Rilo skin={skin} mood={phase === 'preview' ? 'curious' : 'coach'} size={58} />
+        <Rilo skin={skin} mood={phase === 'preview' ? 'curious' : 'coach'} size={58} talks />
         <div style={{ flexGrow: 1, minWidth: 0 }}>
           <p
             style={{

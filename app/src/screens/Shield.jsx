@@ -74,7 +74,7 @@ export default function Shield({
         </div>
 
         {/* kind, not mean, when the day is simply over (§7) */}
-        <Rilo skin={skin} mood={locked ? 'letdown' : 'coach'} size={180} />
+        <Rilo skin={skin} mood={locked ? 'letdown' : 'coach'} size={180} talks />
 
         <h1
           style={{

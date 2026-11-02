@@ -190,7 +190,7 @@ export default function Permission({ skin, onAllow, onDeny, onSkip, onTriedAgain
           gap: 16,
         }}
       >
-        <Rilo skin={skin} mood={denied ? 'letdown' : 'coach'} size={190} />
+        <Rilo skin={skin} mood={denied ? 'letdown' : 'coach'} size={190} talks />
 
         <p
           style={{

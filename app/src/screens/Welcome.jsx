@@ -182,7 +182,7 @@ export default function Welcome({ go, skin }) {
       <div style={{ flexGrow: 1, minHeight: 10 }} />
 
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <Rilo skin={skin} mood="wave" motion="jump" size={210} />
+        <Rilo skin={skin} mood="wave" motion="jump" size={210} talks />
       </div>
       </div>
 

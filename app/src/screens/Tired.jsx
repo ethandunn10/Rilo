@@ -47,7 +47,7 @@ export default function Tired({ onStart, onSaidNo, skin }) {
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <Rilo skin={skin} mood="sleepy" size={170} />
+          <Rilo skin={skin} mood="sleepy" size={170} talks />
         </div>
 
         <div

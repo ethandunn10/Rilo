@@ -107,7 +107,7 @@ export default function Buddies({
 
         {/* you */}
         <div style={{ ...card, flexDirection: 'row', alignItems: 'center', flexShrink: 0 }}>
-          <Rilo skin={skin} mood={myMood} size={64} />
+          <Rilo skin={skin} mood={myMood} size={64} talks />
           <div style={{ flexGrow: 1, minWidth: 0 }}>
             <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}>
               you

@@ -770,7 +770,7 @@ export default function Home({
               animation: 'pop .3s cubic-bezier(.2,.9,.3,1.1) both',
             }}
           >
-            <Rilo skin={skin} mood="letdown" size={120} />
+            <Rilo skin={skin} mood="letdown" size={120} talks />
 
             <p
               style={{

@@ -79,7 +79,7 @@ export default function HowItWorks({ go, skin }) {
           YOU OPEN TIKTOK…
         </p>
         <div style={{ animation: 'pop .7s .2s cubic-bezier(.2,.9,.3,1.2) both' }}>
-          <Rilo skin={skin} mood="curious" size={140} />
+          <Rilo skin={skin} mood="curious" size={140} talks />
         </div>
         <p
           style={{

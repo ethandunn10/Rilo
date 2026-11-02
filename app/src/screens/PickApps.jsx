@@ -89,7 +89,7 @@ export default function PickApps({ go, apps, setApps, skin }) {
               </p>
             </div>
             {/* Rilo is on every onboarding page except the paywall */}
-            <Rilo skin={skin} mood="coach" size={76} />
+            <Rilo skin={skin} mood="coach" size={76} talks />
           </div>
 
           <AppPicker

@@ -73,7 +73,7 @@ export default function NeedIt({ go, app, onStart, onSaidNo, skin }) {
         </p>
 
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: 6 }}>
-          <Rilo skin={skin} mood="curious" size={140} />
+          <Rilo skin={skin} mood="curious" size={140} talks />
           <div
             style={{
               padding: '14px 16px',
@@ -95,9 +95,9 @@ export default function NeedIt({ go, app, onStart, onSaidNo, skin }) {
 
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-            gap: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 9,
             animation: 'rise .5s .2s ease-out both',
           }}
         >

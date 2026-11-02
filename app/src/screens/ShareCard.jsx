@@ -163,7 +163,7 @@ export default function ShareCard({ go, skin, level, streak, week, total }) {
             </p>
           </div>
 
-          <Rilo skin={skin} mood="proud" size={150} />
+          <Rilo skin={skin} mood="proud" size={150} talks />
 
           <div>
             <p

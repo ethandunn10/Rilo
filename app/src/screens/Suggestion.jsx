@@ -50,7 +50,7 @@ export default function Suggestion({ go, about, app, onStart, onSaidNo, skin }) 
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <Rilo skin={skin} mood="coach" motion="jump" size={170} />
+          <Rilo skin={skin} mood="coach" motion="jump" size={170} talks />
         </div>
 
         <div

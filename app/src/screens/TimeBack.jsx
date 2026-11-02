@@ -108,7 +108,7 @@ export default function TimeBack({ go, time, setTime, skin, check }) {
             animation: 'rise .5s ease-out both',
           }}
         >
-          <Rilo skin={skin} mood="proud" motion="jump" size={96} />
+          <Rilo skin={skin} mood="proud" motion="jump" size={96} talks />
           <h1
             style={{
               margin: 0,

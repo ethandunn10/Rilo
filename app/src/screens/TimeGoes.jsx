@@ -30,7 +30,7 @@ export default function TimeGoes({ go, skin, breakdown }) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-          <Rilo skin={skin} mood="coach" size={80} />
+          <Rilo skin={skin} mood="coach" size={80} talks />
           <div>
             <h1
               style={{

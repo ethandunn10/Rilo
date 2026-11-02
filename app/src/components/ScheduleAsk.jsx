@@ -49,7 +49,7 @@ export default function ScheduleAsk({ skin, onBuild, onCancel }) {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-        <Rilo skin={skin} mood="curious" size={62} />
+        <Rilo skin={skin} mood="curious" size={62} talks />
         <div style={{ flexGrow: 1, minWidth: 0 }}>
           <p
             style={{

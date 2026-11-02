@@ -109,13 +109,13 @@ export default function Paywall({
           }}
         >
           <div style={{ marginRight: -18, marginBottom: 4 }}>
-            <Rilo skin="redpanda" mood="coach" size={88} />
+            <Rilo skin="redpanda" mood="coach" size={88} talks />
           </div>
           <div style={{ position: 'relative', zIndex: 1 }}>
-            <Rilo skin="gold" mood="coach" size={112} />
+            <Rilo skin="gold" mood="coach" size={112} talks />
           </div>
           <div style={{ marginLeft: -18, marginBottom: 4 }}>
-            <Rilo skin="pinkpanda" mood="coach" size={88} />
+            <Rilo skin="pinkpanda" mood="coach" size={88} talks />
           </div>
         </div>
 

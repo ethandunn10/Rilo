@@ -58,7 +58,7 @@ export default function Break({ go, onStart, onSaidNo, skin }) {
         </p>
 
         <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <Rilo skin={skin} mood="proud" motion="jump" size={160} />
+          <Rilo skin={skin} mood="proud" motion="jump" size={160} talks />
         </div>
 
         <div

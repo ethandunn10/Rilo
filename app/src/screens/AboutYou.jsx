@@ -73,7 +73,7 @@ export default function AboutYou({ go, about, setAbout, name, setName, skin, tal
               animation: 'rise .5s ease-out both',
             }}
           >
-            <Rilo skin={skin} mood={talked ? 'proud' : 'curious'} size={84} />
+            <Rilo skin={skin} mood={talked ? 'proud' : 'curious'} size={84} talks />
             <h1
               style={{
                 margin: 0,

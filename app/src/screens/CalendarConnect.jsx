@@ -225,7 +225,7 @@ export default function CalendarConnect({
           gap: 12,
         }}
       >
-        <Rilo skin={skin} mood={connected ? 'proud' : 'coach'} size={connected ? 120 : 170} />
+        <Rilo skin={skin} mood={connected ? 'proud' : 'coach'} size={connected ? 120 : 170} talks />
 
         <p
           style={{

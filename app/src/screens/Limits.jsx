@@ -29,6 +29,8 @@ import {
   LIMITED,
   FREE,
   MODES,
+  MODE_LABEL,
+  MODE_SUB,
   MIN_OPENS,
   MAX_OPENS,
   MIN_MINUTES,
@@ -99,20 +101,27 @@ const bigSub = (primary) => ({
   opacity: primary ? 0.78 : 0.68,
 });
 
+/* Full-width and stacked. Four of these across a 390px phone left each one
+   about 80px wide at 13px type — legible on a desk, a dart board on a
+   phone. One per row, 52px tall, with the setting's own explanation next
+   to it, so picking is a glance rather than a squint. */
 const modeChip = (on) => ({
-  flexGrow: 1,
-  flexBasis: 0,
-  minWidth: 62,
-  minHeight: 38,
-  padding: '0 8px',
-  borderRadius: 999,
+  width: '100%',
+  minHeight: 52,
+  boxSizing: 'border-box',
+  padding: '8px 16px',
+  borderRadius: 18,
   border: '2px solid var(--line, #12301A)',
   background: on ? '#12301A' : 'rgba(255,255,255,0.9)',
   color: on ? '#FFFFFF' : '#12301A',
   fontFamily: 'Fredoka, sans-serif',
-  fontSize: 13,
+  fontSize: 16,
   fontWeight: 600,
   cursor: 'pointer',
+  textAlign: 'left',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
 });
 
 const stepBtn = {
@@ -224,20 +233,55 @@ function LimitCard({
         </div>
       </div>
 
-      {/* the four settings */}
-      <div style={{ display: 'flex', gap: 5 }}>
-        {MODES.map((m) => (
-          <button
-            key={m}
-            type="button"
-            className="tap"
-            aria-pressed={setting.mode === m}
-            onClick={() => onSet({ ...setting, mode: m })}
-            style={modeChip(setting.mode === m)}
-          >
-            {m === ALWAYS ? 'always' : m}
-          </button>
-        ))}
+      {/* the four settings, one per row */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        {MODES.map((m) => {
+          const on = setting.mode === m;
+          return (
+            <button
+              key={m}
+              type="button"
+              className="tap"
+              aria-pressed={on}
+              onClick={() => onSet({ ...setting, mode: m })}
+              style={modeChip(on)}
+            >
+              <span
+                aria-hidden="true"
+                style={{
+                  flexShrink: 0,
+                  width: 20,
+                  height: 20,
+                  borderRadius: 999,
+                  border: on ? 0 : '2px solid rgba(18,48,26,0.3)',
+                  background: on ? '#FFFFFF' : 'transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#12301A',
+                  fontSize: 13,
+                  fontWeight: 700,
+                }}
+              >
+                {on ? '✓' : ''}
+              </span>
+              <span style={{ flexGrow: 1, minWidth: 0 }}>
+                <span style={{ display: 'block' }}>{MODE_LABEL[m]}</span>
+                <span
+                  style={{
+                    display: 'block',
+                    fontFamily: 'Inter, system-ui, sans-serif',
+                    fontSize: 11.5,
+                    fontWeight: 600,
+                    opacity: on ? 0.75 : 0.65,
+                  }}
+                >
+                  {MODE_SUB[m]}
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {limited ? (
@@ -425,7 +469,7 @@ export default function Limits({
                 : 'opens are the only thing that locks an app.'}
             </p>
           </div>
-          <Rilo skin={skin} mood={check?.over ? 'curious' : 'proud'} size={74} />
+          <Rilo skin={skin} mood={check?.over ? 'curious' : 'proud'} size={74} talks />
         </div>
 
         {/* ---------- the plan check (§9) ---------- */}

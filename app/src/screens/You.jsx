@@ -243,7 +243,7 @@ export default function You({
               boxShadow: '0 12px 30px rgba(10,40,20,0.25)',
             }}
           >
-            <Rilo skin={chosenRilo} mood="coach" size={76} />
+            <Rilo skin={chosenRilo} mood="coach" size={76} talks />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flexGrow: 1 }}>
               <p
                 style={{
@@ -307,7 +307,9 @@ export default function You({
               </p>
               <span style={{ fontSize: 12, fontWeight: 700, color: '#3D5A46' }}>rilo pro</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 8 }}>
+            {/* three across, not five — at 390px five swatches were 58px
+                wide with their names underneath */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10 }}>
               {THEMES.map((t) => {
                 const on = theme === t.id;
                 const open = t.tier === 'free' || isPro || UNLOCK_ALL;

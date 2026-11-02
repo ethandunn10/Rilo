@@ -87,7 +87,7 @@ export default function LevelUp({ skin, level, onWear, onLater }) {
             </g>
           </svg>
           <div style={{ animation: 'pop-plain .6s ease-out both' }}>
-            <Rilo skin={skin} mood="proud" motion="jump" size={210} />
+            <Rilo skin={skin} mood="proud" motion="jump" size={210} talks />
           </div>
         </div>
 

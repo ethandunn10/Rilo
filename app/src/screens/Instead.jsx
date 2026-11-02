@@ -54,7 +54,7 @@ export default function Instead({ go, skin }) {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ animation: 'pop .7s .15s cubic-bezier(.2,.9,.3,1.2) both' }}>
-            <Rilo skin={skin} mood="coach" size={100} />
+            <Rilo skin={skin} mood="coach" size={100} talks />
           </div>
           <p
             style={{

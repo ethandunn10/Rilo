@@ -275,7 +275,7 @@ export default function Plan({
               made by rilo from your goals
             </p>
           </div>
-          <Rilo skin={skin} mood="proud" size={74} />
+          <Rilo skin={skin} mood="proud" size={74} talks />
         </div>
 
         <div

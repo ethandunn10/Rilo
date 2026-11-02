@@ -47,23 +47,42 @@ const BUNDLE = [
   },
 ];
 
+/* Full-width and stacked. Four lengths across a phone-width card had each
+   one at about 70px, which is why the font had been shrunk to 14 to make
+   "for good" fit at all. One per row instead — nothing to shrink. */
 const chip = (on) => ({
-  flex: 1,
-  flexBasis: 0,
-  minWidth: 0,
-  minHeight: 44,
-  padding: '0 4px',
-  borderRadius: 999,
+  width: '100%',
+  minHeight: 48,
+  boxSizing: 'border-box',
+  padding: '0 16px',
+  borderRadius: 16,
   border: '2px solid var(--line, #12301A)',
   background: on ? '#12301A' : 'rgba(255,255,255,0.9)',
   color: on ? '#FFFFFF' : '#12301A',
   fontFamily: 'Fredoka, sans-serif',
-  /* four lengths across a phone-width card, so a notch smaller than the
-     three windows below it */
-  fontSize: 14,
+  fontSize: 16,
   fontWeight: 600,
-  whiteSpace: 'nowrap',
   cursor: 'pointer',
+  textAlign: 'left',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+});
+
+/* the tick, so the selected row is obvious without relying on colour */
+const tick = (on) => ({
+  flexShrink: 0,
+  width: 20,
+  height: 20,
+  borderRadius: 999,
+  border: on ? 0 : '2px solid rgba(18,48,26,0.3)',
+  background: on ? '#FFFFFF' : 'transparent',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  color: '#12301A',
+  fontSize: 13,
+  fontWeight: 700,
 });
 
 export function endsAtText(endingAt) {
@@ -246,7 +265,7 @@ export default function StrictCard({
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Rilo skin={skin} mood="curious" size={56} />
+            <Rilo skin={skin} mood="curious" size={56} talks />
             <div style={{ flexGrow: 1, minWidth: 0 }}>
               <p
                 style={{
@@ -267,7 +286,7 @@ export default function StrictCard({
             </div>
           </div>
 
-          <div style={{ display: 'flex', gap: 7 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
             <button
               type="button"
               className="tap"
@@ -276,8 +295,8 @@ export default function StrictCard({
                 onAskOff();
               }}
               style={{
-                flex: 1,
-                minHeight: 46,
+                width: '100%',
+                minHeight: 48,
                 borderRadius: 999,
                 border: 0,
                 background: '#FFFFFF',
@@ -298,8 +317,8 @@ export default function StrictCard({
                 onTurnOffNow();
               }}
               style={{
-                flex: 1,
-                minHeight: 46,
+                width: '100%',
+                minHeight: 48,
                 borderRadius: 999,
                 border: '2px solid #FFFFFF',
                 background: 'transparent',
@@ -329,7 +348,7 @@ export default function StrictCard({
             border: '2px solid var(--line, #12301A)',
           }}
         >
-          <Rilo skin={skin} mood="letdown" size={56} />
+          <Rilo skin={skin} mood="letdown" size={56} talks />
           <div style={{ flexGrow: 1, minWidth: 0 }}>
             <p
               style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 15, fontWeight: 600 }}
@@ -413,30 +432,38 @@ export default function StrictCard({
       {!strict.on && picking && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#2C4A36' }}>how long?</p>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {LENGTHS.map((l) => (
               <button
                 key={l.days}
                 type="button"
                 className="tap"
+                aria-pressed={days === l.days}
                 onClick={() => setDays(l.days)}
                 style={chip(days === l.days)}
               >
+                <span aria-hidden="true" style={tick(days === l.days)}>
+                  {days === l.days ? '✓' : ''}
+                </span>
                 {l.label}
               </button>
             ))}
           </div>
 
           <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#2C4A36' }}>when?</p>
-          <div style={{ display: 'flex', gap: 6 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             {WINDOWS.map((w) => (
               <button
                 key={w.id}
                 type="button"
                 className="tap"
+                aria-pressed={when === w.id}
                 onClick={() => setWhen(w.id)}
                 style={chip(when === w.id)}
               >
+                <span aria-hidden="true" style={tick(when === w.id)}>
+                  {when === w.id ? '✓' : ''}
+                </span>
                 {w.label}
               </button>
             ))}

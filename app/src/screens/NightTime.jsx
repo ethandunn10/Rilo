@@ -85,7 +85,7 @@ export default function NightTime({ go, skin, night, setNight, next = 'calendaro
           RILO PRO · NIGHTLY CHECK-IN
         </p>
 
-        <Rilo skin={skin} mood="sleepy" size={150} />
+        <Rilo skin={skin} mood="sleepy" size={150} talks />
 
         <h1
           style={{
@@ -125,8 +125,12 @@ export default function NightTime({ go, skin, night, setNight, next = 'calendaro
                 className="tap"
                 aria-pressed={on}
                 onClick={() => {
+                  /* single choice — the tap IS the answer, no second tap
+                     on a confirm button */
                   setCustom(false);
                   setAt(t.at);
+                  setNight({ ...night, at: t.at });
+                  go(next);
                 }}
                 style={card(on)}
               >
@@ -190,6 +194,9 @@ export default function NightTime({ go, skin, night, setNight, next = 'calendaro
 
         <div style={{ flexGrow: 1, minHeight: 8 }} />
 
+        {/* only the hand-picked time needs a button — the presets advance
+            on the tap itself */}
+        {custom && (
         <button
           type="button"
           className="tap-94"
@@ -211,6 +218,7 @@ export default function NightTime({ go, skin, night, setNight, next = 'calendaro
         >
           ask me at {fmtClock(at)}
         </button>
+        )}
 
         <p style={{ margin: 0, fontSize: 12, fontWeight: 600, opacity: 0.7, textAlign: 'center' }}>
           you can check in any time from the home screen, and change this
