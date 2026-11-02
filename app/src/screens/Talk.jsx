@@ -33,17 +33,6 @@ import { HOBBIES, GOALS, CREATOR_ANSWERS } from '../lib/profile';
 /* roughly how long one of his lines takes to land */
 const speakMs = (line) => Math.min(1600, 450 + line.length * 16);
 
-const ONBOARDING = [
-  { id: 'name', ask: "hey! i'm rilo. what should i call you?", mood: 'wave' },
-  { id: 'hobby', ask: "what do you love doing when you're not on your phone?", mood: 'curious' },
-  { id: 'goal', ask: 'what are you working toward right now?', mood: 'curious' },
-  /* This one changes the plan, not just the chips: if these apps are how
-     they make things, Rilo keeps more opens on them instead of limiting
-     them like doom scrolling (see riloLimits in demo/mockAI). */
-  { id: 'creator', ask: 'are you a content creator, or post pretty often?', mood: 'curious' },
-  { id: 'when', ask: 'last one. when do you end up scrolling the most?', mood: 'curious' },
-];
-
 const CHAT = [{ id: 'chat', ask: "what's new? tell me a hobby, a goal, anything.", mood: 'curious' }];
 
 /* Tappable answers. A phone keyboard is the most annoying part of any
@@ -109,16 +98,19 @@ function applyPicks(about, picks, replaceList) {
 
 export default function Talk({
   go,
-  mode = 'onboarding',
+  mode = 'chat',
   skin,
   name,
   setName,
-  about,
   setAbout,
   onTalked,
 }) {
   const theme = useTheme();
-  const qs = mode === 'chat' ? CHAT : ONBOARDING;
+  /* chat only. Onboarding no longer runs through here — its questions
+     were replaced by one screen ("what would you rather spend it on?"),
+     and the two this list used to hold, "when do you end up scrolling the
+     most?" and "are you a content creator?", are gone entirely. */
+  const qs = CHAT;
   const [step, setStep] = useState(0);
   const [bubble, setBubble] = useState(qs[0].ask);
   const [mood, setMood] = useState(qs[0].mood ?? 'curious');
@@ -337,23 +329,9 @@ export default function Talk({
           ) : (
             <span style={{ width: 64 }} />
           )}
-          {mode === 'onboarding' ? <Dots active={2} /> : <span />}
+          <span />
           {/* how much is left, so five questions don't feel like twenty */}
-          {mode === 'onboarding' && !done ? (
-            <span
-              style={{
-                width: 64,
-                textAlign: 'right',
-                fontSize: 12.5,
-                fontWeight: 700,
-                color: '#2C4A36',
-              }}
-            >
-              {Math.min(step + 1, qs.length)}/{qs.length}
-            </span>
-          ) : (
-            <span style={{ width: 64 }} />
-          )}
+          <span style={{ width: 64 }} />
         </div>
 
         {/* Rilo's line */}

@@ -17,16 +17,15 @@ import { useEffect, useState } from 'react';
 import PhoneFrame from './components/PhoneFrame';
 
 import Welcome from './screens/Welcome';
-import HowItWorks from './screens/HowItWorks';
-import Instead from './screens/Instead';
-import AboutYou from './screens/AboutYou';
+import Name from './screens/Name';
+import YourNumber from './screens/YourNumber';
+import Rather from './screens/Rather';
+import YourPlan from './screens/YourPlan';
 import Talk from './screens/Talk';
 import PickApps from './screens/PickApps';
-import TimeBack from './screens/TimeBack';
 import Paywall from './screens/Paywall';
 import Permission from './screens/Permission';
 import Crunching from './screens/Crunching';
-import TimeGoes from './screens/TimeGoes';
 import Shield from './screens/Shield';
 import AppOpen from './screens/AppOpen';
 import Banner from './components/Banner';
@@ -81,7 +80,16 @@ import {
   dayIndexOf,
   toMins,
 } from './lib/addons';
-import { overLine, comparisonFor, calendarPlan, DEMO_CALENDAR, riloLimits } from './demo/mockAI';
+import {
+  overLine,
+  comparisonFor,
+  calendarPlan,
+  DEMO_CALENDAR,
+  riloLimits,
+  demoDailyMinutes,
+  insteadPlan,
+} from './demo/mockAI';
+import { applyRather, RATHER } from './lib/rather';
 import NightCheckIn from './screens/NightCheckIn';
 import NightTime from './screens/NightTime';
 import CalendarConnect from './screens/CalendarConnect';
@@ -227,8 +235,10 @@ export default function App() {
   const [banner, setBanner] = useState(false);
   /* "you closed 7 min early" — shown on Home once, after a short session */
   const [savedNote, setSavedNote] = useState(null);
-  /* came through Talk in onboarding → About you says "here's what i got" */
-  const [talked, setTalked] = useState(false);
+  /* what they said they'd rather be doing (lib/rather ids). Kept so the
+     plan screen can build its swaps, and folded into `about` on the way
+     past so everything downstream reads it where it always did. */
+  const [rather, setRather] = useState([]);
   /* ticks once a second while anything is pending, so countdowns move and
      a change lands the moment its 24 hours are up */
   const [, setTick] = useState(0);
@@ -257,6 +267,59 @@ export default function App() {
     const picked = watchedFor(pickedApps(apps), isPro);
     const total = hoursToMins(time.now || 5);
     setBreakdown(buildBreakdown(picked, total, allowed));
+  };
+
+  /* ---------- the two things onboarding no longer asks ----------
+     It used to ask how many hours they're on and what their goal was, on
+     two separate screens. Both are derived now:
+
+       hours  from the apps they picked (demoDailyMinutes) — the web can't
+              read real Screen Time, and a number built from their own
+              picks beats a stepper they'd guess at
+       goal   roughly half of it, on a clean half hour, floored at an hour
+
+     Both are editable on the you tab, which is where someone who cares
+     about the exact figure will go anyway. */
+  const startFromApps = (allowed) => {
+    const picked = watchedFor(pickedApps(apps), isPro);
+    const mins = demoDailyMinutes(picked);
+    const hours = Math.round((mins / 60) * 100) / 100;
+    const goal = Math.max(1, Math.round(hours / 2 / 0.5) * 0.5);
+    setTime((t) => ({ ...t, now: hours, goal }));
+    setBreakdown(buildBreakdown(picked, mins, allowed));
+  };
+
+  /* Rilo writes the plan himself from the apps, the number and what they
+     said they'd rather be doing. No "set your limits" screen in the way —
+     they see the result and can edit it. */
+  const buildPlanFor = (picks) => {
+    const picked = watchedFor(pickedApps(apps), isPro);
+    const mins = demoDailyMinutes(picked);
+    const goal = hoursToMins(Math.max(1, Math.round(mins / 60 / 2 / 0.5) * 0.5));
+    const bd = breakdown ?? buildBreakdown(picked, mins, screenTime === true);
+    const hobbies = [];
+    const goals = [];
+    picks.forEach((id) => {
+      const row = RATHER.find((r) => r.id === id);
+      if (!row) return;
+      hobbies.push(...row.hobbies);
+      goals.push(...row.goals);
+    });
+
+    const out = riloLimits({
+      tracked: picked,
+      breakdown: bd,
+      goalMins: goal,
+      hobbies,
+      goals,
+      calendar: [],
+      checkins: [],
+    });
+    setAppSettings((prev) => ({ ...prev, ...out.settings }));
+    setRiloWhy(out.why);
+    setRiloLead(out.lead);
+    setLimitMode('rilo');
+    track('limits', `built from onboarding · allows ${out.check.allows}m`);
   };
 
   /* Watching another app, or changing their hours, changes where the time
@@ -975,6 +1038,21 @@ export default function App() {
   const settle = () =>
     setNav((n) => (n.entries.length > 1 ? { entries: [n.entries[1]], dir: n.dir } : n));
 
+  /* A slide settles on the incoming screen's `animationend`. If that event
+     never arrives the app is stuck for good: two screens stay mounted and
+     `goTo` ignores every tap, because it refuses to start a slide while one
+     is running. The event is normally reliable, but it isn't guaranteed —
+     an interrupted animation, a backgrounded tab mid-transition, a browser
+     that doesn't deliver it. One missed event should not brick the app, so
+     this settles anyway shortly after the slide should have finished. */
+  useEffect(() => {
+    if (nav.entries.length < 2) return undefined;
+    const t = setTimeout(settle, 450);
+    return () => clearTimeout(t);
+    /* settle only reads the setter */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nav.entries]);
+
   /* never default to an app they aren't tracking */
   const currentApp = session.app && tracked.includes(session.app) ? session.app : tracked[0] ?? 'the feed';
 
@@ -1097,38 +1175,36 @@ export default function App() {
          introducing himself, before any skin has been earned or picked. */
       case 'welcome':
         return <Welcome go={go} skin={OG_SKIN} />;
-      case 'howitworks':
-        return <HowItWorks go={go} skin={OG_SKIN} />;
-      case 'instead':
-        return <Instead go={go} skin={OG_SKIN} />;
-      case 'talk':
+      /* ---------- onboarding, in order ----------
+         welcome → name → apps + screen time → crunching → your number →
+         what you'd rather → your plan → paywall → home.
+
+         Eight screens, everything before the paywall, and nothing after
+         it. The screens that used to live here — how it works, instead,
+         the conversation, the about-you review, the hours stepper, the
+         calendar, the check-in setup — are either gone or reachable from
+         the tabs. Talk is still in the app; it just isn't in the way. */
+      case 'name':
+        return (
+          <Name go={go} name={name} setName={setName} skin={OG_SKIN} next="pickapps" />
+        );
+
+      /* from Home: tap Rilo's chat badge */
       case 'talkchat':
         return (
           <Talk
             go={go}
-            onTalked={() => setTalked(true)}
-            mode={screen === 'talk' ? 'onboarding' : 'chat'}
-            skin={screen === 'talk' ? OG_SKIN : chosenRilo}
+            mode="chat"
+            skin={chosenRilo}
             name={name}
             setName={setName}
-            about={about}
             setAbout={setAbout}
           />
         );
-      case 'aboutyou':
-        return (
-          <AboutYou
-            talked={talked}
-            go={go}
-            about={about}
-            setAbout={setAbout}
-            name={name}
-            setName={setName}
-            skin={OG_SKIN}
-          />
-        );
+
       case 'pickapps':
         return <PickApps go={go} apps={apps} setApps={setApps} skin={OG_SKIN} />;
+
       case 'permission':
         return (
           <Permission
@@ -1147,8 +1223,8 @@ export default function App() {
               track('screentime', 'tried again');
             }}
             onSkip={() => {
-              makeBreakdown(false);
-              go('paywall');
+              startFromApps(false);
+              go('yournumber');
             }}
           />
         );
@@ -1158,30 +1234,59 @@ export default function App() {
           <Crunching
             skin={OG_SKIN}
             onDone={() => {
-              makeBreakdown(true);
-              /* the paywall comes first — "where your time goes" is pro */
-              go('paywall');
+              startFromApps(true);
+              go('yournumber');
             }}
           />
         );
 
-      case 'timegoes':
-        return <TimeGoes go={go} skin={OG_SKIN} breakdown={breakdown} />;
-
-      case 'timeback':
+      case 'yournumber':
         return (
-          <TimeBack go={go} time={time} setTime={setTime} skin={OG_SKIN} check={check} />
-        );
-
-      /* the plan itself: every app's setting, and the plan check */
-      case 'limitsonboard':
-        return (
-          <Limits
-            {...limitsProps}
+          <YourNumber
             go={go}
-            onContinue={() => go('home')}
+            skin={OG_SKIN}
+            breakdown={breakdown}
+            isPro={isPro}
+            next="rather"
           />
         );
+
+      case 'rather':
+        return (
+          <Rather
+            skin={OG_SKIN}
+            breakdown={breakdown}
+            picked={rather}
+            setPicked={setRather}
+            /* the only question about them — folded into `about` here, in
+               the same shape the two screens it replaced used */
+            go={(next, extras = []) => {
+              setAbout((a) => applyRather(a, rather, extras));
+              buildPlanFor(rather);
+              track('rather', rather.join(', ') || 'nothing picked');
+              go(next);
+            }}
+            next="yourplan"
+          />
+        );
+
+      case 'yourplan':
+        return (
+          <YourPlan
+            go={go}
+            skin={OG_SKIN}
+            tracked={tracked}
+            appSettings={appSettings}
+            instead={insteadPlan({ picks: rather, apps: watched })}
+            goalMins={goalMins}
+            onEdit={() => go('limitsonboard')}
+            next="paywall"
+          />
+        );
+
+      /* the "edit" link on the plan — the limits screen, and back */
+      case 'limitsonboard':
+        return <Limits {...limitsProps} go={go} onContinue={() => go('yourplan', 'back')} />;
       case 'limits':
         return <Limits {...limitsProps} go={go} />;
 
@@ -1199,20 +1304,15 @@ export default function App() {
               /* prototype: the trial button is what makes someone Pro */
               setIsPro(trial);
             }}
-            /* The nightly check-in is a Pro thing, so taking the trial goes
-               straight to setting it up — that's the moment it's been sold,
-               and asking later means it never gets turned on. Free skips it. */
-            nextFor={(which) => {
-              const trial = which === 'start free trial';
-              if (screen === 'upgrade') return trial ? 'nighttime' : 'home';
-              return trial ? 'nightonboard' : 'calendaronboard';
-            }}
+            /* The paywall is the last screen either way. Nothing is set up
+               after it — the check-in time, the calendar and the limits are
+               all on the you tab, and a plan is already in place. */
+            nextFor={() => 'home'}
           />
         );
 
-      /* "when should i check in?" — pro only, right after the paywall */
+      /* "when should i check in?" — from the you tab now, not onboarding */
       case 'nighttime':
-      case 'nightonboard':
         return (
           <NightTime
             go={go}
@@ -1222,7 +1322,7 @@ export default function App() {
               setNight(n);
               track('night', `check-in set for ${n.at}`);
             }}
-            next={screen === 'nighttime' ? 'home' : 'calendaronboard'}
+            next="home"
           />
         );
 
@@ -1361,19 +1461,13 @@ export default function App() {
           />
         );
 
+      /* the you tab, not onboarding */
       case 'calendar':
-      case 'calendaronboard':
         return (
           <CalendarConnect
             go={go}
             skin={OG_SKIN}
             apps={watched}
-            onContinue={
-              screen === 'calendaronboard' ? () => go(isPro ? 'timegoes' : 'timeback') : undefined
-            }
-            onSkip={
-              screen === 'calendaronboard' ? () => go(isPro ? 'timegoes' : 'timeback') : undefined
-            }
             calendar={calendar}
             setCalendar={(next) => {
               setCalendar(next);

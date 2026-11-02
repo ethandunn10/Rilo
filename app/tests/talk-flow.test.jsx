@@ -1,8 +1,11 @@
-/* Walks the whole onboarding conversation in a real DOM, the way a person
-   does: type, press Enter, click the button, tap the chips. This is the
-   test that was missing — a ReferenceError inside the form's onSubmit made
-   every single submit a silent no-op, and nothing caught it because the
-   render tests only ever checked that the markup appeared. */
+/* Typing to Rilo in a real DOM — the chat from Home, which is the only
+   place the conversation screen lives now that onboarding asks its one
+   question on its own screen.
+
+   This exists because typing once shipped completely broken: a missing
+   word table made every submit throw inside React's onSubmit, silently,
+   and every render test still passed. A screen can look perfect and be
+   entirely non-functional. */
 import { JSDOM } from 'jsdom';
 
 const dom = new JSDOM('<!doctype html><html><body><div id="root"></div></body></html>', {
@@ -74,73 +77,45 @@ async function tapChip(label) {
 }
 
 let about = { on: {}, extra: { hobby: [], goal: [] }, creator: '' };
-let name = '';
 let went = null;
 const root = createRoot(document.getElementById('root'));
 await act(async () => {
   root.render(React.createElement(Talk, {
-    go: (s) => { went = s; }, mode: 'onboarding', skin: 'original',
-    name, setName: (n) => { name = n; }, about,
+    go: (s) => { went = s; }, mode: 'chat', skin: 'original',
+    name: 'ethan', setName: () => {},
     setAbout: (fn) => { about = typeof fn === 'function' ? fn(about) : fn; },
     onTalked: () => {},
   }));
 });
 
-console.log('1. the name — typed, sent with the SEND BUTTON:');
-await type('ethan');
-is('button enables once there are words', !$('button[type="submit"]').disabled);
-await clickSend();
-is('it sent', bubble().includes('nice to meet you'), `"${bubble()}"`);
-is('the name was captured', name === 'Ethan', `"${name}"`);
-is('the field cleared', $('input').value === '');
-/* no "did i get that right?" — it's editable on the you tab, and asking
-   doubled the length of the shortest question in onboarding */
-is('he does NOT ask you to confirm it', !bubble().includes('did i get that right'));
-is('no yep/nope buttons', !byText('yep') && !byText('nope'));
-is('it goes straight on to the hobby question', await saysSoon('not on your phone'), `"${bubble()}"`);
+console.log('the chat opens on the keyboard:');
+is('he asks something open', bubble().includes("what's new"), `"${bubble()}"`);
+is('there is a field', Boolean($('input')));
+is('send is off until there are words', $('button[type="submit"]').disabled);
 
-console.log('\n2. hobbies — TAP SEVERAL, then send:');
-is('chips are offered', buttons().some((b) => b.textContent.trim() === 'basketball'));
-/* tapping must NOT submit on its own any more */
-await tapChip('basketball');
-is('one tap does not send', bubble().includes('not on your phone'), `"${bubble()}"`);
-is('the chip reads as picked', buttons().some((b) => b.textContent.trim() === '✓ basketball'));
-is('send is enabled by a pick alone', !$('button[type="submit"]').disabled);
-await tapChip('✓ basketball');
-is('tapping again unpicks it', !buttons().some((b) => b.textContent.trim() === '✓ basketball'));
-is('and send goes back to disabled', $('button[type="submit"]').disabled);
-/* now pick two and send them together */
-await tapChip('basketball');
-await tapChip('soccer');
-await clickSend();
-is('both were taken', bubble().includes('basketball') && bubble().includes('soccer'), `"${bubble()}"`);
-is('both saved', about.on.basketball === true && about.on.soccer === true);
-is('on to the goal question', await saysSoon('working toward'), `"${bubble()}"`);
-
-console.log('\n3. a goal — TYPED, sent with ENTER:');
-await type('better grades');
+console.log('\ntyped, sent with ENTER:');
+await type('basketball');
+is('send turns on', !$('button[type="submit"]').disabled);
 await pressEnter();
-is('enter sent it', bubble().includes('better grades'), `"${bubble()}"`);
-is('and saved it', about.on['better grades'] === true);
-is('on to the posting question', await saysSoon('content creator'), `"${bubble()}"`);
+is('he took it', bubble().includes('basketball'), `"${bubble()}"`);
+is('and saved it', about.on.basketball === true);
+is('the field cleared', $('input').value === '');
 
-console.log('\n4. do you post — single choice, so the tap IS the answer:');
-await tapChip('sometimes');
-is('one tap sent it, no send button needed', bubble().includes('posting sometimes'), `"${bubble()}"`);
-is('and saved it', about.creator === 'sometimes', `"${about.creator}"`);
-is('on to the last question', await saysSoon('scrolling the most'), `"${bubble()}"`);
-
-console.log('\n5. when — a tap AND some typing together:');
-await tapChip('at night');
-await type('and on the bus');
+console.log('\ntapped a chip, then SEND:');
+await tapChip('soccer');
+is('one tap does not send', !bubble().includes('soccer'), `"${bubble()}"`);
+is('it reads as picked', buttons().some((b) => b.textContent.trim() === '✓ soccer'));
 await clickSend();
-is('he wraps up', await saysSoon("that's all i needed"), `"${bubble()}"`);
-is('and the way forward appears', await chipSoon('next step'));
-is('the composer is gone', !$('input'));
+is('send took it', bubble().includes('soccer'), `"${bubble()}"`);
+is('and saved it', about.on.soccer === true);
 
-console.log('\n6. "next step" actually leaves:');
-await tapChip('next step');
-is('goes to about you', went === 'aboutyou', `went to "${went}"`);
+console.log('\nno confirm screens anywhere:');
+is('never asks "did i get that right"', !bubble().includes('did i get that right'));
+is('no yep/nope', !byText('yep') && !byText('nope'));
 
-console.log(fail ? `\n${fail} FAILED` : '\nall good — the whole conversation works end to end');
+console.log('\n"done" leaves:');
+await tapChip('done');
+is('goes home', went === 'home', `went to "${went}"`);
+
+console.log(fail ? `\n${fail} FAILED` : '\nall good — typing to rilo works');
 process.exit(fail ? 1 : 0);

@@ -53,6 +53,89 @@ export function comparisonFor(mins, spin = 0) {
   return `that's ${n} ${n === 1 ? c.one : c.many}`;
 }
 
+/* ---------- the number onboarding is built around ----------
+   DEMO ONLY: the web can't read real Screen Time, and onboarding no longer
+   asks how many hours they're on (that screen is gone). So the baseline is
+   generated from the apps they picked — more apps, more hours — which gives
+   a specific-looking total like "4h 12m" instead of a suspiciously round
+   one. In the mobile app this is a DeviceActivityReport. */
+const DEMO_MINUTES = {
+  tiktok: 78,
+  instagram: 54,
+  youtube: 46,
+  snapchat: 33,
+  x: 22,
+  reddit: 26,
+  netflix: 31,
+  twitch: 29,
+  discord: 24,
+  roblox: 27,
+  fortnite: 25,
+  pinterest: 18,
+  facebook: 16,
+  threads: 14,
+  spotify: 20,
+};
+const DEMO_OTHER = 41; /* everything on the phone Rilo isn't watching */
+const DEMO_DEFAULT = 23;
+
+export function demoDailyMinutes(picked = []) {
+  const apps = picked.reduce((n, a) => n + (DEMO_MINUTES[a] ?? DEMO_DEFAULT), 0);
+  /* a floor, so someone who picks one small app still sees a real number */
+  return Math.max(96, apps + DEMO_OTHER);
+}
+
+/* ---------- "what you'll do instead" ----------
+   Two or three concrete swaps, built from the apps they picked and what
+   they said they'd rather be doing. Specific on purpose: "do something
+   else" is advice, "tonight 7-8pm: gym instead of tiktok" is a plan.
+
+   DEMO ONLY: the times are sensible defaults. In the mobile app this reads
+   their calendar. */
+const WHEN = [
+  { at: 'tonight, 7–8pm', fits: ['gym', 'sports', 'friends'] },
+  { at: 'after school', fits: ['studying', 'skill', 'reading'] },
+  { at: 'before bed', fits: ['reading', 'studying'] },
+  { at: 'saturday morning', fits: ['making', 'skill', 'sports'] },
+];
+
+const DOING = {
+  gym: 'gym',
+  studying: '30 min of studying',
+  sports: 'practice',
+  friends: 'see your friends',
+  making: 'make something',
+  reading: '20 pages',
+  skill: '20 min on a new skill',
+};
+
+export function insteadPlan({ picks = [], apps = [] } = {}) {
+  const worst = apps[0] ?? 'the feed';
+  const second = apps[1] ?? worst;
+  const out = [];
+  const usedWhen = new Set();
+
+  picks.forEach((id) => {
+    if (out.length >= 3) return;
+    const slot = WHEN.find((w) => w.fits.includes(id) && !usedWhen.has(w.at));
+    if (!slot || !DOING[id]) return;
+    usedWhen.add(slot.at);
+    out.push({
+      id,
+      when: slot.at,
+      what: DOING[id],
+      instead: out.length === 0 ? worst : second,
+    });
+  });
+
+  /* they skipped the question — still give him something to say */
+  if (!out.length) {
+    out.push({ id: 'any', when: 'tonight, 7–8pm', what: 'anything but scrolling', instead: worst });
+  }
+
+  return out;
+}
+
 /* ---------- Rilo's own plan, "generated" (§13) ----------
    He proposes a setting for every app off the % data, the hobbies and goals
    they gave, their calendar, and the check-ins — then checks the result

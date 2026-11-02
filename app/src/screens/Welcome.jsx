@@ -173,7 +173,8 @@ export default function Welcome({ go, skin }) {
             color: '#234030',
           }}
         >
-          less scrolling. more of the stuff you actually care about.
+          your screen-time buddy. i don&apos;t just block your apps, i help
+          you figure out what to do instead.
         </p>
       </div>
 
@@ -203,7 +204,7 @@ export default function Welcome({ go, skin }) {
         <button
           type="button"
           className="tap"
-          onClick={() => go('howitworks')}
+          onClick={() => go('name')}
           style={{
             width: '100%',
             height: 58,

@@ -1,15 +1,26 @@
 /* The beat between allowing Screen Time and seeing the damage. */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 
 export default function Crunching({ skin, onDone }) {
+  /* onDone is a fresh arrow on every parent render, so depending on it
+     restarted the timer each time App re-rendered — which meant "1.5
+     seconds" was really "1.5 seconds after the app stops re-rendering".
+     Holding it in a ref keeps the wait exactly as long as it says. */
+  const done = useRef(onDone);
   useEffect(() => {
-    const t = setTimeout(onDone, 2600);
-    return () => clearTimeout(t);
-    /* onDone is stable enough for one timer */
+    done.current = onDone;
   }, [onDone]);
+
+  useEffect(() => {
+    /* 1.5s. Long enough to feel like he looked, short enough that
+       nobody sits waiting for a progress animation. */
+    const t = setTimeout(() => done.current?.(), 1500);
+    return () => clearTimeout(t);
+    /* one timer for the life of the screen */
+  }, []);
 
   return (
     <div
