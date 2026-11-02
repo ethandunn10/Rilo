@@ -155,5 +155,44 @@ is('and so does choosing a plan', app.includes("nextFor={() => (screen === 'payw
 is('step 8 still ends at home', app.includes("screen === 'paywall' ? 'home'"));
 is('step 8 can go back to the plan', app.includes("goTo('yourplan', 'back')"));
 
+/* ---------- you can always step back ---------- */
+console.log('\nevery step can be undone');
+const Limits = (await import('../src/screens/Limits.jsx')).default;
+const PickApps = (await import('../src/screens/PickApps.jsx')).default;
+const Permission = (await import('../src/screens/Permission.jsx')).default;
+
+const withBack = [
+  ['name', <Name go={noop} name="" setName={noop} skin="original" onBack={noop} />],
+  ['pickapps', <PickApps go={noop} apps={{ on: {}, extra: [] }} setApps={noop} skin="original" onBack={noop} />],
+  ['permission', <Permission skin="original" onAllow={noop} onDeny={noop} onSkip={noop} onTriedAgain={noop} onBack={noop} />],
+  ['your number', <YourNumber go={noop} skin="original" breakdown={breakdown} onBack={noop} />],
+  ['what you would rather', <Rather go={noop} skin="original" breakdown={breakdown} picked={[]} setPicked={noop} onBack={noop} />],
+  ['your plan', <YourPlan go={noop} skin="original" tracked={picked} appSettings={plan.settings} instead={instead} goalMins={goalMins} onEdit={noop} onBack={noop} />],
+  ['edit limits', <Limits go={noop} skin="original" tracked={picked} appSettings={plan.settings} onSetApp={noop} time={{ now: 4, goal: 2 }} setTime={noop} day={{ opensUsed: {} }} check={plan.check} pending={[]} onCancelPending={noop} limitMode="rilo" riloWhy={{}} riloLead={[]} onRiloPlan={noop} onOwnPlan={noop} pctFor={() => null} totalOpensFor={() => 3} onContinue={noop} onBack={noop} />],
+];
+for (const [name, el] of withBack) {
+  is(`${name} has a back button`, /\bback\b/.test(flat(renderToString(el))));
+}
+is('welcome has none (nothing before it)', !/\bback\b/.test(w));
+
+for (const target of ["goTo('welcome', 'back')", "goTo('name', 'back')", "goTo('pickapps', 'back')",
+  "goTo('yournumber', 'back')", "goTo('rather', 'back')", "goTo('yourplan', 'back')"]) {
+  is(`wired: ${target}`, app.includes(target));
+}
+
+/* ---------- only their apps on the limits screen ---------- */
+console.log('\nthe limits screen shows their apps and nothing else');
+const lim = flat(renderToString(
+  <Limits go={noop} skin="original" tracked={picked} appSettings={plan.settings} onSetApp={noop}
+    time={{ now: 4, goal: 2 }} setTime={noop} day={{ opensUsed: {} }} check={plan.check}
+    pending={[]} onCancelPending={noop} limitMode="rilo" riloWhy={{}} riloLead={[]}
+    onRiloPlan={noop} onOwnPlan={noop} pctFor={() => null} totalOpensFor={() => 3} />,
+));
+for (const app_ of picked) is(`  shows ${app_}`, lim.includes(app_));
+for (const junk of ['phone', 'messages', 'maps', 'camera']) {
+  is(`  no uninvited "${junk}" row`, !lim.includes(junk));
+}
+is('App tracks only what they picked', app.includes('const tracked = watched;'));
+
 console.log(fail ? `\n${fail} FAILED` : '\nall good — 8 steps, paywall last, home straight after');
 process.exit(fail ? 1 : 0);

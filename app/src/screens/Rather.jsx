@@ -15,6 +15,7 @@ import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
+import BackButton from '../components/BackButton';
 import { RATHER } from '../lib/rather';
 import { daysPerYear } from '../lib/rather';
 
@@ -52,7 +53,7 @@ const tick = (on) => ({
   fontWeight: 700,
 });
 
-export default function Rather({ go, skin, breakdown, picked, setPicked, next = 'yourplan' }) {
+export default function Rather({ go, skin, breakdown, picked, setPicked, onBack, next = 'yourplan' }) {
   const [typed, setTyped] = useState('');
   const [adding, setAdding] = useState(false);
   const [extras, setExtras] = useState([]);
@@ -101,6 +102,8 @@ export default function Rather({ go, skin, breakdown, picked, setPicked, next = 
         }}
       >
         <Dots active={2} />
+
+        <BackButton onBack={onBack} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Rilo skin={skin} mood="curious" size={92} talks />

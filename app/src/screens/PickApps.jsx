@@ -8,10 +8,11 @@
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
+import BackButton from '../components/BackButton';
 import AppPicker from '../components/AppPicker';
 import { APP_CATALOG, STARTING_APPS, pickedApps } from '../lib/apps';
 
-export default function PickApps({ go, apps, setApps, skin }) {
+export default function PickApps({ go, apps, setApps, skin , onBack }) {
   /* nothing is pre-checked, so there's nothing to turn on until they pick */
   const picked = pickedApps(apps).length > 0;
 
@@ -39,6 +40,8 @@ export default function PickApps({ go, apps, setApps, skin }) {
         }}
       >
         <Dots active={3} />
+
+        <BackButton onBack={onBack} />
 
         {/* everything above the pinned button scrolls */}
         <div

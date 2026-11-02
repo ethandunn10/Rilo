@@ -9,11 +9,12 @@
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
+import BackButton from '../components/BackButton';
 import Breakdown from '../components/Breakdown';
 import { fmtMins } from '../lib/plan';
 import { daysPerYear } from '../lib/rather';
 
-export default function YourNumber({ go, skin, breakdown, isPro = false, next = 'rather' }) {
+export default function YourNumber({ go, skin, breakdown, isPro = false, onBack, next = 'rather' }) {
   const perDay = breakdown?.blocked ?? 0;
   const days = daysPerYear(perDay);
 
@@ -46,6 +47,8 @@ export default function YourNumber({ go, skin, breakdown, isPro = false, next = 
         }}
       >
         <Dots active={2} />
+
+        <BackButton onBack={onBack} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Rilo skin={skin} mood="letdown" size={96} talks />

@@ -19,6 +19,7 @@ import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import TabBar from '../components/TabBar';
+import BackButton from '../components/BackButton';
 import AppLogo from '../components/AppLogo';
 import Opens from '../components/Opens';
 import GoalStepper from '../components/GoalStepper';
@@ -410,8 +411,9 @@ export default function Limits({
   onOwnPlan,
   pctFor = () => null,
   totalOpensFor = () => 0,
-  /* onboarding passes this; the tab version doesn't */
+  /* onboarding passes these; the tab version doesn't */
   onContinue,
+  onBack,
 }) {
   const [editing, setEditing] = useState(limitMode === 'own');
 
@@ -443,6 +445,8 @@ export default function Limits({
           gap: 12,
         }}
       >
+        <BackButton onBack={onBack} />
+
         <div
           style={{
             display: 'flex',

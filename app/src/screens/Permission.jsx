@@ -7,6 +7,7 @@
 import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
+import BackButton from '../components/BackButton';
 
 const btn = {
   width: '100%',
@@ -160,7 +161,7 @@ function SystemSheet({ onAllow, onDeny }) {
   );
 }
 
-export default function Permission({ skin, onAllow, onDeny, onSkip, onTriedAgain }) {
+export default function Permission({ skin, onAllow, onDeny, onSkip, onTriedAgain, onBack }) {
   const [sheet, setSheet] = useState(false);
   const [denied, setDenied] = useState(false);
 
@@ -190,6 +191,7 @@ export default function Permission({ skin, onAllow, onDeny, onSkip, onTriedAgain
           gap: 16,
         }}
       >
+        <BackButton onBack={onBack} />
         <Rilo skin={skin} mood={denied ? 'letdown' : 'coach'} size={190} talks />
 
         <p

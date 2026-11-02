@@ -54,7 +54,7 @@ import {
   freshDay,
 } from './lib/storage';
 import { track } from './lib/track';
-import { pickedApps, trackedApps } from './lib/apps';
+import { pickedApps } from './lib/apps';
 import { HOBBIES, GOALS } from './lib/profile';
 import {
   buildBreakdown,
@@ -341,11 +341,15 @@ export default function App() {
      never locks anything (§8). */
   const goalMins = hoursToMins(time.goal);
 
-  /* every app Rilo watches, plus the always-allowed ones */
+  /* The apps they picked. Nothing else.
+
+     Phone, Messages, Maps and Camera used to be bolted onto this list as
+     "always allowed", so the limits screen showed four rows nobody had
+     asked for and couldn't act on. The always-allowed SETTING still exists
+     for anyone who wants to mark one of their own apps that way — it's
+     just not a list of system apps Rilo invites himself to. */
   const watched = watchedFor(pickedApps(apps), isPro);
-  const tracked = trackedApps(apps, appSettings).filter(
-    (a) => watched.includes(a) || settingFor(appSettings, a).mode === ALWAYS,
-  );
+  const tracked = watched;
 
   /* what they typically spend on an app, from the baseline — this is what
      the plan check counts for a Free app, and what the step-down ranks by */
@@ -1197,7 +1201,14 @@ export default function App() {
          the tabs. Talk is still in the app; it just isn't in the way. */
       case 'name':
         return (
-          <Name go={go} name={name} setName={setName} skin={OG_SKIN} next="pickapps" />
+          <Name
+            go={go}
+            name={name}
+            setName={setName}
+            skin={OG_SKIN}
+            onBack={() => goTo('welcome', 'back')}
+            next="pickapps"
+          />
         );
 
       /* from Home: tap Rilo's chat badge */
@@ -1214,12 +1225,21 @@ export default function App() {
         );
 
       case 'pickapps':
-        return <PickApps go={go} apps={apps} setApps={setApps} skin={OG_SKIN} />;
+        return (
+          <PickApps
+            go={go}
+            apps={apps}
+            setApps={setApps}
+            skin={OG_SKIN}
+            onBack={() => goTo('name', 'back')}
+          />
+        );
 
       case 'permission':
         return (
           <Permission
             skin={OG_SKIN}
+            onBack={() => goTo('pickapps', 'back')}
             onAllow={() => {
               setScreenTime(true);
               track('screentime', 'allowed');
@@ -1258,6 +1278,8 @@ export default function App() {
             skin={OG_SKIN}
             breakdown={breakdown}
             isPro={isPro}
+            /* back to the apps — the only thing worth changing from here */
+            onBack={() => goTo('pickapps', 'back')}
             next="rather"
           />
         );
@@ -1269,6 +1291,7 @@ export default function App() {
             breakdown={breakdown}
             picked={rather}
             setPicked={setRather}
+            onBack={() => goTo('yournumber', 'back')}
             /* the only question about them — folded into `about` here, in
                the same shape the two screens it replaced used */
             go={(next, extras = []) => {
@@ -1290,6 +1313,7 @@ export default function App() {
             appSettings={appSettings}
             instead={insteadPlan({ picks: rather, apps: watched })}
             goalMins={goalMins}
+            onBack={() => goTo('rather', 'back')}
             onEdit={() => go('limitsonboard')}
             next="paywall"
           />
@@ -1297,7 +1321,14 @@ export default function App() {
 
       /* the "edit" link on the plan — the limits screen, and back */
       case 'limitsonboard':
-        return <Limits {...limitsProps} go={go} onContinue={() => go('yourplan', 'back')} />;
+        return (
+          <Limits
+            {...limitsProps}
+            go={go}
+            onBack={() => goTo('yourplan', 'back')}
+            onContinue={() => goTo('yourplan', 'back')}
+          />
+        );
       case 'limits':
         return <Limits {...limitsProps} go={go} />;
 

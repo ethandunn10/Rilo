@@ -16,6 +16,7 @@
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
+import BackButton from '../components/BackButton';
 import AppLogo from '../components/AppLogo';
 import { fmtMins } from '../lib/plan';
 import { LIMITED, BLOCKED, FREE, settingFor, fmtOpens } from '../lib/limits';
@@ -45,6 +46,7 @@ export default function YourPlan({
   goalMins = 120,
   onEdit,
   next = 'paywall',
+  onBack,
 }) {
   const limited = tracked.filter((a) => {
     const m = settingFor(appSettings, a).mode;
@@ -80,6 +82,8 @@ export default function YourPlan({
         }}
       >
         <Dots active={3} />
+
+        <BackButton onBack={onBack} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <Rilo skin={skin} mood="proud" size={92} talks />

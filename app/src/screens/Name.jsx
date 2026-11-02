@@ -9,8 +9,9 @@ import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
+import BackButton from '../components/BackButton';
 
-export default function Name({ go, name, setName, skin, next = 'pickapps' }) {
+export default function Name({ go, name, setName, skin, onBack, next = 'pickapps' }) {
   const [draft, setDraft] = useState(name ?? '');
   const ready = draft.trim().length > 0;
 
@@ -49,6 +50,8 @@ export default function Name({ go, name, setName, skin, next = 'pickapps' }) {
         }}
       >
         <Dots active={1} />
+
+        <BackButton onBack={onBack} />
 
         <Rilo skin={skin} mood="wave" size={190} talks />
 
