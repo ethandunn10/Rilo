@@ -137,6 +137,10 @@ export default function Home({
   /* at most one of Rilo's first-week questions (lib/firstWeek), already
      built — the home screen just decides where it sits */
   askCard = null,
+  isPro = false,
+  creatorModeOn = false,
+  creatorMinutes = 0,
+  showIntroTour = false,
 }) {
   const theme = useTheme();
   const upNext = suggestion(about).task;
@@ -224,6 +228,7 @@ export default function Home({
           boxShadow: '0 4px 0 var(--line)',
           animation: 'rise14 .5s .08s ease-out both',
         }}
+        data-tour-target="hero"
       >
         <svg
           width="140"
@@ -255,6 +260,7 @@ export default function Home({
           type="button"
           className="tap-94"
           aria-label="chat with rilo"
+          data-tour-target="home-talk"
           onClick={() => go('talkchat')}
           style={{
             position: 'absolute',
@@ -391,6 +397,7 @@ export default function Home({
           gap: 10,
           animation: 'rise14 .5s .16s ease-out both',
         }}
+        data-tour-target="score"
       >
         <Ring
           pct={goalPct}
@@ -420,12 +427,13 @@ export default function Home({
       {/* Today's question, if there is one. Under the numbers and above
           everything he wants them to tap, so it's impossible to miss and
           equally impossible to be blocked by. */}
-      {askCard}
+      {askCard && !showIntroTour && <div data-tour-target="learn">{askCard}</div>}
 
       <button
         type="button"
         className="tap"
         onClick={() => go('plan')}
+        data-tour-target="next"
         style={{
           padding: '16px 18px',
           borderRadius: 24,
@@ -470,10 +478,38 @@ export default function Home({
         </svg>
       </button>
 
+      {creatorModeOn && isPro && (
+        <button
+          type="button"
+          className="tap"
+          onClick={() => go('creator')}
+          data-tour-target="creator"
+          style={{
+            minHeight: 62,
+            padding: '10px 16px',
+            borderRadius: 22,
+            background: 'var(--card)',
+            border: '2px solid var(--line)',
+            boxShadow: '0 4px 0 var(--line)',
+            color: '#12301A',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 12,
+            textAlign: 'left',
+            cursor: 'pointer',
+          }}
+        >
+          <span aria-hidden="true" style={{ width: 40, height: 40, display: 'grid', placeItems: 'center', borderRadius: 13, background: '#E9F5E6', fontSize: 22 }}>🎬</span>
+          <span style={{ flexGrow: 1 }}><span style={{ display: 'block', fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}>creator mode</span><span style={{ display: 'block', marginTop: 1, color: '#52715A', fontSize: 12, fontWeight: 600 }}>{creatorMinutes ? `${creatorMinutes} min today · post or research` : 'post or research with a purpose'}</span></span>
+          <span aria-hidden="true" style={{ color: '#1F6B2E', fontSize: 22, fontWeight: 700 }}>›</span>
+        </button>
+      )}
+
       <button
         type="button"
         className="tap"
         onClick={() => watched.length && onOpenApp(watched[0])}
+        data-tour-target="home-apps"
         disabled={!watched.length}
         style={{
           padding: '10px 18px',

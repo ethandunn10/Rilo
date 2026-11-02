@@ -3,11 +3,12 @@
 
 import Rilo from './Rilo';
 
-export default function ProLock({ style, title, sub, skin = 'gold', onTap }) {
+export default function ProLock({ style, title, sub, skin = 'gold', onTap, dataTourTarget }) {
   return (
     <button
       type="button"
       className="tap"
+      data-tour-target={dataTourTarget}
       onClick={onTap}
       style={{
         ...style,

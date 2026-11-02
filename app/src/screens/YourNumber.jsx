@@ -144,7 +144,6 @@ export default function YourNumber({
       <div
         onClick={beat < 2 ? onwards : undefined}
         style={{
-          position: 'relative',
           flexGrow: 1,
           minHeight: 0,
           display: 'flex',
@@ -197,33 +196,37 @@ export default function YourNumber({
               minHeight: 0,
               boxSizing: 'border-box',
               padding: '0 22px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
             }}
           >
-            <p
-              key={`cap-${beat}`}
+            <div
+              aria-hidden="true"
               style={{
-                margin: 0,
-                fontSize: 13,
-                fontWeight: 700,
-                letterSpacing: '0.09em',
-                textTransform: 'uppercase',
-                color: '#2C4A36',
-                animation: reduced ? 'none' : 'rise .45s ease-out both',
+                position: 'absolute',
+                left: 0,
+                right: 0,
+                bottom: 0,
+                display: 'flex',
+                justifyContent: 'center',
+                opacity: 0.7,
+                pointerEvents: 'none',
               }}
             >
-              {beat === 0 ? `${fmtMins(perDay)} a day, on these apps` : 'the same time, spent your way'}
-            </p>
-
-            <Pile days={days} flipped={beat >= 1} reduced={reduced} />
+              <Pile days={days} flipped={beat >= 1} reduced={reduced} />
+            </div>
 
             <div
               key={`num-${beat}`}
               style={{
+                position: 'absolute',
+                top: '50%',
+                left: 0,
+                right: 0,
+                transform: 'translateY(-50%)',
+                zIndex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 11,
                 textAlign: 'center',
                 animation: reduced ? 'none' : 'rise .5s ease-out both',
               }}
@@ -231,8 +234,20 @@ export default function YourNumber({
               <p
                 style={{
                   margin: 0,
+                  fontSize: 13,
+                  fontWeight: 800,
+                  letterSpacing: '0.09em',
+                  textTransform: 'uppercase',
+                  color: '#2C4A36',
+                }}
+              >
+                {beat === 0 ? `${fmtMins(perDay)} a day, on these apps` : 'the same time, spent your way'}
+              </p>
+              <p
+                style={{
+                  margin: 0,
                   fontFamily: 'Fredoka, sans-serif',
-                  fontSize: 58,
+                  fontSize: 68,
                   fontWeight: 700,
                   lineHeight: 1,
                   color: beat === 0 ? '#12301A' : '#2E8B3E',

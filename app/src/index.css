@@ -725,6 +725,10 @@ body.app-locked .stage-wrap {
   50% { transform: translateY(10px); }
 }
 
+@keyframes tour-dash {
+  to { stroke-dashoffset: -30; }
+}
+
 /* ---------- the number sequence (screens/YourNumber) ----------
    One plank arriving: it slides up off the pile below it and widens into
    place. Staggered in JS, because the delay depends on how many days they
@@ -744,5 +748,8 @@ body.app-locked .stage-wrap {
   .pile-slab {
     animation: none !important;
     transition: none !important;
+  }
+  .tour-arrow {
+    animation: none !important;
   }
 }

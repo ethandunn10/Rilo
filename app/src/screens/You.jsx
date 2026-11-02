@@ -148,6 +148,9 @@ export default function You({
   xp,
   level,
   isPro,
+  creatorModeOn = false,
+  setCreatorModeOn = () => {},
+  onReplayIntroTour = () => {},
   chosenRilo,
   theme,
   onTheme,
@@ -454,7 +457,7 @@ export default function You({
           <Section>what rilo watches</Section>
 
           {/* apps rilo watches, same list + add sheet as onboarding */}
-          <div style={card('.24s')}>
+          <div data-tour-target="you-apps" style={card('.24s')}>
             <p
               style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}
             >
@@ -476,8 +479,28 @@ export default function You({
 
           <Section>when rilo steps in</Section>
 
+          <div data-tour-target="you-creator" style={card('.215s')}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span aria-hidden="true" style={{ width: 44, height: 44, display: 'grid', placeItems: 'center', borderRadius: 14, background: '#E9F5E6', fontSize: 23 }}>🎬</span>
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}>creator mode</p>
+                <p style={{ margin: '2px 0 0', color: '#3D5A46', fontSize: 12, fontWeight: 600, lineHeight: 1.35 }}>Turn it on to add a Home button for focused Instagram posting or research. Pro feature.</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={creatorModeOn}
+                aria-label="Turn Creator Mode on or off"
+                onClick={() => (isPro ? setCreatorModeOn(!creatorModeOn) : go('upgrade'))}
+                style={{ minWidth: 58, height: 34, border: 0, borderRadius: 99, padding: 4, background: creatorModeOn ? '#2E8B3E' : '#AAB8AD', cursor: 'pointer' }}
+              ><span style={{ display: 'block', width: 26, height: 26, borderRadius: 99, background: '#FFFFFF', transform: creatorModeOn ? 'translateX(24px)' : 'none', transition: 'transform .16s' }} /></button>
+            </div>
+            {creatorModeOn && isPro && <button type="button" className="tap" onClick={() => go('creator')} style={{ minHeight: 44, borderRadius: 999, border: '2px solid var(--line)', background: '#12301A', color: '#FFFFFF', fontFamily: 'Fredoka, sans-serif', fontSize: 16, fontWeight: 600, cursor: 'pointer' }}>start a creator session</button>}
+          </div>
+
           {/* bedtime + school (rilo-addons-test) */}
           <ScheduleCard
+            dataTourTarget="you-schedule"
             style={card('.22s')}
             bedtime={bedtime}
             setBedtime={setBedtime}
@@ -604,6 +627,7 @@ export default function You({
           <button
             type="button"
             className="tap"
+            data-tour-target="you-buddies"
             onClick={() => go('buddies')}
             style={{
               ...card('.24s'),
@@ -639,6 +663,7 @@ export default function You({
           {/* strict mode — rilo pro */}
           {isPro ? (
             <StrictCard
+              dataTourTarget="you-strict"
               style={card('.2s')}
               skin={chosenRilo}
               strict={strict}
@@ -649,6 +674,7 @@ export default function You({
             />
           ) : (
             <ProLock
+              dataTourTarget="you-strict"
               style={card('.2s')}
               title="strict mode"
               sub="no half opens, no borrowing, 24 hours to loosen anything."
@@ -758,8 +784,14 @@ export default function You({
 
           <Section>account</Section>
 
+          <button type="button" className="tap" onClick={onReplayIntroTour} style={{ ...card('.30s'), flexDirection: 'row', alignItems: 'center', textAlign: 'left', cursor: 'pointer' }}>
+            <Rilo skin={chosenRilo} mood="wave" size={46} />
+            <span style={{ flex: 1 }}><span style={{ display: 'block', fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}>meet Rilo again</span><span style={{ display: 'block', color: '#3D5A46', fontSize: 12, fontWeight: 600 }}>replay the quick tour of what he can do</span></span>
+            <span aria-hidden="true" style={{ color: '#1F6B2E', fontSize: 22, fontWeight: 700 }}>›</span>
+          </button>
+
           {/* plan */}
-          <div style={card('.32s')}>
+          <div data-tour-target="you-plan" style={card('.32s')}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <p
                 style={{

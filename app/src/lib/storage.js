@@ -142,6 +142,10 @@ export const DEFAULT_STATE = {
   buddies: { code: '', friends: [] },
   /* today's schedule on the plan tab: rilo's, or theirs */
   schedule: { mode: 'rilo', rows: [] },
+  /* Creator Mode time is tracked separately from recreational screen time. */
+  creator: { date: today(), todayMinutes: 0, totalMinutes: 0, sessions: 0, active: null },
+  creatorModeOn: false,
+  introTourDone: false,
   /* their calendar, read only — DEMO ONLY, nothing is connected.
      `sources` is the other apps rilo can read for the same reason: notes,
      reminders, tasks. Same deal — read only, never written to. */
@@ -236,6 +240,9 @@ export function loadState() {
       xp: typeof saved.xp === 'number' ? saved.xp : DEFAULT_STATE.xp,
       level: typeof saved.level === 'number' ? saved.level : DEFAULT_STATE.level,
       opens: freshDay ? DEFAULT_STATE.opens : { date: opens.date, counts: opens.counts ?? {} },
+      creator: { ...DEFAULT_STATE.creator, ...(saved.creator ?? {}) },
+      creatorModeOn: saved.creatorModeOn ?? false,
+      introTourDone: false,
     };
 
   } catch {

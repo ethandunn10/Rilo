@@ -94,6 +94,7 @@ export default function TabBar({ active = 'home', go, skin = 'original' }) {
   return (
     <nav
       aria-label="Main"
+      data-tour-target="tabs"
       style={{
         position: 'absolute',
         left: 0,
@@ -171,6 +172,7 @@ export default function TabBar({ active = 'home', go, skin = 'original' }) {
       <button
         type="button"
         onClick={() => go('you')}
+        data-tour-target="you-tab"
         aria-current={active === 'you' ? 'page' : undefined}
         style={{ ...tab, color: col('you') }}
       >

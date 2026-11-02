@@ -67,6 +67,7 @@ function endsIn(mins) {
 
 export default function ScheduleCard({
   style,
+  dataTourTarget,
   bedtime,
   setBedtime,
   school,
@@ -83,7 +84,7 @@ export default function ScheduleCard({
   };
 
   return (
-    <div style={style}>
+    <div data-tour-target={dataTourTarget} style={style}>
       {/* bedtime */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ flexGrow: 1, minWidth: 0 }}>

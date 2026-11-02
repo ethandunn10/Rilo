@@ -15,6 +15,7 @@
 
 import { useEffect, useState } from 'react';
 import PhoneFrame from './components/PhoneFrame';
+import MeetRiloTour from './components/MeetRiloTour';
 
 import Welcome from './screens/Welcome';
 import Name from './screens/Name';
@@ -37,6 +38,7 @@ import Tired from './screens/Tired';
 import Break from './screens/Break';
 import NeedIt from './screens/NeedIt';
 import Plan from './screens/Plan';
+import CreatorMode from './screens/CreatorMode';
 import Limits from './screens/Limits';
 import Progress from './screens/Progress';
 import PickRilo from './screens/PickRilo';
@@ -209,6 +211,11 @@ export default function App() {
   const [buddies, setBuddies] = useState(saved.buddies);
   /* today's schedule on the plan tab */
   const [schedulePlan, setSchedulePlan] = useState(saved.schedule);
+  const [creator, setCreator] = useState(saved.creator);
+  const [creatorModeOn, setCreatorModeOn] = useState(saved.creatorModeOn ?? false);
+  // This demo restarts onboarding on each visit, so the in-app introduction
+  // should be offered again after onboarding rather than remembered forever.
+  const [introTourDone, setIntroTourDone] = useState(false);
   const [calendar, setCalendar] = useState(saved.calendar);
   const [night, setNight] = useState(saved.night);
   /* the first week of questions (lib/firstWeek) */
@@ -262,6 +269,8 @@ export default function App() {
       leanDays, strict,
       checkins, bedtime, school, buddies, demoClock,
       schedule: schedulePlan,
+      creator,
+      creatorModeOn,
       calendar,
       night,
       drip,
@@ -270,7 +279,7 @@ export default function App() {
       stats, appSettings, limitMode, borrow, pending, step, focus,
       screenTime, triedAgain, breakdown, program, day, history, streak,
       leanDays, strict, checkins, bedtime, school, buddies,
-      demoClock, schedulePlan, calendar, night, drip]);
+      demoClock, schedulePlan, creator, creatorModeOn, calendar, night, drip]);
 
   /* The web can't read real Screen Time, so the baseline comes from the
      hours they gave on Your time back (5h if they never said). */
@@ -1125,6 +1134,27 @@ export default function App() {
     goTo(next === 'home' && pendingSkin ? 'levelup' : next, dir);
   };
 
+  const startCreatorSession = (task, duration) => {
+    if (!isPro) return;
+    setCreator((c) => ({
+      ...c,
+      active: { task, duration, startedAt: Date.now() },
+    }));
+    track('creator', `started ${task} · ${duration ? `${duration}m` : 'no limit'}`);
+  };
+
+  const finishCreatorSession = ({ task, minutes, savedAction }) => {
+    setCreator((c) => ({
+      ...c,
+      date: dateKey,
+      todayMinutes: (c.date === dateKey ? c.todayMinutes : 0) + minutes,
+      totalMinutes: c.totalMinutes + minutes,
+      sessions: c.sessions + 1,
+      active: null,
+    }));
+    track('creator', `finished ${task} · ${minutes}m${savedAction ? ' · task saved' : ''}`);
+  };
+
   /* XP never goes below 0, and a level once earned is never lost.
      Returns true if a Pro unlock is now waiting to be celebrated. */
   const awardXp = (amount) => {
@@ -1507,6 +1537,9 @@ export default function App() {
             onClearOverNote={() => setOverNote('')}
             passesLeft={passesLeft}
             backToday={back.today}
+            creatorModeOn={creatorModeOn}
+            creatorMinutes={creator.date === dateKey ? creator.todayMinutes : 0}
+            showIntroTour={!introTourDone}
             canCheckIn={canCheckIn}
             checkInDue={checkInDue}
             checkedInToday={checkedInToday}
@@ -1778,6 +1811,25 @@ export default function App() {
             askCard={planAsk ? <AskCard {...askProps(planAsk)} /> : null}
           />
         );
+      case 'creator':
+        return (
+          <CreatorMode
+            go={go}
+            skin={chosenRilo}
+            isPro={isPro}
+            active={creator.active}
+            stats={{
+              todayMinutes: creator.date === dateKey ? creator.todayMinutes : 0,
+              sessions: creator.sessions,
+            }}
+            onStart={startCreatorSession}
+            onFinish={finishCreatorSession}
+            onUseNormalLimit={({ task, minutes }) => {
+              finishCreatorSession({ task, minutes });
+              openApp('instagram');
+            }}
+          />
+        );
       case 'progress':
         return (
           <Progress
@@ -1843,6 +1895,12 @@ export default function App() {
             xp={xp}
             level={level}
             isPro={isPro}
+            creatorModeOn={creatorModeOn}
+            setCreatorModeOn={setCreatorModeOn}
+            onReplayIntroTour={() => {
+              setIntroTourDone(false);
+              go('home');
+            }}
             chosenRilo={chosenRilo}
             theme={theme}
             onTheme={(id) => {
@@ -1931,6 +1989,25 @@ export default function App() {
           </div>
         );
       })}
+
+      {!introTourDone && ['home', 'you'].includes(nav.entries[nav.entries.length - 1]) && (
+        <MeetRiloTour
+          skin={chosenRilo}
+          screen={nav.entries[nav.entries.length - 1]}
+          go={go}
+          onCreatorAnswer={(postsFrequently) => {
+            if (postsFrequently) {
+              // Demo Pro unlock follows the user's answer; no purchase or
+              // external service is involved in this web prototype.
+              setIsPro(true);
+              setCreatorModeOn(true);
+            } else if (!isPro) {
+              setCreatorModeOn(false);
+            }
+          }}
+          onDone={() => setIntroTourDone(true)}
+        />
+      )}
 
       {/* DEMO ONLY: the tester's remote control */}
       {nav.entries[nav.entries.length - 1] !== 'appopen' && (

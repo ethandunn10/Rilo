@@ -181,6 +181,7 @@ function BundleTable({ on }) {
 
 export default function StrictCard({
   style,
+  dataTourTarget,
   skin,
   strict,
   onTurnOn,
@@ -201,7 +202,7 @@ export default function StrictCard({
   const ending = Boolean(strict.endingAt);
 
   return (
-    <div style={style}>
+    <div data-tour-target={dataTourTarget} style={style}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
         <div style={{ flexGrow: 1, minWidth: 0 }}>
           <p style={{ margin: 0, fontFamily: 'Fredoka, sans-serif', fontSize: 19, fontWeight: 600 }}>

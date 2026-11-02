@@ -26,6 +26,7 @@ const LOCKED = [
   { name: 'the weekly step-down', sub: 'one thing gets tighter each week' },
   { name: 'where your time goes', sub: 'the full per-app breakdown' },
   { name: 'strict mode', sub: 'no half opens, 24 hours to loosen anything' },
+  { name: 'creator mode', sub: 'focused Instagram sessions for posting or research' },
 ];
 
 function Lock() {

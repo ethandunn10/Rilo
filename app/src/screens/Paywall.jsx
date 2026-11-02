@@ -18,6 +18,7 @@ const PERKS = [
   { title: 'all 23 rilos', sub: 'a new one every level' },
   { title: 'all app themes', sub: 'bamboo, sakura, sunset, snow' },
   { title: "today's plan + full history", sub: 'every day you have logged' },
+  { title: 'creator mode', sub: 'focused Instagram sessions for posting or research' },
 ];
 
 /* exactly what the free tier does, in the same words as the free row.
