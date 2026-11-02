@@ -1763,6 +1763,7 @@ export default function App() {
             skin={chosenRilo}
             locked={!isPro}
             onUpgrade={() => go('upgrade')}
+            onBack={() => go('home', 'back')}
             schedule={schedulePlan}
             setSchedule={setSchedulePlan}
             hobbies={profileList('hobby')}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import TabBar from '../components/TabBar';
+import BackButton from '../components/BackButton';
 import { riloSchedule } from '../demo/mockAI';
 import ScheduleAsk from '../components/ScheduleAsk';
 import { fmtMins } from '../lib/plan';
@@ -150,6 +151,7 @@ export default function Plan({
   skin,
   locked = false,
   onUpgrade,
+  onBack,
   /* ---- add-ons (rilo-addons-test) ---- */
   schedule = { mode: 'rilo', rows: [] },
   setSchedule = () => {},
@@ -534,10 +536,10 @@ export default function Plan({
 
       {/* today's plan is rilo pro — free sees it, blurred, with the way in */}
       {locked && (
-        <button
-          type="button"
-          className="tap"
-          onClick={onUpgrade}
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Rilo Pro plan"
           style={{
             position: 'absolute',
             inset: 0,
@@ -547,12 +549,14 @@ export default function Plan({
             alignItems: 'center',
             justifyContent: 'center',
             gap: 8,
-            border: 0,
             background: 'rgba(255,255,255,0.45)',
             backdropFilter: 'blur(8px)',
-            cursor: 'pointer',
           }}
         >
+          <BackButton
+            onBack={onBack}
+            style={{ position: 'absolute', top: 12, left: 16, zIndex: 1 }}
+          />
           <Rilo skin="gold" mood="coach" size={140} />
           <span
             style={{
@@ -567,7 +571,10 @@ export default function Plan({
           <span style={{ fontSize: 15, fontWeight: 600, color: '#2C4A36' }}>
             your day, built around your goals
           </span>
-          <span
+          <button
+            type="button"
+            className="tap-94"
+            onClick={onUpgrade}
             style={{
               marginTop: 4,
               padding: '9px 18px',
@@ -577,11 +584,12 @@ export default function Plan({
               fontFamily: 'Fredoka, sans-serif',
               fontSize: 16,
               fontWeight: 600,
+              cursor: 'pointer',
             }}
           >
             try rilo pro free
-          </span>
-        </button>
+          </button>
+        </div>
       )}
 
       <TabBar active="plan" go={go} variant="plan" skin={skin} />
