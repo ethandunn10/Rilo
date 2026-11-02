@@ -231,6 +231,8 @@ export default function App() {
     kind: 'open',
     minutes: 15,
   });
+  /* which screen opened the paywall, so it can hand them back */
+  const [cameFrom, setCameFrom] = useState(null);
   /* the iOS notification Rilo sends from the shield */
   const [banner, setBanner] = useState(false);
   /* "you closed 7 min early" — shown on Home once, after a short session */
@@ -1006,9 +1008,18 @@ export default function App() {
     setNav((n) => (n.entries.length > 1 ? n : { entries: [n.entries[0], next], dir }));
 
   /* Heading home with an unlock waiting shows the celebration first.
-     Leaving the celebration calls goTo directly so it can't bounce back. */
-  const go = (next, dir = 'forward') =>
+     Leaving the celebration calls goTo directly so it can't bounce back.
+
+     The paywall also records where it was opened from. Tapping a locked
+     feature used to be a one-way door: the blurred breakdown mid-onboarding
+     sent you to the paywall, and whichever button you pressed dropped you
+     on Home — skipping the rest of the setup. Same from the you tab, where
+     a Pro lock cost you your place. Now both the back button and the
+     choice return you to where you were. */
+  const go = (next, dir = 'forward') => {
+    if (next === 'upgrade') setCameFrom(nav.entries[nav.entries.length - 1]);
     goTo(next === 'home' && pendingSkin ? 'levelup' : next, dir);
+  };
 
   /* XP never goes below 0, and a level once earned is never lost.
      Returns true if a Pro unlock is now waiting to be celebrated. */
@@ -1304,10 +1315,16 @@ export default function App() {
               /* prototype: the trial button is what makes someone Pro */
               setIsPro(trial);
             }}
-            /* The paywall is the last screen either way. Nothing is set up
-               after it — the check-in time, the calendar and the limits are
-               all on the you tab, and a plan is already in place. */
-            nextFor={() => 'home'}
+            /* Step 8 ends at home — nothing is set up after it. But the
+               same paywall opened from a locked feature has to return to
+               where it came from, or looking at what Pro costs throws away
+               whatever you were doing. */
+            onBack={
+              screen === 'paywall'
+                ? () => goTo('yourplan', 'back')
+                : () => goTo(cameFrom ?? 'home', 'back')
+            }
+            nextFor={() => (screen === 'paywall' ? 'home' : cameFrom ?? 'home')}
           />
         );
 

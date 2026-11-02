@@ -108,7 +108,8 @@ console.log('\n8. paywall last — then straight home');
 const Paywall = (await import('../src/screens/Paywall.jsx')).default;
 const pw = flat(renderToString(<Paywall go={noop} plan="year" setPlan={noop} onChoose={noop} nextFor={() => 'home'} />));
 is('the free option is visible', pw.includes('free does the basics') || pw.includes('free'));
-is('every choice goes home', app.includes("nextFor={() => 'home'}"));
+is('step 8 ends at home whichever they choose',
+  app.includes("nextFor={() => (screen === 'paywall' ? 'home' : cameFrom ?? 'home')}"));
 is('nothing is set up after it', !app.includes("'nightonboard'") && !app.includes("'calendaronboard'"));
 
 /* ---------- the route graph ---------- */
@@ -134,6 +135,25 @@ is('"when do you scroll most" is gone', !talk.includes("id: 'when'"));
 is('"do you post?" is gone', !talk.includes("id: 'creator'"));
 is('talk is still in the app, just not in onboarding',
   app.includes("case 'talkchat'") && !app.includes("case 'talk':"));
+
+/* ---------- the paywall is not a one-way door ---------- */
+console.log('\nlooking at the price is undoable');
+const pwBack = flat(renderToString(
+  <Paywall go={noop} plan="year" setPlan={noop} onChoose={noop} nextFor={() => 'x'} onBack={noop} />,
+));
+is('there is a back button when something opened it', pwBack.includes('back'));
+is('and none on the onboarding step itself', !flat(renderToString(
+  <Paywall go={noop} plan="year" setPlan={noop} onChoose={noop} nextFor={() => 'home'} />,
+)).match(/\bback\b/));
+
+is('the blurred split opens the returnable route, not step 8',
+  readFileSync(new URL('../src/screens/YourNumber.jsx', import.meta.url), 'utf8')
+    .includes("onUpgrade={() => go('upgrade')}"));
+is('App records where the paywall was opened from', app.includes("setCameFrom(nav.entries[nav.entries.length - 1])"));
+is('back returns there', app.includes("goTo(cameFrom ?? 'home', 'back')"));
+is('and so does choosing a plan', app.includes("nextFor={() => (screen === 'paywall' ? 'home' : cameFrom ?? 'home')}"));
+is('step 8 still ends at home', app.includes("screen === 'paywall' ? 'home'"));
+is('step 8 can go back to the plan', app.includes("goTo('yourplan', 'back')"));
 
 console.log(fail ? `\n${fail} FAILED` : '\nall good — 8 steps, paywall last, home straight after');
 process.exit(fail ? 1 : 0);

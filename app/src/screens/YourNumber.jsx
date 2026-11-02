@@ -137,7 +137,7 @@ export default function YourNumber({ go, skin, breakdown, isPro = false, next = 
             where it goes
           </p>
           {breakdown ? (
-            <Breakdown breakdown={breakdown} compact isPro={isPro} onUpgrade={() => go('paywall')} />
+            <Breakdown breakdown={breakdown} compact isPro={isPro} onUpgrade={() => go('upgrade')} />
           ) : null}
         </div>
       </div>
