@@ -134,6 +134,9 @@ export default function Home({
   checkInDue = false,
   checkedInToday = false,
   onNightCheckIn,
+  /* at most one of Rilo's first-week questions (lib/firstWeek), already
+     built — the home screen just decides where it sits */
+  askCard = null,
 }) {
   const theme = useTheme();
   const upNext = suggestion(about).task;
@@ -413,6 +416,11 @@ export default function Home({
           label="saved today"
         />
       </div>
+
+      {/* Today's question, if there is one. Under the numbers and above
+          everything he wants them to tap, so it's impossible to miss and
+          equally impossible to be blocked by. */}
+      {askCard}
 
       <button
         type="button"

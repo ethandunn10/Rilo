@@ -13,6 +13,7 @@ import { useState } from 'react';
 import { fmtClock } from '../lib/addons';
 import AppLogo from './AppLogo';
 import { LIMITED, fmtOpens, halfOf, settingFor } from '../lib/limits';
+import { ASKS } from '../lib/firstWeek';
 const row = {
   display: 'flex',
   gap: 6,
@@ -89,6 +90,10 @@ export default function DemoPanel({
   onNight,
   onNightTime,
   onCalendar,
+  /* the first week of questions */
+  dripDay = 1,
+  dripDone = [],
+  onAskDay,
   onReset,
   used,
   goal,
@@ -334,6 +339,27 @@ export default function DemoPanel({
           real time
         </button>
       </div>
+
+      {/* ---------- the first week of questions ---------- */}
+      <p style={label}>first week · one ask a day</p>
+      <div style={row}>
+        {ASKS.map((a) => (
+          <button
+            key={a.id}
+            type="button"
+            onClick={() => onAskDay(a.day)}
+            style={dripDone.includes(a.id) ? { ...btn, opacity: 0.55 } : btn}
+          >
+            day {a.day} · {a.id}
+          </button>
+        ))}
+      </div>
+      <p style={note}>
+        on day {dripDay}. each button sets the day, un-asks that question and
+        drops you where it appears — day 1 at the check-in, day 2 on the plan
+        tab, day 3 on a morning home screen, 4 and 5 on home. faded means he
+        has already asked it. only ever one a day, and nothing after day 7.
+      </p>
 
       {/* ---------- jump to ---------- */}
       <p style={label}>jump to</p>

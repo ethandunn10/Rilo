@@ -162,6 +162,9 @@ export default function Plan({
   /* the plan check belongs on the plan screen too (§9) */
   check,
   onLimits = () => {},
+  /* day 2 of the first week asks for the calendar here, where he's
+     already showing what tomorrow looks like (lib/firstWeek) */
+  askCard = null,
 }) {
   const [editing, setEditing] = useState(false);
   /* rilo asks a few things before he builds anything */
@@ -373,6 +376,9 @@ export default function Plan({
               ))}
             </div>
           )}
+
+          {/* today's question, if the plan tab is where it belongs */}
+          {askCard ? <div style={{ marginBottom: 9 }}>{askCard}</div> : null}
 
           {/* who makes the day */}
           {asking ? (

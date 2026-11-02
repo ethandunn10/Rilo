@@ -11,7 +11,18 @@ import { RiloStage } from '../components/TalkBits';
 import { track } from '../lib/track';
 import { NIGHT_QUESTIONS, nightReply, tasksFrom, DEMO_NIGHT } from '../demo/mockAI';
 
-export default function NightCheckIn({ skin, onDone, onSkip }) {
+export default function NightCheckIn({
+  skin,
+  onDone,
+  onSkip,
+  /* Night one of the first week adds a third question here rather than
+     anywhere else: he's already asking how the day went, so "what are you
+     working toward right now?" is one more sentence in a conversation
+     that's open (lib/firstWeek). */
+  extraAsk = null,
+  onAskAnswer = () => {},
+  onAskSkip = () => {},
+}) {
   const [step, setStep] = useState(0);
   const [said, setSaid] = useState({ today: '', tomorrow: '' });
   const [draft, setDraft] = useState('');
@@ -24,18 +35,23 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
     stepRef.current = step;
   }, [step]);
 
-  const q = NIGHT_QUESTIONS[Math.min(step, NIGHT_QUESTIONS.length - 1)];
+  const questions = extraAsk
+    ? NIGHT_QUESTIONS.concat([{ id: 'ask', ask: extraAsk.ask, sub: extraAsk.sub }])
+    : NIGHT_QUESTIONS;
+  const q = questions[Math.min(step, questions.length - 1)];
 
   const answer = (raw) => {
     const text = (raw || '').trim();
     if (!text) return;
     const at = stepRef.current;
-    const key = NIGHT_QUESTIONS[at].id;
+    const key = questions[at].id;
     setSaid((s) => ({ ...s, [key]: text }));
     setDraft('');
     track('night', key);
 
-    if (at + 1 < NIGHT_QUESTIONS.length) {
+    if (key === 'ask') onAskAnswer(text);
+
+    if (at + 1 < questions.length) {
       stepRef.current = at + 1;
       setStep(at + 1);
     } else {
@@ -145,6 +161,11 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
           >
             {done ? reply.line : q.ask}
           </p>
+          {!done && q.sub ? (
+            <p style={{ margin: '5px 0 0', fontSize: 12.5, fontWeight: 600, opacity: 0.75 }}>
+              {q.sub}
+            </p>
+          ) : null}
         </div>
 
         <RiloStage skin={skin} mood={done ? reply.mood : 'curious'} size={180} />
@@ -203,6 +224,22 @@ export default function NightCheckIn({ skin, onDone, onSkip }) {
             <button type="submit" className="tap" style={ghost}>
               send
             </button>
+            {/* the first-week question is the only skippable one — the two
+                he always asks are the check-in itself, and "close" up top
+                already walks out of those */}
+            {q.id === 'ask' && (
+              <button
+                type="button"
+                className="tap"
+                onClick={() => {
+                  onAskSkip();
+                  setDone(true);
+                }}
+                style={ghost}
+              >
+                skip
+              </button>
+            )}
           </form>
         )}
 

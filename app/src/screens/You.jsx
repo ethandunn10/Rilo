@@ -10,6 +10,11 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import TabBar from '../components/TabBar';
 import ChipPicker from '../components/ChipPicker';
+import { ASKS } from '../lib/firstWeek';
+
+/* the day-4 question's own options, so the two places that show them can
+   never drift apart */
+const SCROLL_WHEN = ASKS.find((a) => a.id === 'scroll').options;
 import AppPicker from '../components/AppPicker';
 import GoalStepper from '../components/GoalStepper';
 import StrictCard from '../components/StrictCard';
@@ -393,6 +398,58 @@ export default function You({
 
           {/* hobbies + goals, same chips as onboarding */}
           <ChipPicker about={about} setAbout={setAbout} cardStyle={chipCard} />
+
+          {/* When they scroll. Rilo asks this on day 4 of the first week
+              (lib/firstWeek) and it has to be editable somewhere, because
+              every one of those questions can be waved off and answered
+              here instead. */}
+          <div style={chipCard('.22s')}>
+            <p
+              style={{
+                margin: '0 0 8px',
+                fontFamily: 'Fredoka, sans-serif',
+                fontSize: 17,
+                fontWeight: 600,
+              }}
+            >
+              when you scroll the most
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+              {SCROLL_WHEN.map((w) => {
+                const on = (about.scrollWhen ?? []).includes(w.id);
+                return (
+                  <button
+                    key={w.id}
+                    type="button"
+                    className="tap"
+                    aria-pressed={on}
+                    onClick={() =>
+                      setAbout({
+                        ...about,
+                        scrollWhen: on
+                          ? (about.scrollWhen ?? []).filter((x) => x !== w.id)
+                          : (about.scrollWhen ?? []).concat([w.id]),
+                      })
+                    }
+                    style={{
+                      minHeight: 40,
+                      padding: '0 14px',
+                      borderRadius: 999,
+                      border: '2px solid var(--line)',
+                      background: on ? '#2E8B3E' : '#FFFFFF',
+                      color: on ? '#FFFFFF' : '#12301A',
+                      fontFamily: 'Fredoka, sans-serif',
+                      fontSize: 15,
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {w.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           <Section>what rilo watches</Section>
 

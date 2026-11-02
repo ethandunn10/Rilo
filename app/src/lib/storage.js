@@ -152,6 +152,10 @@ export const DEFAULT_STATE = {
   night: { date: '', said: null, tasks: [], at: '21:00' },
   /* demo panel: a fake clock, null means use the real one */
   demoClock: null,
+  /* the first week of questions (lib/firstWeek): which day they're on,
+     what he's already asked, and the day he last asked anything — one a
+     day, and he stops after the week is up. */
+  drip: { day: 1, done: [], askedOn: 0 },
   /* ---------- strict mode: the bundle (§12) ----------
      On: no halves, loosening takes 24h, the step-down happens by itself, no
      borrowing, a 15-second wait. Turning it ON is instant; turning it OFF

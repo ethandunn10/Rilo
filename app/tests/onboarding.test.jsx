@@ -54,27 +54,36 @@ const crunch = readFileSync(new URL('../src/screens/Crunching.jsx', import.meta.
 is('waits 1500ms', crunch.includes('1500'));
 is('and the timer cannot be restarted by a parent render', crunch.includes('done.current?.()'));
 
-/* ---------- 5. your number ---------- */
-const YourNumber = (await import('../src/screens/YourNumber.jsx')).default;
-const num = flat(renderToString(<YourNumber go={noop} skin="original" breakdown={breakdown} isPro={false} />));
-console.log('\n5. your number — the stat is free');
-is('the daily figure', /\d+h \d+m/.test(num), num.match(/\d+h \d+m/)?.[0]);
-is('the days-a-year line', num.includes(`${days} days a year`), `${days} days a year`);
-is('the per-app split is still pro', num.includes('see where your time goes') && num.includes('rilo pro'));
-const numPro = flat(renderToString(<YourNumber go={noop} skin="original" breakdown={breakdown} isPro />));
-is('and unblurred for pro', !numPro.includes('see where your time goes'));
-
-/* ---------- 6. what would you rather ---------- */
+/* ---------- 5. what would you rather ----------
+   Asked BEFORE the number now: the sequence counts their year in whatever
+   they pick here, so it can't come after. Which also means this screen
+   must not give the number away. */
 const Rather = (await import('../src/screens/Rather.jsx')).default;
-const r = flat(renderToString(<Rather go={noop} skin="original" breakdown={breakdown} picked={[]} setPicked={noop} />));
-console.log('\n6. what would you rather — the only question about them');
-is('uses the real number', r.includes(`${days} days a year. what would you rather`));
+const r = flat(renderToString(<Rather go={noop} skin="original" picked={[]} setPicked={noop} />));
+console.log('\n5. what would you rather — asked before the reveal');
+is('asks the question', r.includes('what would you rather spend it on'));
+is('and does not spoil the number', !r.includes(`${days} days`), `${days} days`);
+is('leads into the sequence', readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8')
+  .includes('next="yournumber"'));
 is('all seven options', RATHER.every((x) => r.includes(x.label)), `${RATHER.length} chips`);
 is('plus add your own', r.includes('add your own'));
 is('multi-select, one next', r.includes('pick at least one'));
 const rPicked = flat(renderToString(<Rather go={noop} skin="original" breakdown={breakdown} picked={['gym', 'studying']} setPicked={noop} />));
 is('two picks are allowed at once', (rPicked.match(/✓/g) ?? []).length >= 2);
 is('and then next is live', rPicked.includes('next') && !rPicked.includes('pick at least one'));
+
+/* ---------- 6. your number — the sequence ----------
+   Only the first beat exists in the markup; advancing it needs a real DOM,
+   which is what tests/sequence.test.jsx is for. */
+const YourNumber = (await import('../src/screens/YourNumber.jsx')).default;
+const num = flat(renderToString(
+  <YourNumber go={noop} skin="original" breakdown={breakdown} picked={['gym']} isPro={false} />,
+));
+console.log('\n6. your number — the hit lands first');
+is('opens on what they lose a day', /\d+h \d+m/.test(num), num.match(/\d+h \d+m/)?.[0]);
+is('days a year is the first beat', num.includes('days a year'));
+is('and it can be skipped', num.includes('skip'));
+is('the flip and the split are not shown yet', !num.includes('where it goes'));
 
 console.log('\n   …saved where the old screens saved');
 const folded = applyRather({ on: { golf: true }, extra: { hobby: [], goal: [] } }, ['gym', 'studying'], ['chess']);

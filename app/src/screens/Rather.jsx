@@ -1,10 +1,13 @@
-/* "that's N days a year. what would you rather spend it on?"
+/* "what would you rather spend it on?"
 
    The one question onboarding asks about the person, and it does the work
    of two screens it replaced ("what are you into?" and "what are you
-   working toward?"). Asking it here, straight after the number, is the
-   point: the answer is the alternative to the thing they just saw the cost
-   of.
+   working toward?").
+
+   It used to open with the number — "that's 64 days a year" — and sit
+   after the reveal. It now comes first and doesn't say the number at all,
+   because the screen after it counts their year in whatever they pick
+   here, and a reveal you've already read isn't a reveal.
 
    Multi-select with one next — people have more than one thing, and
    tapping one shouldn't commit them. Saved to the same place the old
@@ -17,7 +20,6 @@ import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
 import BackButton from '../components/BackButton';
 import { RATHER } from '../lib/rather';
-import { daysPerYear } from '../lib/rather';
 
 const chip = (on) => ({
   width: '100%',
@@ -53,12 +55,11 @@ const tick = (on) => ({
   fontWeight: 700,
 });
 
-export default function Rather({ go, skin, breakdown, picked, setPicked, onBack, next = 'yourplan' }) {
+export default function Rather({ go, skin, picked, setPicked, onBack, next = 'yournumber' }) {
   const [typed, setTyped] = useState('');
   const [adding, setAdding] = useState(false);
   const [extras, setExtras] = useState([]);
 
-  const days = daysPerYear(breakdown?.blocked ?? 0);
   const chosen = picked ?? [];
   const ready = chosen.length > 0 || extras.length > 0;
 
@@ -116,7 +117,8 @@ export default function Rather({ go, skin, breakdown, picked, setPicked, onBack,
               lineHeight: 1.15,
             }}
           >
-            that&apos;s {days} days a year. what would you rather spend it on?
+            if you got a chunk of that time back, what would you rather
+            spend it on?
           </h1>
         </div>
 

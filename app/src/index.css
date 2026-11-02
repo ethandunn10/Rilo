@@ -724,3 +724,25 @@ body.app-locked .stage-wrap {
   0%, 100% { transform: translateY(-4px); }
   50% { transform: translateY(10px); }
 }
+
+/* ---------- the number sequence (screens/YourNumber) ----------
+   One plank arriving: it slides up off the pile below it and widens into
+   place. Staggered in JS, because the delay depends on how many days they
+   are losing. */
+@keyframes slab-in {
+  from {
+    opacity: 0;
+    transform: translateY(9px) scaleX(0.55);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pile-slab {
+    animation: none !important;
+    transition: none !important;
+  }
+}

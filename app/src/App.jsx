@@ -90,6 +90,8 @@ import {
   insteadPlan,
 } from './demo/mockAI';
 import { applyRather, RATHER } from './lib/rather';
+import AskCard from './components/AskCard';
+import { ASKS, askFor, markAsked, dripToDay, windowOf, isMorning } from './lib/firstWeek';
 import NightCheckIn from './screens/NightCheckIn';
 import NightTime from './screens/NightTime';
 import CalendarConnect from './screens/CalendarConnect';
@@ -209,6 +211,8 @@ export default function App() {
   const [schedulePlan, setSchedulePlan] = useState(saved.schedule);
   const [calendar, setCalendar] = useState(saved.calendar);
   const [night, setNight] = useState(saved.night);
+  /* the first week of questions (lib/firstWeek) */
+  const [drip, setDrip] = useState(saved.drip);
   /* DEMO ONLY: a fake clock so bedtime and school can be tested */
   const [demoClock, setDemoClock] = useState(saved.demoClock);
   /* the reason they gave on the check-in, for this session */
@@ -256,12 +260,13 @@ export default function App() {
       schedule: schedulePlan,
       calendar,
       night,
+      drip,
     });
   }, [name, about, apps, time, plan, planChoice, isPro, xp, level, chosenRilo, theme, opens,
       stats, appSettings, limitMode, borrow, pending, step, focus,
       screenTime, triedAgain, breakdown, program, day, history, streak,
       leanDays, strict, checkins, bedtime, school, buddies,
-      demoClock, schedulePlan, calendar, night]);
+      demoClock, schedulePlan, calendar, night, drip]);
 
   /* The web can't read real Screen Time, so the baseline comes from the
      hours they gave on Your time back (5h if they never said). */
@@ -416,6 +421,93 @@ export default function App() {
 
   /* what the calendar means for the week ahead */
   const weekAhead = calendar.on ? calendarPlan(DEMO_CALENDAR, watched) : [];
+
+  /* ---------- the first week of questions (lib/firstWeek) ----------
+     At most one of these exists at any moment, anywhere in the app. The
+     slot decides where: home, the plan tab, or the night check-in. */
+  const slotAsk = (slot) =>
+    askFor({ day: drip.day, done: drip.done, askedOn: drip.askedOn, slot, morning: isMorning(nowMins) });
+
+  /* Two of these live where only Pro can reach them: the plan tab is
+     blurred for a free account and the nightly check-in is a Pro feature.
+     Those questions fall back to the home screen rather than waiting
+     forever behind a paywall — he should still get to learn the answer. */
+  const planAsk = isPro ? slotAsk('plan') : null;
+  const checkinAsk = isPro ? slotAsk('checkin') : null;
+  const homeAsk = slotAsk('home') ?? (isPro ? null : slotAsk('plan') ?? slotAsk('checkin'));
+
+  /* Waved off. Marked asked so he drops it for good — it stays reachable
+     in the You tab, which is where all of this lives anyway. */
+  const skipAsk = (id) => {
+    setDrip((d) => markAsked(d, id));
+    track('firstweek', `${id} · not now`);
+  };
+
+  /* Answered. Each one writes to wherever that setting already lived, so
+     nothing downstream needs to know these questions were asked late. */
+  const answerAsk = (id, values = []) => {
+    if (id === 'school') {
+      const { from, to } = windowOf(values[0]);
+      setSchool((sc) => ({ ...sc, on: true, from, to }));
+    }
+    if (id === 'scroll') {
+      setAbout((a) => ({ ...a, scrollWhen: values }));
+    }
+    if (id === 'hobbies') {
+      setAbout((a) => ({
+        ...a,
+        extra: {
+          ...a.extra,
+          hobby: Array.from(new Set((a.extra?.hobby ?? []).concat(values))),
+        },
+      }));
+    }
+    if (id === 'goal') {
+      setAbout((a) => ({
+        ...a,
+        extra: {
+          ...a.extra,
+          goal: Array.from(new Set((a.extra?.goal ?? []).concat(values))),
+        },
+      }));
+    }
+    setDrip((d) => markAsked(d, id));
+    track('firstweek', `${id} · ${values.join(', ') || 'answered'}`);
+  };
+
+  /* The calendar question is the only one with somewhere to go. */
+  const ctaAsk = (id) => {
+    setDrip((d) => markAsked(d, id));
+    track('firstweek', `${id} · opened`);
+    if (id === 'calendar') go('calendar');
+  };
+
+  /* DEMO ONLY: jump to one day of the first week. Sets the day, un-asks
+     that day's question so it comes back, and lands on the screen it
+     appears on — a morning one also needs the clock moved, or it would be
+     filtered out for not being morning. */
+  const demoAskDay = (n) => {
+    const row = ASKS.find((a) => a.day === n);
+    setDrip((d) => ({
+      day: n,
+      done: (d.done ?? []).filter((id) => id !== row?.id),
+      askedOn: 0,
+    }));
+    if (!row) return;
+    track('demo', `first week · day ${n}`);
+    if (row.morningOnly) setDemoClock('08:00');
+    if (row.slot === 'checkin') go('nightcheckin');
+    else if (row.slot === 'plan') go('plan');
+    else go('home');
+  };
+
+  const askProps = (ask) => ({
+    ask,
+    skin: chosenRilo,
+    onAnswer: (values) => answerAsk(ask.id, values),
+    onSkip: () => skipAsk(ask.id),
+    onCta: () => ctaAsk(ask.id),
+  });
 
   /* ---------- the plan check (§9) ---------- */
   const check = planCheck({ appSettings, tracked, typicalFor, goalMins });
@@ -841,6 +933,8 @@ export default function App() {
     /* fresh day: opens and the pass reset, unused opens don't carry (§2.7) */
     setDay(freshDay(dateKey));
     collectBorrow();
+    /* a day going by is what moves the first week's questions along */
+    setDrip((d) => dripToDay(d, d.day + 1));
 
     setDayResult({
       used,
@@ -880,6 +974,8 @@ export default function App() {
     awardXp(gained);
     setDay(freshDay(dateKey));
     collectBorrow();
+    /* a cleared week puts them past the first week of questions */
+    setDrip((d) => dripToDay(d, d.day + 7));
     offerStepDown(nextWeek);
 
     setDayResult({
@@ -1255,7 +1351,7 @@ export default function App() {
             }}
             onSkip={() => {
               startFromApps(false);
-              go('yournumber');
+              go('rather');
             }}
           />
         );
@@ -1266,8 +1362,30 @@ export default function App() {
             skin={OG_SKIN}
             onDone={() => {
               startFromApps(true);
-              go('yournumber');
+              go('rather');
             }}
+          />
+        );
+
+      /* What they'd rather be doing is asked BEFORE the number now: the
+         flip beat of the sequence counts their year in it ("that's 180 gym
+         sessions"), and it can't do that with an answer it hasn't got. */
+      case 'rather':
+        return (
+          <Rather
+            skin={OG_SKIN}
+            picked={rather}
+            setPicked={setRather}
+            onBack={() => goTo('pickapps', 'back')}
+            /* the only question about them — folded into `about` here, in
+               the same shape the two screens it replaced used */
+            go={(next, extras = []) => {
+              setAbout((a) => applyRather(a, rather, extras));
+              buildPlanFor(rather);
+              track('rather', rather.join(', ') || 'nothing picked');
+              go(next);
+            }}
+            next="yournumber"
           />
         );
 
@@ -1277,29 +1395,9 @@ export default function App() {
             go={go}
             skin={OG_SKIN}
             breakdown={breakdown}
-            isPro={isPro}
-            /* back to the apps — the only thing worth changing from here */
-            onBack={() => goTo('pickapps', 'back')}
-            next="rather"
-          />
-        );
-
-      case 'rather':
-        return (
-          <Rather
-            skin={OG_SKIN}
-            breakdown={breakdown}
             picked={rather}
-            setPicked={setRather}
-            onBack={() => goTo('yournumber', 'back')}
-            /* the only question about them — folded into `about` here, in
-               the same shape the two screens it replaced used */
-            go={(next, extras = []) => {
-              setAbout((a) => applyRather(a, rather, extras));
-              buildPlanFor(rather);
-              track('rather', rather.join(', ') || 'nothing picked');
-              go(next);
-            }}
+            isPro={isPro}
+            onBack={() => goTo('rather', 'back')}
             next="yourplan"
           />
         );
@@ -1313,7 +1411,7 @@ export default function App() {
             appSettings={appSettings}
             instead={insteadPlan({ picks: rather, apps: watched })}
             goalMins={goalMins}
-            onBack={() => goTo('rather', 'back')}
+            onBack={() => goTo('yournumber', 'back')}
             onEdit={() => go('limitsonboard')}
             next="paywall"
           />
@@ -1405,6 +1503,7 @@ export default function App() {
             checkInDue={checkInDue}
             checkedInToday={checkedInToday}
             onNightCheckIn={() => go('nightcheckin')}
+            askCard={homeAsk ? <AskCard {...askProps(homeAsk)} /> : null}
             strictOn={strict.on}
             /* the weekly step-down surfaces here */
             stepApp={stepApp}
@@ -1489,6 +1588,9 @@ export default function App() {
         return (
           <NightCheckIn
             skin={chosenRilo}
+            extraAsk={checkinAsk}
+            onAskAnswer={(text) => checkinAsk && answerAsk(checkinAsk.id, [text])}
+            onAskSkip={() => checkinAsk && skipAsk(checkinAsk.id)}
             onDone={({ said, tasks }) => {
               /* keep the time they chose — only the day's answers change */
               setNight((n) => ({ ...n, date: dateKey, said, tasks }));
@@ -1664,6 +1766,7 @@ export default function App() {
             /* the plan check belongs on the plan screen too (§9) */
             check={check}
             onLimits={() => go('limits')}
+            askCard={planAsk ? <AskCard {...askProps(planAsk)} /> : null}
           />
         );
       case 'progress':
@@ -1923,6 +2026,9 @@ export default function App() {
           onNight={() => go('nightcheckin')}
           onNightTime={() => go('nighttime')}
           onCalendar={() => go('calendar')}
+          dripDay={drip.day}
+          dripDone={drip.done}
+          onAskDay={demoAskDay}
           onReset={startOver}
         />
       )}
