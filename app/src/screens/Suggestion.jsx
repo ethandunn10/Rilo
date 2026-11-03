@@ -4,10 +4,16 @@
 
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
-import { suggestion } from '../lib/profile';
+import { useState } from 'react';
+import { suggestion, pickedHobbies } from '../lib/profile';
 
-export default function Suggestion({ go, about, app, onStart, onSaidNo, skin }) {
-  const s = suggestion(about, app);
+export default function Suggestion({ go, about, app, onStart, onSaidNo, skin, minutes = 5 }) {
+  /* "suggest something else" used to go home, which is not what it says.
+     It walks their other hobbies instead; with only one to offer there is
+     nothing else to suggest, so the button says what it really does. */
+  const [nth, setNth] = useState(0);
+  const s = suggestion(about, app, nth);
+  const more = pickedHobbies(about).length > 1;
 
   return (
     <div
@@ -143,7 +149,7 @@ export default function Suggestion({ go, about, app, onStart, onSaidNo, skin }) 
           <button
             type="button"
             className="tap"
-            onClick={() => onStart(5)}
+            onClick={() => onStart(minutes)}
             style={{
               width: '100%',
               height: 52,
@@ -161,11 +167,11 @@ export default function Suggestion({ go, about, app, onStart, onSaidNo, skin }) 
               justifyContent: 'center',
             }}
           >
-            give me 5 minutes
+            give me {minutes} minutes
           </button>
           <button
             type="button"
-            onClick={() => go('home', 'back')}
+            onClick={() => (more ? setNth((n) => n + 1) : go('home', 'back'))}
             style={{
               border: 0,
               background: 'transparent',
@@ -178,7 +184,7 @@ export default function Suggestion({ go, about, app, onStart, onSaidNo, skin }) 
               cursor: 'pointer',
             }}
           >
-            suggest something else
+            {more ? 'suggest something else' : 'not right now'}
           </button>
         </div>
       </div>

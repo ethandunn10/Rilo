@@ -15,7 +15,7 @@ import { ThemeDecor } from './Sky';
 import { useTheme } from '../lib/themes';
 import { useReducedMotion } from '../lib/motion';
 
-const CROSS_MS = 2100;
+const CROSS_MS = 2400;
 const FADE_MS = 520;
 
 export default function RiloHandoff({ skin, name, onDone }) {
@@ -73,11 +73,11 @@ export default function RiloHandoff({ skin, name, onDone }) {
           position: 'absolute',
           left: 24,
           right: 24,
-          top: '31%',
+          top: '24%',
           margin: 0,
           textAlign: 'center',
           fontFamily: 'Fredoka, sans-serif',
-          fontSize: 27,
+          fontSize: 29,
           fontWeight: 700,
           lineHeight: 1.18,
           color: '#12301A',
@@ -93,12 +93,25 @@ export default function RiloHandoff({ skin, name, onDone }) {
         style={{
           position: 'absolute',
           left: 0,
-          bottom: 96,
+          bottom: 78,
           animation: reduced ? 'none' : `rilo-cross ${CROSS_MS}ms linear both`,
         }}
       >
         <div style={{ animation: reduced ? 'none' : `rilo-hop ${CROSS_MS}ms ease-in-out both` }}>
-          <Rilo skin={skin} mood="proud" size={116} motion="none" />
+          {/* big — he is the whole screen here, not a mascot in a corner */}
+          <Rilo skin={skin} mood="proud" size={190} motion="none" />
+          <div
+            aria-hidden="true"
+            style={{
+              width: 150,
+              height: 15,
+              margin: '-8px auto 0',
+              borderRadius: '50%',
+              background: 'rgba(12,48,26,0.3)',
+              filter: 'blur(5px)',
+              animation: reduced ? 'none' : `rilo-shadow ${CROSS_MS}ms ease-in-out both`,
+            }}
+          />
         </div>
       </div>
     </div>

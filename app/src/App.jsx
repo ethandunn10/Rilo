@@ -104,6 +104,7 @@ import { ThemeContext, themeInfo } from './lib/themes';
 /* ---- the limit system ---- */
 import {
   ALWAYS,
+  BLOCKED,
   LIMITED,
   FREE,
   PASS_MINUTES,
@@ -528,9 +529,10 @@ export default function App() {
     if (!row) return;
     track('demo', `first week · day ${n}`);
     if (row.morningOnly) setDemoClock('08:00');
+    /* the question of the day moved off home when home was cut back, so
+       every slot except the check-in now surfaces on the plan tab */
     if (row.slot === 'checkin') go('nightcheckin');
-    else if (row.slot === 'plan') go('plan');
-    else go('home');
+    else go('plan');
   };
 
   const askProps = (ask) => ({
@@ -775,6 +777,25 @@ export default function App() {
 
     const carried = carry?.mins ?? 0;
     const charged = carry?.charged ?? 0;
+
+    /* An app with no limit has no opens to spend, so none of the arithmetic
+       below applies to it. Running it through anyway gave avail 0 → cap 0 →
+       "out of opens" → back to the pop-up, which offered to open it again:
+       a loop with no way into the app. It just opens, for as long as its
+       own per-open length says, and costs nothing. */
+    if (setting.mode === FREE) {
+      const mins = Math.max(1, Math.min(wanted ?? setting.minutes, setting.minutes));
+      setSession({
+        app: appName,
+        cap: mins,
+        carried: 0,
+        charged: 0,
+        kind: 'free',
+        minutes: setting.minutes,
+      });
+      goTo('appopen');
+      return;
+    }
 
     /* add back what this session already cost, so carrying on doesn't look
        like a second session with less to spend */
@@ -1139,7 +1160,13 @@ export default function App() {
 
   /* Ignore taps while a slide is already running. */
   const goTo = (next, dir = 'forward') =>
-    setNav((n) => (n.entries.length > 1 ? n : { entries: [n.entries[0], next], dir }));
+    setNav((n) => {
+      /* already there: tapping the tab you're on used to slide the screen
+         out and an identical one in, and React warned about two children
+         with the same key because both entries were the same screen */
+      if (n.entries[n.entries.length - 1] === next) return n;
+      return n.entries.length > 1 ? n : { entries: [n.entries[0], next], dir };
+    });
 
   /* Heading home with an unlock waiting shows the celebration first.
      Leaving the celebration calls goTo directly so it can't bounce back.
@@ -1252,12 +1279,42 @@ export default function App() {
 
   /* The reason screens (bored / tired / a break) still end in a session, and
      a session still costs an open — so they all go through the check-in. */
-  const startSession = () => {
-    const mode = settingOf(currentApp).mode;
-    /* limited and unlimited both get asked what it's for; only an
-       always-allowed app skips the question entirely */
-    if (mode === LIMITED || mode === FREE) go('whyopen');
-    else openApp(currentApp);
+  /* The screens that offer "give me a few minutes" — bored, tired, taking a
+     break, needing it — ARE the reason, so they open the app rather than
+     asking for a reason again. Sending them to the check-in put them back
+     on "messages / posting / something else", which is a loop with no way
+     out of it.
+
+     The length is whatever they set for that app, not the number printed on
+     the button: picking 10 minutes per open and being handed 5 is the app
+     overruling a choice they already made. */
+  const startSession = (wanted, reason = 'something') => {
+    const setting = settingOf(currentApp);
+    const mode = setting.mode;
+
+    if (mode === BLOCKED) {
+      /* nothing to start — the pop-up is where the pass lives */
+      go('intercept');
+      return;
+    }
+
+    if (mode !== LIMITED && mode !== FREE) {
+      openApp(currentApp);
+      return;
+    }
+
+    /* `setting.minutes` is never falsy (clampMinutes floors it), so the old
+       `setting.minutes || wanted` meant a length the user picked on Break
+       or NeedIt was silently thrown away. Their pick wins, capped by what
+       the app allows per open. */
+    const mins = Math.max(1, Math.min(wanted ?? setting.minutes, setting.minutes));
+    startCheckedIn(currentApp, {
+      reason,
+      why: '',
+      length: 'full',
+      mins,
+      cost: 1,
+    });
   };
 
   const saidNo = () => {
@@ -1726,7 +1783,7 @@ export default function App() {
             opensUsed={opensUsedFor(currentApp, day)}
             schedule={schedule}
             onTalk={() => setBanner(true)}
-            onClose={() => go('home', 'back')}
+            onClose={() => { setBanner(false); go('home', 'back'); }}
           />
         );
 
@@ -1784,7 +1841,8 @@ export default function App() {
             go={go}
             about={about}
             app={currentApp}
-            onStart={startSession}
+            minutes={settingOf(currentApp).minutes}
+            onStart={(mins) => startSession(mins, 'bored')}
             onSaidNo={() => {
               saidNo();
               awardXp(10); /* did a hobby instead */
@@ -1797,7 +1855,8 @@ export default function App() {
         return (
           <Tired
             go={go}
-            onStart={startSession}
+            minutes={settingOf(currentApp).minutes}
+            onStart={(mins) => startSession(mins, 'tired')}
             onSaidNo={() => {
               saidNo();
               awardXp(5); /* put the phone down */
@@ -1807,13 +1866,20 @@ export default function App() {
           />
         );
       case 'break':
-        return <Break go={go} onStart={startSession} onSaidNo={saidNo} skin={chosenRilo} />;
+        return (
+          <Break
+            go={go}
+            onStart={(mins) => startSession(mins, 'break')}
+            onSaidNo={saidNo}
+            skin={chosenRilo}
+          />
+        );
       case 'needit':
         return (
           <NeedIt
             go={go}
             app={currentApp}
-            onStart={startSession}
+            onStart={(mins) => startSession(mins, 'needed')}
             onSaidNo={saidNo}
             skin={chosenRilo}
           />
@@ -1992,7 +2058,12 @@ export default function App() {
   return (
     <ThemeContext.Provider value={themeInfo(theme)}>
     <PhoneFrame>
-      {banner && (
+      {/* Rilo knocking only makes sense while the shield is up. It used to
+          render outside the nav stack with no dismiss, so tapping "talk to
+          rilo" and then "close" left it pinned over home, progress and you,
+          and the only way to clear it was to tap it — which dragged them
+          into the pop-up for whatever app was current. */}
+      {banner && nav.entries[nav.entries.length - 1] === 'shield' && (
         <Banner
           skin={chosenRilo}
           onTap={() => {

@@ -762,20 +762,34 @@ body.app-locked .stage-wrap {
 }
 
 /* The hand-off between onboarding and the intro tour: Rilo bounds across
-   the grass, then the whole screen fades into the app behind it. Three
-   hops, each a little flatter, so he reads as landing rather than looping. */
+   the grass, big, then the whole screen fades into the app behind it.
+   The hops get flatter and the squash on landing sells the weight. */
 @keyframes rilo-cross {
-  from { transform: translateX(-30vw); }
-  to { transform: translateX(118vw); }
+  from { transform: translateX(-34vw); }
+  to { transform: translateX(124vw); }
 }
 @keyframes rilo-hop {
-  0% { transform: translateY(0) rotate(-4deg); }
-  18% { transform: translateY(-62px) rotate(3deg); }
-  36% { transform: translateY(0) rotate(-2deg); }
-  54% { transform: translateY(-44px) rotate(3deg); }
-  72% { transform: translateY(0) rotate(-2deg); }
-  86% { transform: translateY(-24px) rotate(2deg); }
-  100% { transform: translateY(0) rotate(0deg); }
+  0%   { transform: translateY(6px) scale(1.06, 0.92) rotate(-5deg); }
+  10%  { transform: translateY(-96px) scale(0.96, 1.08) rotate(4deg); }
+  22%  { transform: translateY(0) scale(1.08, 0.9) rotate(-3deg); }
+  34%  { transform: translateY(-78px) scale(0.97, 1.06) rotate(5deg); }
+  48%  { transform: translateY(0) scale(1.07, 0.91) rotate(-3deg); }
+  62%  { transform: translateY(-54px) scale(0.98, 1.05) rotate(4deg); }
+  76%  { transform: translateY(0) scale(1.06, 0.93) rotate(-2deg); }
+  88%  { transform: translateY(-28px) scale(0.99, 1.03) rotate(2deg); }
+  100% { transform: translateY(0) scale(1, 1) rotate(0deg); }
+}
+/* the shadow pulses with the hops so he reads as leaving the ground */
+@keyframes rilo-shadow {
+  0%   { transform: scaleX(1); opacity: .26; }
+  10%  { transform: scaleX(.5); opacity: .10; }
+  22%  { transform: scaleX(1); opacity: .26; }
+  34%  { transform: scaleX(.58); opacity: .12; }
+  48%  { transform: scaleX(1); opacity: .26; }
+  62%  { transform: scaleX(.68); opacity: .15; }
+  76%  { transform: scaleX(1); opacity: .26; }
+  88%  { transform: scaleX(.82); opacity: .19; }
+  100% { transform: scaleX(1); opacity: .26; }
 }
 @keyframes handoff-out {
   from { opacity: 1; }

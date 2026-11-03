@@ -311,5 +311,121 @@ console.log('\nrilo hands off into the tour:');
   is('and the tour waits for it', app.includes('!introTourDone && !handoff'));
 }
 
+console.log('\n"give me a few minutes" actually opens the app:');
+{
+  const Tired = (await import('../src/screens/Tired.jsx')).default;
+  let got = null;
+  await render(React.createElement(Tired, {
+    onStart: (m) => { got = m; },
+    onSaidNo: () => {},
+    skin: 'original',
+    minutes: 10,
+  }));
+
+  const give = btns().find((b) => /give me/.test(b.textContent || ''));
+  is('the button offers their own minutes', /give me 10 minutes/.test(give?.textContent || ''),
+    (give?.textContent || '').trim());
+  await act(async () => { give.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+  is('and asks for that many', got === 10, String(got));
+
+  /* the handler on the other end has to open the app, not re-ask the
+     question they already answered by tapping "just tired" */
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  const fn = app.slice(app.indexOf('const startSession = ('), app.indexOf('const saidNo'));
+  is('it starts a real session', fn.includes('startCheckedIn(currentApp'), fn.slice(0, 80));
+  is('and never bounces back to the reason screen', !fn.includes("go('whyopen')"));
+  is('using the minutes set for that app', fn.includes('setting.minutes'));
+  is('and it records why they opened it',
+    /startSession\(mins, 'tired'\)/.test(app) && /startSession\(mins, 'bored'\)/.test(app));
+}
+
+console.log('\nan app with no limit actually opens:');
+{
+  /* The loop: a free app has no opens, so the opens arithmetic produced a
+     cap of 0, which sent the user back to the pop-up that offered to open
+     it again. Verify the numbers that caused it, then the guard. */
+  const { opensTotalFor, sessionCapMins } = await import('../src/lib/limits.js');
+  const free = { mode: 'free', opens: 3, minutes: 15 };
+  const avail = opensTotalFor({ setting: free, app: 'x', day: { opensUsed: {} }, borrow: null, dateKey: 'd' });
+  is('a free app really does have zero opens', avail === 0, String(avail));
+  is('so the opens maths alone would cap it at nothing',
+    sessionCapMins({ avail: 0, minutes: 15, strictOn: false }) === 0);
+
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  const fn = app.slice(app.indexOf('const startOpenSession ='), app.indexOf('const finishSession'));
+  is('so a free app skips that maths entirely', fn.includes("if (setting.mode === FREE)"));
+  is('and goes straight into the app', /setting\.mode === FREE[\s\S]{0,420}goTo\('appopen'\)/.test(fn));
+  is('with its own session kind, so nothing charges it an open',
+    /kind: 'free'/.test(fn) && app.includes("session.kind === 'open'"));
+  is('the free branch comes before the cap check',
+    fn.indexOf('mode === FREE') < fn.indexOf('if (cap <= 0)'));
+
+  /* a length the user picked is no longer thrown away */
+  const ss = app.slice(app.indexOf('const startSession = ('), app.indexOf('const saidNo'));
+  is('a picked length is honoured, capped by the app',
+    ss.includes('Math.min(wanted ?? setting.minutes, setting.minutes)'), ss.slice(0, 60));
+  is('and a blocked app no longer loops back to the shield', ss.includes('mode === BLOCKED'));
+  is('BLOCKED is imported, so that branch cannot throw', /\n  BLOCKED,/.test(app));
+}
+
+console.log('\nthe loose ends:');
+{
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  is('the knock only shows while the shield is up',
+    app.includes("banner && nav.entries[nav.entries.length - 1] === 'shield'"));
+  is('and closing the shield clears it', app.includes('setBanner(false); go(\'home\', \'back\')'));
+
+  const { suggestion, pickedHobbies } = await import('../src/lib/profile.js');
+  const about = { on: { basketball: true, gym: true }, extra: { hobby: [], goal: [] } };
+  is('both hobbies are available to suggest', pickedHobbies(about).length === 2);
+  const a = suggestion(about, 'tiktok', 0);
+  const b = suggestion(about, 'tiktok', 1);
+  is('"something else" really is something else', a.task !== b.task, `${a.task} / ${b.task}`);
+  is('and it wraps round', suggestion(about, 'tiktok', 2).task === a.task);
+
+  const sug = readFileSync(new URL('../src/screens/Suggestion.jsx', import.meta.url), 'utf8');
+  is('with one hobby the button says what it does', sug.includes("'not right now'"));
+}
+
+console.log('\nthe tour can never trap them:');
+{
+  const MeetRiloTour = (await import('../src/components/MeetRiloTour.jsx')).default;
+  /* render it with NO anchors in the DOM — a renamed target, or a screen
+     that hasn't mounted. The card must still appear so skip/next work;
+     otherwise the full-screen dim covers everything and the app is stuck. */
+  let skipped = false;
+  await render(React.createElement(MeetRiloTour, {
+    skin: 'original',
+    screen: 'home',
+    go: () => {},
+    onCreatorAnswer: () => {},
+    onDone: () => { skipped = true; },
+  }));
+  await act(async () => { await new Promise((r) => setTimeout(r, 2000)); });
+
+  const card = document.querySelector('[data-tour-card=""]');
+  is('the card still appears', Boolean(card));
+  is('and is not hidden', (card?.getAttribute('style') || '').includes('visibility: visible'),
+    (card?.getAttribute('style') || '').match(/visibility:[^;]*/)?.[0] ?? 'none');
+
+  const skip = btns().find((b) => b.getAttribute('aria-label') === 'Skip tour');
+  is('skip is reachable', Boolean(skip));
+  await act(async () => { skip.dispatchEvent(new dom.window.MouseEvent('click', { bubbles: true })); });
+  is('and it works', skipped);
+
+  const src = readFileSync(new URL('../src/components/MeetRiloTour.jsx', import.meta.url), 'utf8');
+  is('scrolling cannot kill the measuring loop',
+    src.includes('scrollIntoView') && /catch \{ \/\* no layout to scroll/.test(src));
+}
+
+console.log('\nand the small things:');
+{
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  is('tapping the tab you are on does nothing',
+    app.includes("if (n.entries[n.entries.length - 1] === next) return n;"));
+  is("rilo's daily question is demoed where it actually shows",
+    app.includes("if (row.slot === 'checkin') go('nightcheckin');\n    else go('plan');"));
+}
+
 console.log(fail ? `\n${fail} failed` : '\nall good — home cut back, guilt before bypasses, five free apps, a simpler plan editor');
 process.exit(fail ? 1 : 0);

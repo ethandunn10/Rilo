@@ -4,7 +4,7 @@
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 
-export default function Tired({ onStart, onSaidNo, skin }) {
+export default function Tired({ onStart, onSaidNo, skin, minutes = 5 }) {
   return (
     <div
       style={{
@@ -142,7 +142,7 @@ export default function Tired({ onStart, onSaidNo, skin }) {
           <button
             type="button"
             className="tap"
-            onClick={() => onStart(5)}
+            onClick={() => onStart(minutes)}
             style={{
               width: '100%',
               height: 52,
@@ -160,7 +160,7 @@ export default function Tired({ onStart, onSaidNo, skin }) {
               justifyContent: 'center',
             }}
           >
-            give me 5 minutes
+            give me {minutes} minutes
           </button>
         </div>
       </div>

@@ -157,14 +157,21 @@ const SUGGESTIONS = {
 
 /* First hobby the user left switched on, in the order they were shown. */
 export function pickedHobby(about) {
-  const all = HOBBIES.concat(about.extra.hobby);
-  return all.find((h) => about.on[h]) ?? null;
+  return pickedHobbies(about)[0] ?? null;
+}
+
+/* every hobby they ticked, in order — "suggest something else" walks this
+   rather than handing back the same one forever */
+export function pickedHobbies(about) {
+  const all = HOBBIES.concat(about?.extra?.hobby ?? []);
+  return all.filter((h) => about?.on?.[h]);
 }
 
 /* `app` is the app they were about to open, so Rilo names the right one. */
-export function suggestion(about, app = 'the feed') {
+export function suggestion(about, app = 'the feed', nth = 0) {
   const fill = (s) => s.replace('{app}', app);
-  const hobby = pickedHobby(about);
+  const picks = pickedHobbies(about);
+  const hobby = picks.length ? picks[((nth % picks.length) + picks.length) % picks.length] : null;
 
   if (!hobby) {
     return {

@@ -56,6 +56,11 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
      drawn until the rect has stopped moving; then it fades in where it
      belongs. */
   const [ready, setReady] = useState(false);
+  /* If a step can't be placed at all — a renamed anchor, a target that
+     never mounts, a measurement that throws — the card must still appear,
+     centred, or the dim covers the screen with no way to skip or advance
+     and the app is unusable. Hiding the card is only ever temporary. */
+  const [gaveUp, setGaveUp] = useState(false);
   const rootRef = useRef(null);
   const cardRef = useRef(null);
   const [cardH, setCardH] = useState(120);
@@ -88,6 +93,8 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
     let lastKey = '';
     let scrolled = false;
     setReady(false);
+    setGaveUp(false);
+    const bailout = setTimeout(() => setGaveUp(true), 1600);
 
     const measure = () => {
       const target = (root.parentElement ?? document).querySelector(`[data-tour-target="${targetName}"]`);
@@ -113,7 +120,11 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
         scrolled = true;
         const inView = r.top >= rootRect.top + 60
           && r.bottom <= rootRect.bottom - 140;
-        if (!inView) target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        try {
+          if (!inView && typeof target.scrollIntoView === 'function') {
+            target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }
+        } catch { /* no layout to scroll — the measurement below still works */ }
       }
       /* back into layout pixels, the space these panels are painted in */
       const x = (r.left - rootRect.left) / scale;
@@ -136,7 +147,12 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
       const left = Math.max(EDGE, Math.min(frameW - cw - EDGE, x + w / 2 - cw / 2));
 
       setBox({ x, y, w, h, radius, frameW, frameH, cardLeft: left, cardTop: top, cardW: cw, below });
-      return `${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`;
+      /* The card's own placement is part of "settled". Keying only on the
+         target meant the box could settle while the card was still being
+         re-placed as its measured height arrived — so it appeared and then
+         crept into position. */
+      return `${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`
+        + `|${Math.round(left)},${Math.round(top)}`;
     };
 
     const track = () => {
@@ -180,6 +196,7 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
     window.addEventListener('scroll', onMove, true);
     return () => {
       cancelled = true;
+      clearTimeout(bailout);
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', onMove);
       window.removeEventListener('scroll', onMove, true);
@@ -194,6 +211,15 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
   const answer = (posts) => { onCreatorAnswer(posts); setStep((n) => n + 1); };
   const next = () => (last ? onDone() : setStep((n) => n + 1));
   const prev = () => setStep((n) => Math.max(0, n - 1));
+
+  /* A step that points at something must not show its card until it knows
+     where to put it. The fallback below is centred, so while a measurement
+     was pending the card flashed up in the middle of the screen and then
+     slid onto Rilo — the "quick thing in the middle" before the panda.
+     Only the question step, which has no target, is centred on purpose. */
+  const anchored = Boolean(targetName);
+  const placed = Boolean(box) && ready;
+  const showCard = !anchored || placed || gaveUp;
 
   const cardStyle = box
     ? { left: box.cardLeft, top: box.cardTop, width: box.cardW }
@@ -242,7 +268,13 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
       )}
 
       {/* Rilo, one line, and the way forward */}
+      {/* Same trap as the box: while unplaced the card sits at the centred
+          fallback, so when its real position arrives the transition glides
+          it across from the middle of the screen. A key that flips on
+          placement makes it a fresh node that simply appears where it
+          belongs. */}
       <div
+        key={placed ? 'tour-card' : 'tour-card-pending'}
         ref={cardRef}
         data-tour-card=""
         style={{
@@ -256,8 +288,11 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
           transition:
             'left .42s cubic-bezier(.33,1,.68,1), top .42s cubic-bezier(.33,1,.68,1),'
             + ' opacity .3s ease-out',
-          opacity: ready || !box ? 1 : 0,
-          animation: 'tour-fade .3s ease-out both',
+          opacity: showCard ? 1 : 0,
+          /* no position transition until it has been placed once, or it
+             animates in from wherever the fallback left it */
+          visibility: showCard ? 'visible' : 'hidden',
+          animation: showCard ? 'tour-fade .3s ease-out both' : 'none',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>

@@ -356,9 +356,9 @@ export default function DemoPanel({
       </div>
       <p style={note}>
         on day {dripDay}. each button sets the day, un-asks that question and
-        drops you where it appears — day 1 at the check-in, day 2 on the plan
-        tab, day 3 on a morning home screen, 4 and 5 on home. faded means he
-        has already asked it. only ever one a day, and nothing after day 7.
+        drops you where it appears — day 1 at the check-in, the rest on the
+        plan tab. faded means he has already asked it. only ever one a day,
+        and nothing after day 7.
       </p>
 
       {/* ---------- jump to ---------- */}
