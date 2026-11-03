@@ -32,8 +32,10 @@ const STEPS = [
   { screen: 'plan', target: null, ask: true },
 
   /* progress, and the rilos you unlock */
-  { screen: 'progress', target: 'progress-week', title: 'Every day under your goal shows up here.', mood: 'proud' },
-  { screen: 'pickrilo', target: 'skins', title: 'Stay under it and you unlock a new me.', mood: 'wave' },
+  /* the level card, not the week chart — on a new account the chart is
+     empty, so highlighting it pointed at a blank box */
+  { screen: 'progress', target: 'progress-level', title: 'Every day under your goal earns xp.', mood: 'proud' },
+  { screen: 'pickrilo', target: 'skins', title: 'Level up and you unlock a new me.', mood: 'wave' },
 
   /* the settings worth knowing about */
   { screen: 'you', target: 'you-creator', title: "Posting isn't scrolling — it's tracked on its own.", mood: 'proud' },
@@ -61,6 +63,10 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
      centred, or the dim covers the screen with no way to skip or advance
      and the app is unusable. Hiding the card is only ever temporary. */
   const [gaveUp, setGaveUp] = useState(false);
+  /* After the first step has landed, the box and card stay on screen while
+     the next step is measured and simply travel to it. Only the very first
+     appearance is hidden, because there is nowhere for it to travel from. */
+  const [everPlaced, setEverPlaced] = useState(false);
   const rootRef = useRef(null);
   const cardRef = useRef(null);
   const [cardH, setCardH] = useState(120);
@@ -96,9 +102,13 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
     setGaveUp(false);
     const bailout = setTimeout(() => setGaveUp(true), 1600);
 
+    /* measure() only WORKS OUT where things go; committing it to state is
+       the tracking loop's job, once the numbers have stopped moving. That
+       is what makes a step change one clean glide instead of the box
+       chasing the scroll frame by frame. */
     const measure = () => {
       const target = (root.parentElement ?? document).querySelector(`[data-tour-target="${targetName}"]`);
-      if (!target) { setBox(null); return ''; }
+      if (!target) return null;
 
       const rootRect = root.getBoundingClientRect();
       /* the overlay is inset:0 inside the scaled stage, so its own layout
@@ -146,20 +156,30 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
       const top = Math.max(EDGE, Math.min(frameH - cardH - EDGE, rawTop));
       const left = Math.max(EDGE, Math.min(frameW - cw - EDGE, x + w / 2 - cw / 2));
 
-      setBox({ x, y, w, h, radius, frameW, frameH, cardLeft: left, cardTop: top, cardW: cw, below });
       /* The card's own placement is part of "settled". Keying only on the
          target meant the box could settle while the card was still being
          re-placed as its measured height arrived — so it appeared and then
          crept into position. */
-      return `${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`
-        + `|${Math.round(left)},${Math.round(top)}`;
+      return {
+        next: { x, y, w, h, radius, frameW, frameH, cardLeft: left, cardTop: top, cardW: cw, below },
+        key: `${Math.round(x)},${Math.round(y)},${Math.round(w)},${Math.round(h)}`
+          + `|${Math.round(left)},${Math.round(top)}`,
+      };
     };
 
     const track = () => {
-      const key = measure();
+      const got = measure();
+      const key = got?.key ?? '';
       if (key && key === lastKey) settled += 1;
       else { settled = 0; lastKey = key; }
-      if (settled >= 5) setReady(true);
+
+      if (got && settled >= 5) {
+        /* one commit, at the final numbers — the previous step's box stays
+           put until this lands, so CSS carries it across in a single move */
+        setBox(got.next);
+        setReady(true);
+        setEverPlaced(true);
+      }
       if (settled < 7 && passes++ < 120) frame = requestAnimationFrame(track);
     };
 
@@ -219,7 +239,7 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
      Only the question step, which has no target, is centred on purpose. */
   const anchored = Boolean(targetName);
   const placed = Boolean(box) && ready;
-  const showCard = !anchored || placed || gaveUp;
+  const showCard = !anchored || placed || gaveUp || everPlaced;
 
   const cardStyle = box
     ? { left: box.cardLeft, top: box.cardTop, width: box.cardW }
@@ -240,7 +260,7 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
           transition then animates the box down from the top of the screen
           onto its target, which is exactly the slide this was meant to
           avoid. Distinct keys make it a fresh node that fades in in place. */}
-      {box && ready ? (
+      {box && (ready || everPlaced) ? (
         <div
           key="tour-box"
           aria-hidden="true"
@@ -274,7 +294,7 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
           placement makes it a fresh node that simply appears where it
           belongs. */}
       <div
-        key={placed ? 'tour-card' : 'tour-card-pending'}
+        key={placed || everPlaced ? 'tour-card' : 'tour-card-pending'}
         ref={cardRef}
         data-tour-card=""
         style={{

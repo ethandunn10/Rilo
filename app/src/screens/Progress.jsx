@@ -240,6 +240,7 @@ export default function Progress({
         </h1>
 
         <div
+          data-tour-target="progress-level"
           style={{
             padding: '14px 16px',
             borderRadius: 26,

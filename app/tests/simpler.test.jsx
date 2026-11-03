@@ -427,5 +427,20 @@ console.log('\nand the small things:');
     app.includes("if (row.slot === 'checkin') go('nightcheckin');\n    else go('plan');"));
 }
 
+console.log('\nthe step that pointed at nothing:');
+{
+  const tour = readFileSync(new URL('../src/components/MeetRiloTour.jsx', import.meta.url), 'utf8');
+  const prog = readFileSync(new URL('../src/screens/Progress.jsx', import.meta.url), 'utf8');
+  /* the week chart is empty on a new account, so a step highlighting it
+     framed a blank box */
+  is('progress points at the level card, not the empty chart',
+    tour.includes("target: 'progress-level'") && !tour.includes("target: 'progress-week'"));
+  is('and that card is anchored', prog.includes('data-tour-target="progress-level"'));
+
+  const handoff = readFileSync(new URL('../src/components/RiloHandoff.jsx', import.meta.url), 'utf8');
+  is('rilo is big on the way in', /size=\{2[5-9]\d\}/.test(handoff),
+    (handoff.match(/size=\{\d+\}/) || [''])[0]);
+}
+
 console.log(fail ? `\n${fail} failed` : '\nall good — home cut back, guilt before bypasses, five free apps, a simpler plan editor');
 process.exit(fail ? 1 : 0);

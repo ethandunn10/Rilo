@@ -73,7 +73,7 @@ export default function RiloHandoff({ skin, name, onDone }) {
           position: 'absolute',
           left: 24,
           right: 24,
-          top: '24%',
+          top: '17%',
           margin: 0,
           textAlign: 'center',
           fontFamily: 'Fredoka, sans-serif',
@@ -93,19 +93,19 @@ export default function RiloHandoff({ skin, name, onDone }) {
         style={{
           position: 'absolute',
           left: 0,
-          bottom: 78,
+          bottom: 58,
           animation: reduced ? 'none' : `rilo-cross ${CROSS_MS}ms linear both`,
         }}
       >
         <div style={{ animation: reduced ? 'none' : `rilo-hop ${CROSS_MS}ms ease-in-out both` }}>
           {/* big — he is the whole screen here, not a mascot in a corner */}
-          <Rilo skin={skin} mood="proud" size={190} motion="none" />
+          <Rilo skin={skin} mood="proud" size={290} motion="none" />
           <div
             aria-hidden="true"
             style={{
-              width: 150,
-              height: 15,
-              margin: '-8px auto 0',
+              width: 220,
+              height: 20,
+              margin: '-14px auto 0',
               borderRadius: '50%',
               background: 'rgba(12,48,26,0.3)',
               filter: 'blur(5px)',
