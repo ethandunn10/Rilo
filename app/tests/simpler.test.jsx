@@ -442,5 +442,80 @@ console.log('\nthe step that pointed at nothing:');
     (handoff.match(/size=\{\d+\}/) || [''])[0]);
 }
 
+console.log('\nthe xp system, rule by rule:');
+{
+  const { dayXp } = await import('../src/lib/plan.js');
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+
+  /* earning */
+  const good = dayXp({ used: 90, goal: 120, streak: 2 });
+  is('under the goal pays', good.xp > 0 && good.hit, JSON.stringify(good));
+  is('and extends the streak', good.streak === 3);
+  is('further under pays more', dayXp({ used: 60, goal: 120, streak: 2 }).xp > good.xp);
+  is('a longer streak pays more', dayXp({ used: 90, goal: 120, streak: 5 }).xp > good.xp);
+
+  /* going over the DAY */
+  const bad = dayXp({ used: 200, goal: 120, streak: 6 });
+  is('over the goal scores nothing', bad.xp === 0, JSON.stringify(bad));
+  is('and never goes negative', bad.xp >= 0);
+  is('the streak is what is lost', bad.streak === 0);
+
+  /* losing */
+  is('the emergency pass costs xp', app.includes('awardXp(-PASS_XP)'));
+  is('overstaying what they promised costs xp', app.includes('awardXp(-spill)'));
+  is('proportional to how far over they went',
+    app.includes('Math.min(OVER_XP_CAP, Math.round(gone - promise.promised))'));
+  is('and capped so one session cannot wipe a week', app.includes('OVER_XP_CAP = 30'));
+
+  /* the cost is stated, not silent */
+  const mock = readFileSync(new URL('../src/demo/mockAI.js', import.meta.url), 'utf8');
+  is('and rilo says the number', mock.includes('cost ? `${line} −${cost} xp.`'));
+
+  /* nothing else takes xp */
+  const takes = [...app.matchAll(/awardXp\(\s*-([A-Za-z_]+)/g)].map((m) => m[1]);
+  is('only the pass and overstaying ever take xp',
+    new Set(takes).size === 2 && takes.includes('PASS_XP') && takes.includes('spill'),
+    [...new Set(takes)].join(','));
+
+  /* opening an app normally costs an OPEN, never xp */
+  /* just startOpenSession — the pass is declared between it and
+     finishSession, and it legitimately does spend xp */
+  const openStart = app.indexOf('const startOpenSession =');
+  const open = app.slice(openStart, app.indexOf('\n  const ', openStart + 10));
+  is('opening an app does not cost xp', !open.includes('awardXp'),
+    open.match(/awardXp\([^)]*\)/)?.[0] ?? 'none');
+  is('leaving on time earns it', app.includes('awardXp(ON_TIME_XP)'));
+
+  /* xp floors at zero and a level is never lost */
+  const award = app.slice(app.indexOf('const awardXp ='), app.indexOf('const awardXp =') + 400);
+  is('xp can never go below zero', award.includes('Math.max(0, xp + amount)'));
+  is('and a level once earned stays', award.includes('if (earned <= level) return false;'));
+}
+
+console.log('\nand the warning that comes BEFORE the open:');
+{
+  const Intercept = (await import('../src/screens/Intercept.jsx')).default;
+  const base = {
+    go: () => {}, app: 'tiktok', skin: 'original', openCount: 1, opensToday: 1,
+    lock: { locked: false, used: 1, setting: { mode: 'limited', opens: 3, minutes: 15 } },
+    minutes: 15, opensTotal: 3, opensUsed: 1, opensLeft: 2,
+    passesLeft: 1, canBorrow: false, hobbies: [], goals: [],
+    onPass: () => {}, onBorrow: () => {}, onOpen: () => {}, onReason: () => {},
+  };
+
+  await render(React.createElement(Intercept, { ...base, streak: 6, goalLeft: 12 }));
+  const warn = document.querySelector('[data-streak-warning]');
+  is('a streak about to go is called out', Boolean(warn));
+  is('naming the minutes and the streak',
+    /12 min left/.test(warn?.textContent || '') && /6-day streak/.test(warn?.textContent || ''),
+    (warn?.textContent || '').trim().slice(0, 70));
+
+  await render(React.createElement(Intercept, { ...base, streak: 6, goalLeft: 200 }));
+  is('but not when the day is wide open', !document.querySelector('[data-streak-warning]'));
+
+  await render(React.createElement(Intercept, { ...base, streak: 0, goalLeft: 12 }));
+  is('and not when there is no streak to lose', !document.querySelector('[data-streak-warning]'));
+}
+
 console.log(fail ? `\n${fail} failed` : '\nall good — home cut back, guilt before bypasses, five free apps, a simpler plan editor');
 process.exit(fail ? 1 : 0);

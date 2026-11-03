@@ -80,6 +80,10 @@ export default function Intercept({
   hobbies = [],
   goals = [],
   streak = 0,
+  /* how much of today's goal is left, so rilo can say what this open
+     actually risks BEFORE they tap through — a streak they can still save
+     stops more opens than any penalty applied afterwards */
+  goalLeft = null,
   /* put a limit on an app that hasn't got one */
   onLimitIt,
 }) {
@@ -298,6 +302,29 @@ export default function Intercept({
           <div
             style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}
           >
+            {/* What this open is actually about to cost them, said before
+                they commit rather than after. Only when a streak is real
+                and genuinely close to going — otherwise it is noise. */}
+            {streak >= 2 && goalLeft !== null && goalLeft > 0 && goalLeft <= 30 && (
+              <p
+                data-streak-warning=""
+                style={{
+                  margin: 0,
+                  padding: '10px 13px',
+                  borderRadius: 16,
+                  background: 'rgba(217,100,58,0.12)',
+                  color: '#8F3F15',
+                  fontSize: 13.5,
+                  fontWeight: 700,
+                  lineHeight: 1.35,
+                  textAlign: 'left',
+                }}
+              >
+                {goalLeft} min left today — that&apos;s all that&apos;s between you and
+                losing a {streak}-day streak.
+              </p>
+            )}
+
             {/* An app with no limit can't block them, so the only useful
                 thing rilo can do is point out how often they're on it and
                 offer to put a limit there. */}

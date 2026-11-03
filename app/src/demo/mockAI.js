@@ -26,12 +26,15 @@ const OVER_LINES = {
   custom: 'you said {mins} for "{why}". it has been {gone}.',
 };
 
-export function overLine({ reason, why, promised, gone, fmt }) {
+export function overLine({ reason, why, promised, gone, fmt, cost }) {
   const t = OVER_LINES[reason] ?? OVER_LINES.custom;
-  return t
+  const line = t
     .replace('{mins}', fmt(promised))
     .replace('{gone}', fmt(gone))
     .replace('{why}', why || 'that');
+  /* say the number — a penalty they can't see isn't a penalty, it's just
+     their xp quietly being wrong */
+  return cost ? `${line} −${cost} xp.` : line;
 }
 
 /* ---------- "you got back N hours" in something real ---------- */

@@ -143,6 +143,11 @@ const SAID_NO_MINUTES = 15;
 /* what going around a limit costs, and what leaving on time is worth */
 const PASS_XP = 20;
 const ON_TIME_XP = 5;
+/* Breaking their own word costs — a minute of xp per minute over what they
+   said, capped so one bad session can't wipe out a good week. A session
+   can't run past its open (AppOpen locks at the cap), so this only ever
+   fires when they said "quick" and then kept the session going. */
+const OVER_XP_CAP = 30;
 
 /* The Rilo who walks you through onboarding: always the original. */
 const OG_SKIN = 'original';
@@ -935,7 +940,9 @@ export default function App() {
         list.map((c) => (c.at === promise.at ? { ...c, used, gone, over } : c)),
       );
       if (over) {
-        track('checkin', `over: said ${promise.promised}m, took ${gone}m`);
+        const spill = Math.max(1, Math.min(OVER_XP_CAP, Math.round(gone - promise.promised)));
+        awardXp(-spill);
+        track('checkin', `over: said ${promise.promised}m, took ${gone}m · -${spill} xp`);
         setSavedNote(null);
         setOverNote(
           overLine({
@@ -944,6 +951,7 @@ export default function App() {
             promised: promise.promised,
             gone,
             fmt: fmtMins,
+            cost: spill,
           }),
         );
       }
@@ -1820,6 +1828,7 @@ export default function App() {
             hobbies={profileList('hobby')}
             goals={profileList('goal')}
             streak={streak}
+            goalLeft={Math.max(0, Math.round(goalMins - usedTotalToday))}
             onReason={(reason) => {
               track('reason', reason);
               if (reason === 'never mind') saidNo();
