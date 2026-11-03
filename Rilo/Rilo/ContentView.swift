@@ -1,17 +1,21 @@
 import SwiftUI
 
+/// Creates the app state, hands it to every screen, applies the theme, and
+/// shows the router. DEMO/DEBUG launch arguments are read in Models/DemoSeed.
 struct ContentView: View {
-    /// DEMO/DEBUG: `-screen <name>` launch argument jumps straight to a screen
-    /// (used for the screenshot checks). `-theme <id>` picks the app theme.
-    private var args: [String] { ProcessInfo.processInfo.arguments }
-    private func arg(_ key: String) -> String? {
-        guard let i = args.firstIndex(of: key), i + 1 < args.count else { return nil }
-        return args[i + 1]
-    }
+    @State private var state = DemoSeed.launch()
 
     var body: some View {
-        FoundationPreview()
-            .environment(\.riloTheme, Themes.info(arg("-theme") ?? Themes.defaultId))
+        let foundation = DemoSeed.foundation
+        Group {
+            if foundation.on {
+                FoundationPreview()
+            } else {
+                RootView()
+            }
+        }
+        .environment(state)
+        .environment(\.riloTheme, Themes.info(foundation.theme ?? state.theme))
     }
 }
 

@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Colors from app/src/index.css (:root) plus the ones screens use inline.
 extension Color {
-    init(hex: String, opacity: Double = 1) {
+    nonisolated init(hex: String, opacity: Double = 1) {
         var s = hex.trimmingCharacters(in: .whitespaces)
         if s.hasPrefix("#") { s.removeFirst() }
         if s.count == 3 { s = s.map { "\($0)\($0)" }.joined() }
@@ -17,12 +17,12 @@ extension Color {
     }
 
     /// rgba(r,g,b,a) from the web styles
-    static func rgba(_ r: Double, _ g: Double, _ b: Double, _ a: Double) -> Color {
+    nonisolated static func rgba(_ r: Double, _ g: Double, _ b: Double, _ a: Double) -> Color {
         Color(.sRGB, red: r / 255, green: g / 255, blue: b / 255, opacity: a)
     }
 }
 
-enum RC {
+nonisolated enum RC {
     // ink + text
     static let ink = Color(hex: "#12301A")
     static let ink2 = Color(hex: "#2C4A36")
