@@ -35,7 +35,12 @@ dom.window.matchMedia = (q) => ({
 const React = (await import('react')).default;
 const { createRoot } = await import('react-dom/client');
 const { act } = await import('react');
-const YourNumber = (await import('../src/screens/YourNumber.jsx')).default;
+const YourNumberModule = await import('../src/screens/YourNumber.jsx');
+const YourNumber = YourNumberModule.default;
+/* read the real beat timings rather than hardcoding them — they have been
+   tuned twice now, and a copied number just goes stale */
+const { BEAT_MS } = YourNumberModule;
+const past = (n) => BEAT_MS[n] + 400;
 const { daysPerYear, insteadOf } = await import('../src/lib/rather.js');
 
 let fail = 0;
@@ -110,9 +115,9 @@ is('nothing has gone anywhere yet', went === null);
 
 /* ---------- it advances by itself ---------- */
 console.log('\nit plays on its own');
-await wait(3700);
+await wait(past(0));
 is('beat two arrived without a tap', text().includes(flip.unit), flip.line);
-await wait(3500);
+await wait(past(1));
 is('and beat three after it', text().includes("let's get some of it back"));
 is('and then it stops', Boolean(buttonSaying('show me the plan')));
 is('still waiting on them', went === null);
@@ -215,7 +220,7 @@ is('the number is already there, not counting up',
 is('no plank animates in',
   [...document.querySelectorAll('.pile-slab')]
     .every((e) => (e.getAttribute('style') ?? '').includes('animation: none')));
-is('the beats still advance', await (async () => { await wait(3700); return text().includes(flip.unit); })());
+is('the beats still advance', await (async () => { await wait(past(0)); return text().includes(flip.unit); })());
 is('the flip number is final too', text().includes(String(flip.count)));
 await click(buttonSaying('skip'));
 is('and the way out still works', Boolean(buttonSaying('show me the plan')));

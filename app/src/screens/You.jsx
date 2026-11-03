@@ -6,6 +6,7 @@
    and app list as onboarding, the daily goal stepper, the plan they tapped,
    and "start over" for handing the phone to the next tester. */
 
+import { useState } from 'react';
 import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import TabBar from '../components/TabBar';
@@ -18,6 +19,9 @@ const SCROLL_WHEN = ASKS.find((a) => a.id === 'scroll').options;
 import AppPicker from '../components/AppPicker';
 import GoalStepper from '../components/GoalStepper';
 import StrictCard from '../components/StrictCard';
+import BypassGuilt from '../components/BypassGuilt';
+import ProBadge from '../components/ProBadge';
+import { HOBBIES, GOALS } from '../lib/profile';
 import ProLock from '../components/ProLock';
 import ScheduleCard from '../components/ScheduleCard';
 import { FREE_MAX_APPS, GOAL_FLOOR_HOURS, fmtMins } from '../lib/plan';
@@ -167,6 +171,16 @@ export default function You({
   onNextWeek,
   onDemoXp,
 }) {
+  /* Loosening strict mode is a bypass, so it goes through the same sad-rilo
+     sheet as the pass and the borrow. Tightening never does. */
+  const [loosening, setLoosening] = useState(null);
+  /* what they picked in onboarding, in their words — the same list rilo
+     builds his plan from */
+  const pickedFrom = (list, kind) =>
+    list.filter((k) => about?.on?.[k]).concat(about?.extra?.[kind] ?? []);
+  const hobbyList = pickedFrom(HOBBIES, 'hobby');
+  const goalList = pickedFrom(GOALS, 'goal');
+
   const prog = levelProgress(xp, level);
   const planLabel = isPro ? 'rilo pro (trial)' : 'free';
 
@@ -628,7 +642,7 @@ export default function You({
             type="button"
             className="tap"
             data-tour-target="you-buddies"
-            onClick={() => go('buddies')}
+            onClick={() => (isPro ? go('buddies') : go('upgrade'))}
             style={{
               ...card('.24s'),
               flexDirection: 'row',
@@ -653,9 +667,14 @@ export default function You({
               <span
                 style={{ display: 'block', marginTop: 2, fontSize: 13, fontWeight: 600, color: '#2C4A36' }}
               >
-                {buddyCount ? `${buddyCount} added` : 'invite code only. no profiles.'}
+                {isPro
+                  ? buddyCount
+                    ? `${buddyCount} added`
+                    : 'invite code only. no profiles.'
+                  : 'a friend sees your mood and streak, never your numbers.'}
               </span>
             </span>
+            {!isPro && <ProBadge />}
           </button>
 
           <Section>your limits</Section>
@@ -668,9 +687,9 @@ export default function You({
               skin={chosenRilo}
               strict={strict}
               onTurnOn={onStrictOn}
-              onAskOff={onStrictAskOff}
+              onAskOff={() => setLoosening('strict-wait')}
               onKeepOn={onStrictKeepOn}
-              onTurnOffNow={onStrictOffNow}
+              onTurnOffNow={() => setLoosening('strict-now')}
             />
           ) : (
             <ProLock
@@ -946,6 +965,26 @@ export default function You({
 
         </div>
       </div>
+
+      {/* loosening strict mode goes past rilo first */}
+      {loosening && (
+        <BypassGuilt
+          skin={chosenRilo}
+          kind="loosen"
+          hobbies={hobbyList}
+          goals={goalList}
+          streak={streak}
+          title="making it easier?"
+          confirmLabel={loosening === 'strict-now' ? 'turn it off' : 'start the 24 hours'}
+          onCancel={() => setLoosening(null)}
+          onConfirm={() => {
+            const which = loosening;
+            setLoosening(null);
+            if (which === 'strict-now') onStrictOffNow();
+            else onStrictAskOff();
+          }}
+        />
+      )}
 
       <TabBar active="you" go={go} variant="progress" skin={chosenRilo} />
     </div>

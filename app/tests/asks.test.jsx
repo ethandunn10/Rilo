@@ -151,10 +151,14 @@ const home = readFileSync(new URL('../src/screens/Home.jsx', import.meta.url), '
 const plan = readFileSync(new URL('../src/screens/Plan.jsx', import.meta.url), 'utf8');
 const night = readFileSync(new URL('../src/screens/NightCheckIn.jsx', import.meta.url), 'utf8');
 
-is('home gets at most one', app.includes('askCard={homeAsk ? <AskCard {...askProps(homeAsk)} /> : null}'));
-is('the plan tab gets at most one', app.includes('askCard={planAsk ? <AskCard {...askProps(planAsk)} /> : null}'));
+/* Home was cut back to four things, so Rilo's question of the day moved to
+   the plan tab — which now shows the plan ask, or the home one if there is
+   no plan ask waiting. Still at most one card. */
+is('home no longer carries a question', !home.includes('askCard'));
+is('the plan tab gets at most one',
+  app.includes('askCard={planAsk || homeAsk ? <AskCard {...askProps(planAsk ?? homeAsk)} /> : null}'));
 is('the check-in gets the extra question', app.includes('extraAsk={checkinAsk}'));
-is('home has somewhere to put it', home.includes('askCard'));
+is('and the plan screen has somewhere to put it', plan.includes('askCard'));
 is('so does the plan tab', plan.includes('askCard'));
 is('the check-in can be skipped past', night.includes('onAskSkip'));
 is('a day going by moves it along', app.includes('dripToDay(d, d.day + 1)'));

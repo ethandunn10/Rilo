@@ -9,7 +9,7 @@
                    rather be doing — "that's 180 gym sessions"
      3. the promise "let's get some of it back", then their plan
 
-   Beats one and two run themselves (about three and a half seconds each)
+   Beats one and two run themselves (about two seconds each)
    and a tap anywhere moves it on, because someone who has read it should
    never have to wait out an animation. "skip" jumps straight to the last
    beat, which is the resting one: nothing moves there, the button is
@@ -31,8 +31,11 @@ import { fmtMins } from '../lib/plan';
 import { daysPerYear, insteadOf } from '../lib/rather';
 import { useCountUp, useReducedMotion } from '../lib/motion';
 
-/* how long each self-advancing beat holds */
-const BEAT_MS = [3600, 3400];
+/* How long each self-advancing beat holds. This is the moment the whole
+   pitch rests on — the number has to land, not flash past — so each beat
+   holds long enough to read it twice. A tap moves it on early and "skip"
+   jumps to the end, so nobody who has read it has to wait. */
+export const BEAT_MS = [3800, 3400];
 
 /* The pile: one slab per day they lose in a year.
    Drawn as a stack of thin planks rising off the hills rather than a grid
@@ -40,7 +43,9 @@ const BEAT_MS = [3600, 3400];
    weight. Slabs are sized to the count so 40 days and 90 days both fill
    the same space instead of one overflowing the screen. */
 function Pile({ days, flipped, reduced }) {
-  const budget = 236;
+  /* Kept below the centred column rather than running up behind it — the
+     words are the point, the pile is the weight under them. */
+  const budget = 150;
   const slabH = Math.max(2, Math.min(7, Math.floor(budget / Math.max(days, 1)) - 1));
   const stagger = reduced ? 0 : Math.min(26, 2000 / Math.max(days, 1));
 
@@ -52,6 +57,11 @@ function Pile({ days, flipped, reduced }) {
         alignItems: 'center',
         justifyContent: 'flex-start',
         gap: 1,
+        /* The slabs are sized in %, so the stack needs a width of its own.
+           Without one it shrink-wraps its children, the percentages resolve
+           against zero, and every plank renders 0px wide — the pile was
+           there in the DOM and invisible on screen. */
+        width: 240,
         height: budget,
         transition: reduced ? 'none' : 'transform .9s cubic-bezier(.2,.8,.3,1)',
         transform: flipped ? 'rotate(-4deg) translateY(-4px)' : 'none',
@@ -115,8 +125,8 @@ export default function YourNumber({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [beat]);
 
-  const bigDays = useCountUp(days, 1800, { run: beat === 0, reduced });
-  const bigFlip = useCountUp(flip.count, 1200, { run: beat >= 1, reduced });
+  const bigDays = useCountUp(days, 2000, { run: beat === 0, reduced });
+  const bigFlip = useCountUp(flip.count, 1700, { run: beat >= 1, reduced });
 
   const onwards = () => setBeat((b) => Math.min(b + 1, 2));
   /* back steps through the beats before it leaves the screen — the way
@@ -207,7 +217,7 @@ export default function YourNumber({
                 bottom: 0,
                 display: 'flex',
                 justifyContent: 'center',
-                opacity: 0.7,
+                opacity: 0.45,
                 pointerEvents: 'none',
               }}
             >
@@ -218,7 +228,9 @@ export default function YourNumber({
               key={`num-${beat}`}
               style={{
                 position: 'absolute',
-                top: '50%',
+                /* a little above centre: it reads better with the pile
+                   under it, and nothing is fighting the hills */
+                top: '43%',
                 left: 0,
                 right: 0,
                 transform: 'translateY(-50%)',
@@ -226,43 +238,55 @@ export default function YourNumber({
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: 11,
+                justifyContent: 'center',
+                gap: 10,
+                padding: '0 18px',
+                boxSizing: 'border-box',
                 textAlign: 'center',
                 animation: reduced ? 'none' : 'rise .5s ease-out both',
               }}
             >
+              {/* Rilo is part of the moment, not a decoration in the corner:
+                  he is the one being let down by the number, so he stands
+                  with it where they are already looking. */}
+              <Rilo skin={skin} mood={mood} size={124} />
+
               <p
                 style={{
-                  margin: 0,
-                  fontSize: 13,
+                  margin: '4px 0 0',
+                  fontSize: 15.5,
                   fontWeight: 800,
-                  letterSpacing: '0.09em',
+                  letterSpacing: '0.07em',
                   textTransform: 'uppercase',
-                  color: '#2C4A36',
+                  color: '#1E3A27',
                 }}
               >
                 {beat === 0 ? `${fmtMins(perDay)} a day, on these apps` : 'the same time, spent your way'}
               </p>
+
               <p
                 style={{
                   margin: 0,
                   fontFamily: 'Fredoka, sans-serif',
-                  fontSize: 68,
+                  fontSize: 104,
                   fontWeight: 700,
-                  lineHeight: 1,
+                  lineHeight: 0.95,
+                  letterSpacing: '-0.02em',
                   color: beat === 0 ? '#12301A' : '#2E8B3E',
                 }}
               >
                 {beat === 0 ? bigDays : bigFlip}
               </p>
+
               <p
                 style={{
-                  margin: '4px 0 0',
+                  margin: '6px 0 0',
                   fontFamily: 'Fredoka, sans-serif',
-                  fontSize: 21,
-                  fontWeight: 600,
+                  fontSize: 30,
+                  fontWeight: 700,
                   lineHeight: 1.2,
-                  maxWidth: 280,
+                  maxWidth: 320,
+                  color: beat === 0 ? '#0E2615' : '#1B5F28',
                 }}
               >
                 {beat === 0 ? 'days a year. awake, scrolling.' : `${flip.unit}. that's what it's worth.`}
@@ -337,20 +361,6 @@ export default function YourNumber({
           </div>
         )}
 
-        {/* Rilo watches it happen from the corner. He's let down while the
-            pile grows and pleased once it turns into something. */}
-        <div
-          style={{
-            position: 'absolute',
-            left: 14,
-            bottom: 4,
-            pointerEvents: 'none',
-            opacity: beat === 2 ? 0 : 1,
-            transition: reduced ? 'none' : 'opacity .3s ease-out',
-          }}
-        >
-          <Rilo skin={skin} mood={mood} size={96} />
-        </div>
       </div>
 
       {/* no button while it's playing — a tap anywhere moves it on and

@@ -2,6 +2,7 @@
    tester should be able to see what the trial would give them. */
 
 import Rilo from './Rilo';
+import ProBadge from './ProBadge';
 
 export default function ProLock({ style, title, sub, skin = 'gold', onTap, dataTourTarget }) {
   return (
@@ -52,6 +53,8 @@ export default function ProLock({ style, title, sub, skin = 'gold', onTap, dataT
       >
         pro
       </span>
+      <ProBadge />
+    
     </button>
   );
 }

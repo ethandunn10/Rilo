@@ -57,6 +57,9 @@ export default function WhyOpen({
   schedule = [],
   nowMins = 0,
   onStart,
+  /* "i'm bored" and "just tired" are answers rilo can actually do something
+     with, so they leave this screen instead of starting a session */
+  onFeeling = () => {},
   onNevermind,
   /* they took him up on the alternative */
   onInstead,
@@ -177,6 +180,10 @@ export default function WhyOpen({
               type="button"
               className="tap"
               onClick={() => {
+                if (r.id === 'bored' || r.id === 'tired') {
+                  onFeeling(r.id);
+                  return;
+                }
                 setReason(r.id);
                 /* posting is the one he doesn't argue with — but he does
                    ask what. everything else gets pushed back on first. */

@@ -753,3 +753,31 @@ body.app-locked .stage-wrap {
     animation: none !important;
   }
 }
+
+/* the intro tour's box and card fade in once their target has settled,
+   rather than appearing mid-scroll and sliding into place */
+@keyframes tour-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The hand-off between onboarding and the intro tour: Rilo bounds across
+   the grass, then the whole screen fades into the app behind it. Three
+   hops, each a little flatter, so he reads as landing rather than looping. */
+@keyframes rilo-cross {
+  from { transform: translateX(-30vw); }
+  to { transform: translateX(118vw); }
+}
+@keyframes rilo-hop {
+  0% { transform: translateY(0) rotate(-4deg); }
+  18% { transform: translateY(-62px) rotate(3deg); }
+  36% { transform: translateY(0) rotate(-2deg); }
+  54% { transform: translateY(-44px) rotate(3deg); }
+  72% { transform: translateY(0) rotate(-2deg); }
+  86% { transform: translateY(-24px) rotate(2deg); }
+  100% { transform: translateY(0) rotate(0deg); }
+}
+@keyframes handoff-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

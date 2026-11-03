@@ -16,6 +16,8 @@
 import { useEffect, useState } from 'react';
 import PhoneFrame from './components/PhoneFrame';
 import MeetRiloTour from './components/MeetRiloTour';
+import BypassGuilt from './components/BypassGuilt';
+import RiloHandoff from './components/RiloHandoff';
 
 import Welcome from './screens/Welcome';
 import Name from './screens/Name';
@@ -137,6 +139,9 @@ function wantsResults() {
 /* How much time saying no is worth. Refusing a session outright banks the
    open they didn't spend, which is the app's own per-open length. */
 const SAID_NO_MINUTES = 15;
+/* what going around a limit costs, and what leaving on time is worth */
+const PASS_XP = 20;
+const ON_TIME_XP = 5;
 
 /* The Rilo who walks you through onboarding: always the original. */
 const OG_SKIN = 'original';
@@ -216,6 +221,10 @@ export default function App() {
   // This demo restarts onboarding on each visit, so the in-app introduction
   // should be offered again after onboarding rather than remembered forever.
   const [introTourDone, setIntroTourDone] = useState(false);
+  /* a loosening change waiting on rilo's "are you sure" — { app, next } */
+  const [loosenAsk, setLoosenAsk] = useState(null);
+  /* the beat between finishing onboarding and the tour starting */
+  const [handoff, setHandoff] = useState(false);
   const [calendar, setCalendar] = useState(saved.calendar);
   const [night, setNight] = useState(saved.night);
   /* the first week of questions (lib/firstWeek) */
@@ -358,6 +367,16 @@ export default function App() {
   /* The goal is one number they set. It does not step itself down and it
      never locks anything (§8). */
   const goalMins = hoursToMins(time.goal);
+
+  /* While they are still building the first plan there is nothing to feel
+     bad about — rilo only asks why a limit is getting easier once the plan
+     is theirs and they are living with it. */
+  /* the tabs the intro tour walks through */
+  const TOUR_SCREENS = ['home', 'plan', 'progress', 'pickrilo', 'you'];
+
+  const ONBOARDING = ['welcome', 'name', 'pickapps', 'permission', 'crunching',
+    'yournumber', 'rather', 'yourplan', 'limitsonboard', 'paywall'];
+  const inOnboarding = () => ONBOARDING.includes(nav.entries[nav.entries.length - 1]);
 
   /* The apps they picked. Nothing else.
 
@@ -563,6 +582,14 @@ export default function App() {
     };
     const prev = settingOf(app);
     if (prev.mode === next.mode && prev.opens === next.opens && prev.minutes === next.minutes) {
+      return;
+    }
+
+    /* Making a limit easier is a bypass like any other, so rilo asks for a
+       reason first — but not while they are still setting the plan up, and
+       not in strict mode, where the 24-hour wait below already does it. */
+    if (!strict.on && !inOnboarding() && isLoosening(prev, next)) {
+      setLoosenAsk({ app, next });
       return;
     }
 
@@ -794,11 +821,14 @@ export default function App() {
     startOpenSession(appName, mins);
   };
 
-  /* the emergency pass: five minutes, no opens spent (§5) */
+  /* the emergency pass: five minutes, no opens spent (§5), but it costs xp
+     — it is a way around a limit, and going around one should cost
+     something that isn't free */
   const spendEmergencyPass = (appName, why) => {
     if (passesLeft <= 0) return;
     setDay((d) => ({ ...d, passes: (d.passes ?? 0) + 1 }));
-    track('pass', why || 'no reason given');
+    awardXp(-PASS_XP);
+    track('pass', `${why || 'no reason given'} · -${PASS_XP} xp`);
     setSession({
       app: appName,
       cap: PASS_MINUTES,
@@ -811,11 +841,11 @@ export default function App() {
   };
 
   /* borrow half an open off tomorrow (§6) */
-  const borrowFromTomorrow = (appName) => {
+  const borrowFromTomorrow = (appName, why) => {
     if (!borrowableFor(appName)) return;
     setDay((d) => ({ ...d, borrowed: { app: appName } }));
     setBorrow({ date: tomorrow(), app: appName });
-    track('borrow', `${appName}: ½ open off tomorrow`);
+    track('borrow', `${appName}: ½ open off tomorrow · ${why || 'no reason given'}`);
     /* the half open is theirs now — straight to the check-in */
     go('whyopen');
   };
@@ -856,6 +886,13 @@ export default function App() {
         lastBlockedAt: Date.now(),
         sinceBlocked: 0,
       }));
+    }
+
+    /* Getting off when the timer is up is the thing worth rewarding, so it
+       pays xp. Coming back later just doesn't earn it again — opening an
+       app never subtracts xp, only the emergency pass does. */
+    if (session.kind === 'open' && used <= session.cap + 0.5) {
+      awardXp(ON_TIME_XP);
     }
 
     /* closing early banks the minutes they didn't spend */
@@ -1059,11 +1096,11 @@ export default function App() {
   };
 
   /* ---------- Rilo's plan, and their own (§13) ---------- */
-  const makeRiloPlan = () => {
+  const makeRiloPlan = (goalOverride) => {
     const out = riloLimits({
       tracked,
       breakdown,
-      goalMins,
+      goalMins: goalOverride ?? goalMins,
       hobbies: profileList('hobby'),
       goals: profileList('goal'),
       calendar: weekAhead,
@@ -1099,22 +1136,6 @@ export default function App() {
     track('limits', `rilo built a plan · allows ${out.check.allows}m`);
   };
 
-  /* "make your own" starts from a clean slate: nothing is pre-limited, so
-     there's nothing to undo first. */
-  const makeOwnPlan = () => {
-    setAppSettings((s) => {
-      const next = { ...s };
-      tracked.forEach((app) => {
-        if (settingFor(s, app).mode === ALWAYS) return;
-        next[app] = { mode: FREE, opens: 3, minutes: 15 };
-      });
-      return next;
-    });
-    setRiloWhy({});
-    setRiloLead([]);
-    setLimitMode('own');
-    track('limits', 'made their own');
-  };
 
   /* Ignore taps while a slide is already running. */
   const goTo = (next, dir = 'forward') =>
@@ -1232,7 +1253,10 @@ export default function App() {
   /* The reason screens (bored / tired / a break) still end in a session, and
      a session still costs an open — so they all go through the check-in. */
   const startSession = () => {
-    if (settingOf(currentApp).mode === LIMITED) go('whyopen');
+    const mode = settingOf(currentApp).mode;
+    /* limited and unlimited both get asked what it's for; only an
+       always-allowed app skips the question entirely */
+    if (mode === LIMITED || mode === FREE) go('whyopen');
     else openApp(currentApp);
   };
 
@@ -1298,8 +1322,6 @@ export default function App() {
     tracked,
     appSettings,
     onSetApp: setAppSetting,
-    time,
-    setTime,
     day,
     check,
     pending,
@@ -1308,8 +1330,6 @@ export default function App() {
     limitMode,
     riloWhy,
     riloLead,
-    onRiloPlan: makeRiloPlan,
-    onOwnPlan: makeOwnPlan,
     pctFor,
     totalOpensFor,
   };
@@ -1449,6 +1469,16 @@ export default function App() {
             appSettings={appSettings}
             instead={insteadPlan({ picks: rather, apps: watched })}
             goalMins={goalMins}
+            time={time}
+            /* changing the goal refits the limits to it straight away —
+               the goal is the number, the limits are how it is met */
+            setTime={(next) => {
+              setTime(next);
+              makeRiloPlan(hoursToMins(next.goal));
+            }}
+            avgMins={breakdown?.blocked ?? 0}
+            check={check}
+            onFit={() => makeRiloPlan()}
             onBack={() => goTo('yournumber', 'back')}
             onEdit={() => go('limitsonboard')}
             next="paywall"
@@ -1492,6 +1522,9 @@ export default function App() {
                 : () => goTo(cameFrom ?? 'home', 'back')
             }
             nextFor={() => (screen === 'paywall' ? 'home' : cameFrom ?? 'home')}
+            /* leaving the paywall at the end of onboarding is the one time
+               rilo gets a run-up before the tour */
+            onNext={() => { if (screen === 'paywall') setHandoff(true); }}
           />
         );
 
@@ -1517,8 +1550,6 @@ export default function App() {
             go={go}
             name={name}
             about={about}
-            xp={xp}
-            level={level}
             skin={chosenRilo}
             onOpenApp={openApp}
             tracked={tracked}
@@ -1527,24 +1558,13 @@ export default function App() {
             totalOpensFor={totalOpensFor}
             usedToday={usedTotalToday}
             goalMins={goalMins}
-            streak={streak}
             savedNote={savedNote}
             onClearSavedNote={() => setSavedNote(null)}
-            isPro={isPro}
             riloMood={riloMood}
             riloNote={riloNote}
             overNote={overNote}
             onClearOverNote={() => setOverNote('')}
-            passesLeft={passesLeft}
             backToday={back.today}
-            creatorModeOn={creatorModeOn}
-            creatorMinutes={creator.date === dateKey ? creator.todayMinutes : 0}
-            showIntroTour={!introTourDone}
-            canCheckIn={canCheckIn}
-            checkInDue={checkInDue}
-            checkedInToday={checkedInToday}
-            onNightCheckIn={() => go('nightcheckin')}
-            askCard={homeAsk ? <AskCard {...askProps(homeAsk)} /> : null}
             strictOn={strict.on}
             /* the weekly step-down surfaces here */
             stepApp={stepApp}
@@ -1608,6 +1628,10 @@ export default function App() {
             schedule={schedulePlan.rows ?? []}
             nowMins={nowMins}
             onStart={(pick) => startCheckedIn(currentApp, pick)}
+            onFeeling={(id) => {
+              track('checkin', id);
+              go(id === 'bored' ? 'suggestion' : 'tired');
+            }}
             onInstead={(option) => {
               /* they took the alternative — that's the whole point of the
                  app, so it banks the time and the xp */
@@ -1736,13 +1760,20 @@ export default function App() {
             strictOn={strict.on}
             passesLeft={passesLeft}
             canBorrow={borrowableFor(currentApp)}
+            hobbies={profileList('hobby')}
+            goals={profileList('goal')}
+            streak={streak}
             onReason={(reason) => {
               track('reason', reason);
               if (reason === 'never mind') saidNo();
             }}
             onOpen={() => go('whyopen')}
             onPass={(why) => spendEmergencyPass(currentApp, why)}
-            onBorrow={() => borrowFromTomorrow(currentApp)}
+            onBorrow={(why) => borrowFromTomorrow(currentApp, why)}
+            onLimitIt={() => {
+              track('limits', `suggested a limit on ${currentApp}`);
+              go('limits');
+            }}
           />
         );
       }
@@ -1789,12 +1820,13 @@ export default function App() {
         );
 
       case 'plan':
-        /* today's plan is rilo pro */
+        /* the plan and "do this instead" are free — they are the reason to
+           put the phone down, so they can't sit behind the paywall */
         return (
           <Plan
             go={go}
             skin={chosenRilo}
-            locked={!isPro}
+            locked={false}
             onUpgrade={() => go('upgrade')}
             onBack={() => go('home', 'back')}
             schedule={schedulePlan}
@@ -1808,7 +1840,12 @@ export default function App() {
             /* the plan check belongs on the plan screen too (§9) */
             check={check}
             onLimits={() => go('limits')}
-            askCard={planAsk ? <AskCard {...askProps(planAsk)} /> : null}
+            askCard={planAsk || homeAsk ? <AskCard {...askProps(planAsk ?? homeAsk)} /> : null}
+            canCheckIn={canCheckIn}
+            checkInDue={checkInDue}
+            checkedInToday={checkedInToday}
+            onNightCheckIn={() => go('nightcheckin')}
+            isPro={isPro}
           />
         );
       case 'creator':
@@ -1990,7 +2027,34 @@ export default function App() {
         );
       })}
 
-      {!introTourDone && ['home', 'you'].includes(nav.entries[nav.entries.length - 1]) && (
+      {loosenAsk && (
+        <BypassGuilt
+          skin={chosenRilo}
+          kind="loosen"
+          hobbies={profileList('hobby')}
+          goals={profileList('goal')}
+          streak={streak}
+          title="making it easier?"
+          confirmLabel="change it"
+          onCancel={() => setLoosenAsk(null)}
+          onConfirm={(reason) => {
+            const { app, next } = loosenAsk;
+            setLoosenAsk(null);
+            applySetting(app, next);
+            track('limit', `loosened ${app} · ${reason}`);
+          }}
+        />
+      )}
+
+      {handoff && (
+        <RiloHandoff
+          skin={chosenRilo}
+          name={name}
+          onDone={() => setHandoff(false)}
+        />
+      )}
+
+      {!introTourDone && !handoff && TOUR_SCREENS.includes(nav.entries[nav.entries.length - 1]) && (
         <MeetRiloTour
           skin={chosenRilo}
           screen={nav.entries[nav.entries.length - 1]}

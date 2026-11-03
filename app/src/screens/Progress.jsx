@@ -417,6 +417,7 @@ export default function Progress({
             </p>
           </div>
           <div
+            data-tour-target="progress-week"
             style={{
               display: 'flex',
               alignItems: 'flex-end',

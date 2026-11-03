@@ -6,6 +6,7 @@ import Rilo from '../components/Rilo';
 import TabBar from '../components/TabBar';
 import BackButton from '../components/BackButton';
 import { riloSchedule } from '../demo/mockAI';
+import ProBadge from '../components/ProBadge';
 import ScheduleAsk from '../components/ScheduleAsk';
 import { fmtMins } from '../lib/plan';
 import { planCheckLine } from '../lib/limits';
@@ -63,15 +64,14 @@ const bigSub = (primary) => ({
 });
 
 
-/* Sticks to the bottom of the scroller while editing, so however many rows
-   they add, "done" is on screen and tappable without hunting for it. */
+/* "done" is a bar docked above the tab bar while editing, not a sticky
+   button inside the card. As a sticky child of the card it floated in the
+   middle of the screen over the rows it was meant to sit under, and it
+   covered "+ add something", which made adding a row impossible. */
 const doneBtn = {
-  position: 'sticky',
-  bottom: 8,
-  zIndex: 3,
-  marginTop: 10,
-  width: '100%',
-  minHeight: 56,
+  flex: 1,
+  minWidth: 0,
+  minHeight: 54,
   borderRadius: 999,
   border: 0,
   background: '#12301A',
@@ -84,12 +84,12 @@ const doneBtn = {
 };
 
 const addBtn = {
-  marginTop: 8,
-  minHeight: 42,
-  width: '100%',
+  flex: 1,
+  minWidth: 0,
+  minHeight: 54,
   borderRadius: 999,
   border: '2px dashed rgba(18,48,26,0.4)',
-  background: 'transparent',
+  background: 'var(--card, #FFFFFF)',
   color: '#12301A',
   fontFamily: 'Fredoka, sans-serif',
   fontSize: 15,
@@ -167,6 +167,15 @@ export default function Plan({
   /* day 2 of the first week asks for the calendar here, where he's
      already showing what tomorrow looks like (lib/firstWeek) */
   askCard = null,
+  /* the nightly check-in moved off Home when Home was cut back to four
+     things. It belongs here: it is how tomorrow gets planned. (pro) */
+  canCheckIn = false,
+  checkInDue = false,
+  checkedInToday = false,
+  onNightCheckIn = () => {},
+  /* free sees the check-in, locked — knowing what pro does is the argument
+     for it, and a feature that simply isn't there makes no argument */
+  isPro = false,
 }) {
   const [editing, setEditing] = useState(false);
   /* rilo asks a few things before he builds anything */
@@ -233,7 +242,11 @@ export default function Plan({
           height: '100%',
           boxSizing: 'border-box',
           padding: '52px 20px 0',
-          '--tail': 'calc(128px + var(--safe-bottom, 0px))',
+          /* while editing, clear the docked "done" bar as well as the tab
+             bar, so the last row and "+ add something" are both reachable */
+          '--tail': editing
+            ? 'calc(206px + var(--safe-bottom, 0px))'
+            : 'calc(128px + var(--safe-bottom, 0px))',
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
@@ -382,6 +395,51 @@ export default function Plan({
           {/* today's question, if the plan tab is where it belongs */}
           {askCard ? <div style={{ marginBottom: 9 }}>{askCard}</div> : null}
 
+          {/* rilo's nightly check-in */}
+          {(canCheckIn || !isPro) && (
+            <button
+              type="button"
+              className="tap"
+              onClick={isPro ? onNightCheckIn : onUpgrade}
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                minHeight: 56,
+                marginBottom: 9,
+                padding: '10px 14px',
+                borderRadius: 20,
+                background: checkInDue ? '#2B3A6B' : 'var(--card)',
+                border: '1.5px solid rgba(18,48,26,0.12)',
+                color: checkInDue ? '#FFFFFF' : '#12301A',
+                textAlign: 'left',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+              }}
+            >
+              <span aria-hidden="true" style={{ fontSize: 20 }}>🌙</span>
+              <span style={{ flexGrow: 1, minWidth: 0 }}>
+                <span style={{ display: 'block', fontFamily: 'Fredoka, sans-serif', fontSize: 16, fontWeight: 600 }}>
+                  {checkedInToday ? 'checked in' : 'check in with rilo'}
+                </span>
+                <span style={{ display: 'block', fontSize: 11.5, fontWeight: 600, opacity: checkInDue ? 0.85 : 0.6 }}>
+                  {!isPro
+                    ? 'thirty seconds before bed, and tomorrow is planned'
+                    : checkedInToday
+                      ? 'tomorrow is planned'
+                      : checkInDue
+                        ? '30 seconds, then bed'
+                        : 'how today went'}
+                </span>
+              </span>
+              {!isPro && <ProBadge />}
+              {isPro && checkInDue && !checkedInToday && (
+                <span aria-hidden="true" style={{ flexShrink: 0, width: 9, height: 9, borderRadius: 999, background: '#FFD43B' }} />
+              )}
+            </button>
+          )}
+
           {/* who makes the day */}
           {asking ? (
             <ScheduleAsk skin={skin} onBuild={buildWithRilo} onCancel={() => setAsking(false)} />
@@ -400,17 +458,17 @@ export default function Plan({
                 <span style={bigSub(true)}>he&apos;ll ask a couple of things first</span>
               </button>
 
-              <button
-                type="button"
-                className="tap-94"
-                onClick={() => setEditing((v) => !v)}
-                style={bigBtn(false)}
-              >
-                {editing ? 'done editing' : 'edit the schedule'}
-                <span style={bigSub(false)}>
-                  {editing ? "tap when you're happy with it" : 'change what you already have'}
-                </span>
-              </button>
+              {!editing && (
+                <button
+                  type="button"
+                  className="tap-94"
+                  onClick={() => setEditing(true)}
+                  style={bigBtn(false)}
+                >
+                  edit the schedule
+                  <span style={bigSub(false)}>change what you already have</span>
+                </button>
+              )}
 
               <button type="button" className="tap-94" onClick={startOwn} style={bigBtn(false)}>
                 make your own
@@ -419,8 +477,12 @@ export default function Plan({
             </div>
           )}
 
+          <div data-tour-target="plan-day" style={{ display: 'flex', flexDirection: 'column' }}>
           {rows.map((row, i) => (
-            <div key={`${row.at}-${i}`} style={rowStyle(row.status ?? '', i)}>
+            <div
+              key={`${row.at}-${i}`}
+              style={rowStyle(row.status ?? '', i)}
+            >
               <p
                 style={{
                   margin: 0,
@@ -499,6 +561,7 @@ export default function Plan({
               )}
             </div>
           ))}
+          </div>
 
           {!rows.length && (
             <p
@@ -514,14 +577,29 @@ export default function Plan({
             </p>
           )}
 
-          {editing && (
+        </div>
+      </div>
+
+      {/* docked above the tab bar, clear of everything it used to cover */}
+      {editing && (
+        <div
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 'calc(94px + var(--safe-bottom, 0px))',
+            zIndex: 12,
+            boxSizing: 'border-box',
+            padding: '11px 20px 13px',
+            background: 'var(--card, #FFFFFF)',
+            borderTop: '1.5px solid rgba(18,48,26,0.10)',
+            boxShadow: '0 -6px 18px rgba(10,40,20,0.10)',
+          }}
+        >
+          <div style={{ display: 'flex', gap: 9 }}>
             <button type="button" className="tap" onClick={addRow} style={addBtn}>
               + add something
             </button>
-          )}
-
-          {/* finishing where they finish — at the bottom of the list */}
-          {editing && (
             <button
               type="button"
               className="tap-94"
@@ -530,9 +608,9 @@ export default function Plan({
             >
               done
             </button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* today's plan is rilo pro — free sees it, blurred, with the way in */}
       {locked && (

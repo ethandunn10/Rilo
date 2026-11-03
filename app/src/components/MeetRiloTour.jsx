@@ -19,16 +19,27 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Rilo from './Rilo';
 
 const STEPS = [
+  /* home — what he tracks and what to do instead */
   { screen: 'home', target: 'home-talk', title: "Hey — I'm Rilo. Tap me any time to talk.", mood: 'wave' },
   { screen: 'home', target: 'score', title: 'Your day at a glance — time, goal, streak.', mood: 'coach' },
-  { screen: 'home', target: 'home-apps', title: 'I watch these apps. Leave early, it costs half an open.', mood: 'coach' },
-  { screen: 'home', target: 'next', title: 'What to do instead. Your schedule lives here.', mood: 'proud' },
-  { screen: 'home', target: null, ask: true },
+  { screen: 'home', target: 'home-apps', title: 'I watch these. Leave early, it costs half an open.', mood: 'coach' },
+  { screen: 'home', target: 'next', title: 'And something to do instead of scrolling.', mood: 'proud' },
+
+  /* the plan */
+  { screen: 'plan', target: 'plan-day', title: 'Your day, built around what you told me.', mood: 'coach' },
+
+  /* the one question */
+  { screen: 'plan', target: null, ask: true },
+
+  /* progress, and the rilos you unlock */
+  { screen: 'progress', target: 'progress-week', title: 'Every day under your goal shows up here.', mood: 'proud' },
+  { screen: 'pickrilo', target: 'skins', title: 'Stay under it and you unlock a new me.', mood: 'wave' },
+
+  /* the settings worth knowing about */
   { screen: 'you', target: 'you-creator', title: "Posting isn't scrolling — it's tracked on its own.", mood: 'proud' },
   { screen: 'you', target: 'you-strict', title: 'Strict mode: 24 hours before anything loosens.', mood: 'coach' },
   { screen: 'you', target: 'you-schedule', title: 'Bedtime, school and focus times go here.', mood: 'coach' },
   { screen: 'you', target: 'you-buddies', title: 'Add a friend — they see your streak, not your numbers.', mood: 'wave' },
-  { screen: 'you', target: 'you-apps', title: "That's me. Change any of it here.", mood: 'proud' },
 ];
 
 const PAD = 6;
@@ -39,6 +50,12 @@ const GREEN = '#7ED957';
 export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go }) {
   const [step, setStep] = useState(0);
   const [box, setBox] = useState(null);
+  /* The first measurement lands before the scroll and the entry animations
+     have settled, which used to paint the box over whatever was at the top
+     of the screen and then slide it down to the real target. Nothing is
+     drawn until the rect has stopped moving; then it fades in where it
+     belongs. */
+  const [ready, setReady] = useState(false);
   const rootRef = useRef(null);
   const cardRef = useRef(null);
   const [cardH, setCardH] = useState(120);
@@ -70,6 +87,7 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
     let settled = 0;
     let lastKey = '';
     let scrolled = false;
+    setReady(false);
 
     const measure = () => {
       const target = (root.parentElement ?? document).querySelector(`[data-tour-target="${targetName}"]`);
@@ -84,12 +102,19 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
       const frameW = root.offsetWidth || rootRect.width;
       const frameH = root.offsetHeight || rootRect.height;
 
+      const r = target.getBoundingClientRect();
+
+      /* Only scroll when the target isn't already comfortably on screen.
+         Scrolling unconditionally meant the very first step — Rilo, who is
+         already near the top — still slid the page, so the box appeared and
+         then travelled. If it is already in view the box simply opens on
+         it, which is what the first step should do. */
       if (!scrolled) {
         scrolled = true;
-        target.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        const inView = r.top >= rootRect.top + 60
+          && r.bottom <= rootRect.bottom - 140;
+        if (!inView) target.scrollIntoView({ block: 'center', behavior: 'smooth' });
       }
-
-      const r = target.getBoundingClientRect();
       /* back into layout pixels, the space these panels are painted in */
       const x = (r.left - rootRect.left) / scale;
       const y = (r.top - rootRect.top) / scale;
@@ -118,14 +143,43 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
       const key = measure();
       if (key && key === lastKey) settled += 1;
       else { settled = 0; lastKey = key; }
-      if (settled < 5 && passes++ < 120) frame = requestAnimationFrame(track);
+      if (settled >= 5) setReady(true);
+      if (settled < 7 && passes++ < 120) frame = requestAnimationFrame(track);
     };
-    track();
+
+    /* The screens animate their cards in (rise14), so a target measured
+       mid-entry is still travelling — which is why the box used to appear
+       slightly above Rilo and slide down onto him. Wait for the running
+       entry animations to finish first. Looping ones (Rilo's bob, the
+       drifting cloud) never finish, so they're excluded, and the whole wait
+       is capped so a stuck animation can't hold the tour hostage. */
+    let cancelled = false;
+    const settleAnimations = () => {
+      const host = root.parentElement;
+      if (!host || typeof host.getAnimations !== 'function') return Promise.resolve();
+      try {
+        const running = host.getAnimations({ subtree: true }).filter((a) => {
+          if (a.playState !== 'running') return false;
+          const iterations = a.effect?.getTiming?.().iterations;
+          return iterations !== Infinity;
+        });
+        if (!running.length) return Promise.resolve();
+        return Promise.race([
+          Promise.allSettled(running.map((a) => a.finished)),
+          new Promise((res) => { setTimeout(res, 1200); }),
+        ]);
+      } catch {
+        return Promise.resolve();
+      }
+    };
+
+    settleAnimations().then(() => { if (!cancelled) track(); });
 
     const onMove = () => { settled = 0; passes = 0; measure(); };
     window.addEventListener('resize', onMove);
     window.addEventListener('scroll', onMove, true);
     return () => {
+      cancelled = true;
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', onMove);
       window.removeEventListener('scroll', onMove, true);
@@ -154,9 +208,15 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
       onClick={(e) => e.stopPropagation()}
       style={{ position: 'absolute', inset: 0, zIndex: 60, overflow: 'hidden', color: '#12301A', fontFamily: 'Inter, system-ui, sans-serif' }}
     >
-      {/* the green box: nothing inside it, the feature shows through */}
-      {box ? (
+      {/* The green box: nothing inside it, the feature shows through.
+          The keys matter. Without them React reconciles this div with the
+          full-screen dim below it — same element type — and the position
+          transition then animates the box down from the top of the screen
+          onto its target, which is exactly the slide this was meant to
+          avoid. Distinct keys make it a fresh node that fades in in place. */}
+      {box && ready ? (
         <div
+          key="tour-box"
           aria-hidden="true"
           data-tour-box=""
           style={{
@@ -169,12 +229,16 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
             border: `3px solid ${GREEN}`,
             borderRadius: box.radius,
             boxShadow: '0 0 0 100vmax rgba(8, 26, 14, .66)',
-            transition: 'left .26s ease, top .26s ease, width .26s ease, height .26s ease',
+            transition:
+              'left .42s cubic-bezier(.33,1,.68,1), top .42s cubic-bezier(.33,1,.68,1),'
+              + ' width .42s cubic-bezier(.33,1,.68,1), height .42s cubic-bezier(.33,1,.68,1),'
+              + ' opacity .3s ease-out',
+            animation: 'tour-fade .3s ease-out both',
             pointerEvents: 'none',
           }}
         />
       ) : (
-        <div aria-hidden="true" data-tour-box="none" style={{ position: 'absolute', inset: 0, background: 'rgba(8, 26, 14, .66)' }} />
+        <div key="tour-dim" aria-hidden="true" data-tour-box="none" style={{ position: 'absolute', inset: 0, background: 'rgba(8, 26, 14, .66)' }} />
       )}
 
       {/* Rilo, one line, and the way forward */}
@@ -189,8 +253,11 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
           borderRadius: 20,
           background: '#FFFFFF',
           boxShadow: '0 10px 28px rgba(8,26,14,.34)',
-          transition: 'left .26s ease, top .26s ease',
-          animation: 'rise14 .24s ease-out both',
+          transition:
+            'left .42s cubic-bezier(.33,1,.68,1), top .42s cubic-bezier(.33,1,.68,1),'
+            + ' opacity .3s ease-out',
+          opacity: ready || !box ? 1 : 0,
+          animation: 'tour-fade .3s ease-out both',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -218,7 +285,7 @@ export default function MeetRiloTour({ skin, screen, onCreatorAnswer, onDone, go
           </div>
         ) : (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 11 }}>
-            <button type="button" className="tap" onClick={onDone} style={{ border: 0, background: 'transparent', color: '#85978B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>skip</button>
+            <button type="button" className="tap" aria-label="Skip tour" onClick={onDone} style={{ border: 0, background: 'transparent', color: '#85978B', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>skip</button>
             <span style={{ flex: 1 }} />
             {step > 0 && (
               <button type="button" className="tap" onClick={prev} style={{ minWidth: 54, minHeight: 36, border: '2px solid #DCE7DE', borderRadius: 999, background: 'transparent', color: '#12301A', fontFamily: 'Fredoka, sans-serif', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}>back</button>

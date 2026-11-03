@@ -16,9 +16,13 @@
    out every time. */
 export const CHECKIN_REASONS = [
   { id: 'messages', label: 'messages', sub: 'replying to someone' },
-  { id: 'something', label: 'something specific', sub: 'one thing, then out' },
-  { id: 'post', label: 'need to post', sub: 'something you made' },
+  { id: 'post', label: 'posting', sub: 'something you made' },
   { id: 'custom', label: 'something else', sub: 'tell me' },
+  /* The honest ones. They used to sit on the wait screen, where ticking
+     "bored" and carrying on was a single tap and nothing came of it. Here
+     they go somewhere: rilo answers with something to do, or with bed. */
+  { id: 'bored', label: "i'm bored", sub: 'rilo picks something' },
+  { id: 'tired', label: 'just tired', sub: 'brain is fried' },
 ];
 
 /* Creators get a sharper version of the posting line — for them it isn't a

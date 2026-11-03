@@ -162,6 +162,7 @@ export default function PickRilo({
         </div>
 
         <div
+          data-tour-target="skins"
           className="scroll-y"
           style={{
             flexGrow: 1,

@@ -6,30 +6,28 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 
 const PERKS = [
-  { title: 'unlimited apps', sub: 'free watches 2' },
-  { title: 'where your time goes', sub: 'the per-app breakdown, unblurred' },
-  { title: 'let rilo build your limits', sub: 'and explain every choice' },
+  { title: 'unlimited apps', sub: 'free watches 5' },
+  { title: 'strict mode', sub: 'no half opens, 24 hours to loosen anything' },
+  { title: 'where your time goes', sub: 'the per-app breakdown and your trends' },
   { title: 'the weekly step-down', sub: 'one thing tightens each week' },
   {
     title: 'rilo checks in every night',
     sub: 'thirty seconds before bed, and tomorrow is planned',
   },
-  { title: 'strict mode', sub: 'no half opens, 24 hours to loosen anything' },
-  { title: 'all 23 rilos', sub: 'a new one every level' },
-  { title: 'all app themes', sub: 'bamboo, sakura, sunset, snow' },
-  { title: "today's plan + full history", sub: 'every day you have logged' },
-  { title: 'creator mode', sub: 'focused Instagram sessions for posting or research' },
+  { title: 'all 23 rilos and every theme', sub: 'a new one every level' },
+  { title: 'buddy mode', sub: 'a friend sees your mood and streak, never your numbers' },
 ];
 
-/* exactly what the free tier does, in the same words as the free row.
-   The limit system itself is not behind the paywall — opens, halves, the
-   emergency pass and borrowing are how the app works, for everyone. */
+/* Exactly what the free tier does. The limit system itself is not behind
+   the paywall — the opens, the check-in, rilo's plan and the guilt prompts
+   are how the app works, for everyone. Pro is more apps and more depth. */
 const FREE_BITS = [
-  'watches 2 apps',
-  'opens in halves, with the wait and the rilo pop-up',
-  'always allowed / blocked / limited / free, per app',
-  '1 emergency pass a day, and borrowing from tomorrow',
-  'your daily goal, your streak and your total screen time',
+  'watches up to 5 apps',
+  'opens in halves, with the wait and the "what are you opening this for?"',
+  "rilo's plan, and something to do instead",
+  'your daily goal, your streak and your screen-time number',
+  'rilo\'s moods, and a word from him when you go around a limit',
+  '1 emergency pass a day',
   'original rilo and the grass theme',
 ];
 
@@ -44,7 +42,7 @@ const PLANS = [
   {
     id: 'free',
     name: 'free',
-    sub: '2 apps, one daily limit, no plan',
+    sub: '5 apps, your limits and your plan',
     price: '$0',
   },
 ];
@@ -71,6 +69,9 @@ export default function Paywall({
   /* Where to go next depends on which button they tapped, and on how the
      paywall was reached — see the note in App.jsx. */
   nextFor = () => 'home',
+  /* fires alongside the navigation, so the caller can do something with
+     the fact that they just finished (the hand-off into the tour) */
+  onNext = () => {},
   /* Looking at the price has to be undoable. Without this, tapping a
      blurred Pro feature was a one-way door out of whatever you were
      doing. */
@@ -382,6 +383,7 @@ export default function Paywall({
             if (onChoose) onChoose(which);
             /* onboarding carries on to the calendar; from settings it
                just goes back to where they were */
+            onNext(which);
             go(nextFor(which));
           }}
           style={{

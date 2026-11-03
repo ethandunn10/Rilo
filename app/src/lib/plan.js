@@ -29,8 +29,8 @@ function blockedShare(appList) {
   return Math.min(MAX_BLOCKED_SHARE, sum / (sum + OTHER_WEIGHT));
 }
 
-/* free blocks two apps; pro blocks as many as they like */
-export const FREE_MAX_APPS = 2;
+/* free blocks five apps; pro blocks as many as they like */
+export const FREE_MAX_APPS = 5;
 
 export function watchedFor(appList, isPro) {
   return isPro ? appList : appList.slice(0, FREE_MAX_APPS);

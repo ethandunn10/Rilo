@@ -16,8 +16,10 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 import AppLogo from '../components/AppLogo';
 import Opens from '../components/Opens';
+import BypassGuilt from '../components/BypassGuilt';
 import {
   BLOCKED,
+  FREE,
   LIMITED,
   BORROW_OPENS,
   PASS_MINUTES,
@@ -39,24 +41,6 @@ function moodFor({ stuck, opensToday }) {
   return 'coach';
 }
 
-const card = {
-  width: '100%',
-  minHeight: 64,
-  borderRadius: 20,
-  background: 'rgba(255,255,255,0.62)',
-  border: '1.5px solid rgba(255,255,255,0.9)',
-  backdropFilter: 'blur(14px)',
-  boxShadow: '0 8px 26px rgba(20,60,40,0.12)',
-  color: '#12301A',
-  cursor: 'pointer',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'flex-start',
-  justifyContent: 'center',
-  gap: 2,
-  padding: '10px 18px',
-  textAlign: 'left',
-};
 
 const wideBtn = (ready, dark = true) => ({
   width: '100%',
@@ -91,19 +75,33 @@ export default function Intercept({
   onOpen,
   onPass,
   onBorrow,
+  /* their own onboarding answers and what a bypass costs — rilo says both
+     before he lets them past a limit */
+  hobbies = [],
+  goals = [],
+  streak = 0,
+  /* put a limit on an app that hasn't got one */
+  onLimitIt,
 }) {
   const wait = waitFor(strictOn);
   const [countdown, setCountdown] = useState(wait);
-  const [passWhat, setPassWhat] = useState(false);
-  const [typed, setTyped] = useState('');
+  /* which bypass they tapped, if any: 'pass' or 'borrow'. Both go through
+     the same sad-rilo sheet, which is what collects the reason. */
+  const [bypass, setBypass] = useState(null);
   const timer = useRef(null);
 
   const limited = lock?.setting?.mode === LIMITED;
   const blocked = lock?.setting?.mode === BLOCKED;
+  /* An app with no limit has nothing to run out of. It still gets the wait
+     and the check-in — rilo always asks what it's for — but it can never be
+     "that's it for today", which is what used to happen: with no opens to
+     spend it fell through to the out-of-everything screen and got blocked
+     by a limit it doesn't have. */
+  const unlimited = lock?.setting?.mode === FREE;
   /* a window (bedtime / school / focus) beats everything but the pass */
   const windowed = Boolean(lock?.kind) && ['bedtime', 'school', 'focus'].includes(lock.kind);
   /* can they still spend an open on this? */
-  const canSpend = limited && !windowed && !lock?.locked;
+  const canSpend = (limited || unlimited) && !windowed && !lock?.locked;
   /* Nothing left anywhere — the end of the road (§7). A window doesn't
      count: bedtime isn't "that's it for today", it's "not right now", and
      the opens are still sitting there waiting for the morning. */
@@ -125,10 +123,6 @@ export default function Intercept({
   const ready = countdown <= 0;
   const mood = moodFor({ stuck, opensToday });
 
-  const sayReason = (label, where) => {
-    onReason?.(label);
-    go(where);
-  };
 
   const headline = () => {
     if (windowed) {
@@ -300,17 +294,40 @@ export default function Intercept({
 
         <div style={{ flexGrow: 1, minHeight: 6 }} />
 
-        {passWhat ? (
-          <AskWhat
-            typed={typed}
-            setTyped={setTyped}
-            onSubmit={(text) => text.trim() && onPass(text.trim())}
-            title="what's it for?"
-          />
-        ) : (
+        {(
           <div
             style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}
           >
+            {/* An app with no limit can't block them, so the only useful
+                thing rilo can do is point out how often they're on it and
+                offer to put a limit there. */}
+            {unlimited && openCount >= 3 && onLimitIt && (
+              <button
+                type="button"
+                className="tap"
+                data-suggest-limit=""
+                onClick={onLimitIt}
+                style={{
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  textAlign: 'left',
+                  padding: '12px 14px',
+                  borderRadius: 20,
+                  border: '2px solid var(--line, #12301A)',
+                  background: 'rgba(255,255,255,0.94)',
+                  color: '#12301A',
+                  cursor: 'pointer',
+                }}
+              >
+                <span style={{ display: 'block', fontFamily: 'Fredoka, sans-serif', fontSize: 17, fontWeight: 600 }}>
+                  that&apos;s {openCount} times today, and {app} has no limit.
+                </span>
+                <span style={{ display: 'block', marginTop: 2, fontSize: 12.5, fontWeight: 600, color: '#3D5A46' }}>
+                  want me to put one on it?
+                </span>
+              </button>
+            )}
+
             {/* 1. spend an open — the normal way in, via the check-in (§4) */}
             {canSpend && (
               <button
@@ -337,7 +354,7 @@ export default function Intercept({
                 type="button"
                 className="tap"
                 disabled={!ready}
-                onClick={() => setPassWhat(true)}
+                onClick={() => setBypass('pass')}
                 style={wideBtn(ready)}
               >
                 emergency pass · {PASS_MINUTES} min
@@ -353,7 +370,7 @@ export default function Intercept({
                 type="button"
                 className="tap"
                 disabled={!ready}
-                onClick={onBorrow}
+                onClick={() => setBypass('borrow')}
                 style={wideBtn(ready, false)}
               >
                 borrow ½ open from tomorrow
@@ -370,45 +387,9 @@ export default function Intercept({
               </button>
             )}
 
-            {/* something better to do, instead of any of the above */}
-            {!stuck && (
-              /* stacked: two cards side by side on a 390px phone left
-                 each one about 165px, with the subtitle wrapping to three
-                 lines */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-                <button
-                  type="button"
-                  className="tap-ic"
-                  onClick={() => sayReason("i'm bored", 'suggestion')}
-                  style={card}
-                >
-                  <span
-                    style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}
-                  >
-                    i&apos;m bored
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#3D5A46' }}>
-                    rilo picks something
-                  </span>
-                </button>
-
-                <button
-                  type="button"
-                  className="tap-ic"
-                  onClick={() => sayReason('just tired', 'tired')}
-                  style={card}
-                >
-                  <span
-                    style={{ fontFamily: 'Fredoka, sans-serif', fontSize: 18, fontWeight: 600 }}
-                  >
-                    just tired
-                  </span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#3D5A46' }}>
-                    brain is fried
-                  </span>
-                </button>
-              </div>
-            )}
+            {/* "i'm bored" and "just tired" used to sit here, which let them
+                tick a box and carry straight on. They belong one screen
+                later, with the rest of the reasons, after the wait. */}
           </div>
         )}
 
@@ -436,77 +417,26 @@ export default function Intercept({
           {stuck ? 'alright, close it' : 'never mind, close it'}
         </button>
       </div>
-    </div>
-  );
-}
 
-/* "what for?" — talk or type, same as everywhere else in the app */
-function AskWhat({ typed, setTyped, onSubmit, title }) {
-  return (
-    <div
-      style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0 }}
-    >
-      <p
-        style={{
-          margin: 0,
-          fontFamily: 'Fredoka, sans-serif',
-          fontSize: 22,
-          fontWeight: 600,
-          textAlign: 'center',
-        }}
-      >
-        {title}
-      </p>
-
-      {/* Typing first: it's the thing that always works, needs no
-          permission and no quiet room. The mic sits under it for anyone who
-          would rather say it. */}
-      <div style={{ display: 'flex', gap: 8 }}>
-        <input
-          autoFocus
-          type="text"
-          value={typed}
-          placeholder="type it…"
-          onChange={(e) => setTyped(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') onSubmit(typed);
-          }}
-          style={{
-            flexGrow: 1,
-            minWidth: 0,
-            height: 48,
-            boxSizing: 'border-box',
-            padding: '0 16px',
-            borderRadius: 999,
-            border: '2px solid #12301A',
-            background: '#FFFFFF',
-            fontFamily: 'Inter, system-ui, sans-serif',
-            fontSize: 16,
-            fontWeight: 600,
-            color: '#12301A',
+      {/* every way around a limit goes through rilo first */}
+      {bypass && (
+        <BypassGuilt
+          skin={skin}
+          kind={bypass}
+          hobbies={hobbies}
+          goals={goals}
+          streak={streak}
+          title={bypass === 'borrow' ? 'borrowing from tomorrow?' : 'using your one pass?'}
+          confirmLabel={bypass === 'borrow' ? 'borrow it' : 'use the pass'}
+          onCancel={() => setBypass(null)}
+          onConfirm={(reason) => {
+            setBypass(null);
+            if (bypass === 'borrow') onBorrow(reason);
+            else onPass(reason);
           }}
         />
-        <button
-          type="button"
-          className="tap"
-          onClick={() => onSubmit(typed)}
-          style={{
-            height: 48,
-            padding: '0 20px',
-            borderRadius: 999,
-            border: 0,
-            background: '#12301A',
-            color: '#FFFFFF',
-            fontFamily: 'Fredoka, sans-serif',
-            fontSize: 16,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
-          go
-        </button>
-      </div>
-
+      )}
     </div>
   );
 }
+

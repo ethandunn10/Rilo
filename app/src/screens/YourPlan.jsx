@@ -18,7 +18,9 @@ import Rilo from '../components/Rilo';
 import Dots from '../components/Dots';
 import BackButton from '../components/BackButton';
 import AppLogo from '../components/AppLogo';
-import { fmtMins } from '../lib/plan';
+import GoalStepper from '../components/GoalStepper';
+import { useState } from 'react';
+import { fmtMins, GOAL_FLOOR_HOURS } from '../lib/plan';
 import { LIMITED, BLOCKED, FREE, settingFor, fmtOpens } from '../lib/limits';
 
 const LOCKED = [
@@ -45,10 +47,27 @@ export default function YourPlan({
   appSettings = {},
   instead = [],
   goalMins = 120,
+  /* the daily goal moved here from the limits editor: it is the number the
+     whole plan is aimed at, so it belongs with the plan, not buried in the
+     per-app screen */
+  time,
+  setTime,
+  /* what they are actually on right now, so the goal is set against a real
+     number rather than picked out of the air */
+  avgMins = 0,
+  /* whether the limits still add up to the goal (lib/limits planCheck) */
+  check,
+  /* refit the limits to the goal, when they have drifted over it */
+  onFit = () => {},
   onEdit,
   next = 'paywall',
   onBack,
 }) {
+  /* Rilo only says it once per drift — dismissing it shouldn't mean being
+     nagged on every re-render while they decide. */
+  const [hushed, setHushed] = useState(false);
+  const over = Boolean(check?.over) && !hushed;
+
   const limited = tracked.filter((a) => {
     const m = settingFor(appSettings, a).mode;
     return m === LIMITED || m === BLOCKED || m === FREE;
@@ -101,10 +120,60 @@ export default function YourPlan({
               here&apos;s your plan.
             </h1>
             <p style={{ margin: '3px 0 0', fontSize: 13.5, fontWeight: 600, color: '#2C4A36' }}>
-              aiming at {fmtMins(goalMins)} a day.
+              {avgMins
+                ? "pick your goal and i'll fit your limits to it."
+                : `aiming at ${fmtMins(goalMins)} a day.`}
             </p>
           </div>
         </div>
+
+        {/* ---------- the daily goal, above the limits it drives ------- */}
+        {time && setTime && (
+          <div
+            style={{
+              padding: '14px 16px',
+              borderRadius: 26,
+              background: 'var(--card)',
+              border: '2px solid var(--line)',
+              boxShadow: '0 4px 0 var(--line)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 10,
+            }}
+          >
+            {/* what they are on today, stated plainly right above the goal
+                they are about to set against it */}
+            {avgMins > 0 && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  gap: 10,
+                  paddingBottom: 10,
+                  marginBottom: 2,
+                  borderBottom: '1.5px solid rgba(18,48,26,0.10)',
+                }}
+              >
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#52715A' }}>
+                  your screen time now
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'Fredoka, sans-serif',
+                    fontSize: 24,
+                    fontWeight: 700,
+                    color: '#12301A',
+                  }}
+                >
+                  {fmtMins(avgMins)} a day
+                </span>
+              </div>
+            )}
+
+            <GoalStepper time={time} setTime={setTime} floor={GOAL_FLOOR_HOURS} />
+          </div>
+        )}
 
         {/* ---------- the limits ---------- */}
         <div
@@ -298,6 +367,95 @@ export default function YourPlan({
           unlock my full plan
         </button>
       </div>
+      {/* their limits add up to more than the goal they just set */}
+      {over && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="your limits are over your goal"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 40,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 20,
+            boxSizing: 'border-box',
+            background: 'rgba(12,30,18,0.45)',
+            backdropFilter: 'blur(3px)',
+            animation: 'scrim-in .25s ease-out both',
+          }}
+        >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: 320,
+              boxSizing: 'border-box',
+              padding: '18px 18px 16px',
+              borderRadius: 26,
+              background: 'var(--card, #FFFFFF)',
+              border: '1.5px solid rgba(18,48,26,0.12)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12,
+              animation: 'rise14 .3s ease-out both',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+              <Rilo skin={skin} mood="curious" size={62} />
+              <p style={{ margin: 0, flex: 1, fontFamily: 'Fredoka, sans-serif', fontSize: 17, fontWeight: 600, lineHeight: 1.22 }}>
+                that&apos;s more than your goal.
+              </p>
+            </div>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 600, color: '#43604D', lineHeight: 1.4 }}>
+              your limits allow {fmtMins(check.allows)} a day — {fmtMins(check.by)} over
+              the {fmtMins(check.goal)} you picked.
+            </p>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button
+                type="button"
+                className="tap"
+                onClick={() => setHushed(true)}
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  borderRadius: 999,
+                  border: '2px solid rgba(18,48,26,0.16)',
+                  background: 'transparent',
+                  color: '#12301A',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                leave it
+              </button>
+              <button
+                type="button"
+                className="tap-94"
+                onClick={() => { setHushed(true); onFit(); }}
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  borderRadius: 999,
+                  border: 0,
+                  background: '#12301A',
+                  color: '#FFFFFF',
+                  fontFamily: 'Fredoka, sans-serif',
+                  fontSize: 15,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                }}
+              >
+                fit them for me
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
