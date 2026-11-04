@@ -87,6 +87,9 @@ Rilo is a screen-time buddy app. This policy explains what Rilo stores and what 
 **What Rilo stores, and where**
 Rilo saves what you tell it so it can coach you: your first name, the apps you picked, your limits and plan, your daily goal, your XP, level, streak, chosen Rilo and theme, your settings (bedtime, school hours, check-in time, strict mode, Creator Mode), your nightly check-in answers and the tasks Rilo pulls from them, and today's opens and minutes. All of it is saved **only on your phone**, inside the app. Rilo has no accounts and no servers, and it doesn't send this information anywhere. Deleting the app, or tapping "start over" in the You tab, deletes it.
 
+**Rilo's thinking and memory**
+On phones with Apple Intelligence, Rilo uses Apple's on-device intelligence to reply to you, plan your day and read your nightly check-in, and he remembers the useful things you tell him (like your hobbies, goals and what's coming up). This all happens and stays on your phone; nothing is sent to Apple, to Rilo or to anyone else. You can see and delete what he remembers any time in You ▸ what rilo knows.
+
 **Screen Time**
 When Rilo blocks or limits apps, it uses Apple's Screen Time tools. Apple designed these so that Rilo doesn't see which apps you use or your browsing; it only gets anonymous tokens to put a shield on the apps you picked. That data stays on your phone.
 

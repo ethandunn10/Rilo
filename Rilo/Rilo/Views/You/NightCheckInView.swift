@@ -5,7 +5,9 @@ import SwiftUI
 /// turns it into tomorrow's schedule. On night one of the first week (Pro)
 /// he adds the first-week question as a third step.
 ///
-/// DEMO ONLY: what they write is matched against patterns in MockAI.
+/// What they say goes to Rilo's brain (Services/RiloBrain): Apple's
+/// on-device model when the phone has it, otherwise (and in the DEBUG
+/// seeds/checks) the patterns in MockAI.
 /// Voice: real on-device speech-to-text when `SpeechInput` is available
 /// (DEBUG `-voice` fakes it). Then HOLDING Rilo talks; letting go sends it.
 /// No speech (or a "no" to the mic) → typing only, like the web.
@@ -27,6 +29,8 @@ struct NightCheckInView: View {
     @State var said = NightSaid()
     @State var draft = ""
     @State var done = false
+    /// what his brain made of it (nil until it answers)
+    @State var result: NightResult? = nil
     @State var listening = false
     @State var heard = ""
     @State var left = NightCheckInView.SECONDS
@@ -40,8 +44,10 @@ struct NightCheckInView: View {
         return base + [Question(id: "ask", ask: extra.ask, sub: extra.sub)]
     }
     var q: Question { questions[min(step, questions.count - 1)] }
-    var reply: NightReply { MockAI.nightReply(said.today) }
-    var tasks: [NightTask] { MockAI.tasksFrom(said.tomorrow) }
+    var reply: NightReply { result?.reply ?? MockAI.nightReply(said.today) }
+    var tasks: [NightTask] { result?.tasks ?? MockAI.tasksFrom(said.tomorrow) }
+    /// the on-device model is still working on it
+    var thinking: Bool { done && result == nil && state.brain.usesModel }
     var showText: String { listening ? heard : draft }
 
     var body: some View {
@@ -71,7 +77,7 @@ struct NightCheckInView: View {
             topRow
             bubble
             /* with a mic, Rilo is the talk button: hold him, say it, let go */
-            RiloStage(skin: state.chosenRilo, mood: done ? reply.mood : "curious", size: 180,
+            RiloStage(skin: state.chosenRilo, mood: done && !thinking ? reply.mood : "curious", size: 180,
                       state: listening ? .listening : .idle,
                       onHold: speech.isAvailable && !done ? { down in
                           down ? startMic() : speech.stop()
@@ -84,7 +90,7 @@ struct NightCheckInView: View {
                     .multilineTextAlignment(.center)
             }
             if !done { form }
-            if done { tomorrowCard }
+            if done && !thinking { tomorrowCard }
             Spacer(minLength: 6)
             if done {
                 Button {
@@ -98,10 +104,23 @@ struct NightCheckInView: View {
                         .background(Capsule().fill(.white))
                 }
                 .buttonStyle(.tap(0.94))
+                .disabled(thinking)
+                .opacity(thinking ? 0.5 : 1)
             } else {
                 demoFill
             }
         }
+        .task(id: done) { await think() }
+    }
+
+    /// once both answers are in, ask his brain what tomorrow looks like
+    func think() async {
+        guard done, result == nil else { return }
+        let r = await state.brain.nightCheckIn(today: said.today, tomorrow: said.tomorrow,
+                                               context: state.brainContext)
+        guard done else { return }
+        result = r
+        state.remember(r.learned)
     }
 
     // MARK: answering

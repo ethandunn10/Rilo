@@ -24,6 +24,8 @@ struct YouView: View {
     @State var appSheet = DemoSeed.flag("-appsheet")
     @State var refused = ""
     @State var confirmStartOver = false
+    /// You ▸ what rilo knows (MemoryView)
+    @State var showMemory = DemoSeed.flag("-memory")
 
     var body: some View {
         @Bindable var s = state
@@ -94,6 +96,7 @@ struct YouView: View {
                 )
             }
         }
+        .sheet(isPresented: $showMemory) { MemoryView() }
         .alert("Start over? This clears this tester\u{2019}s name, picks, xp and progress.",
                isPresented: $confirmStartOver) {
             Button("Cancel", role: .cancel) {}

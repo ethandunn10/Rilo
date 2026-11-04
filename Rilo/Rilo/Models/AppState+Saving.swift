@@ -65,6 +65,7 @@ extension AppState {
         riloWhy = d.riloWhy
         riloLead = d.riloLead
         pendingSkin = d.pendingSkin
+        memory = d.memory
     }
 
     // MARK: the app coming and going

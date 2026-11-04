@@ -12,6 +12,7 @@ extension YouView {
         })
         .id("about")
         scrollWhenCard.id("scroll")
+        memoryCard.id("memory")
 
         YouSection(title: "what rilo watches")
         appsCard
@@ -184,6 +185,18 @@ extension YouView {
                     padding: EdgeInsets(top: 18, leading: 18, bottom: 18, trailing: 18),
                     radius: 26) { state.go(.upgrade) }
                 .rise(0.225, distance: 14, duration: 0.4)
+        }
+    }
+
+    // MARK: what he remembers (on the phone only)
+
+    private var memoryCard: some View {
+        let n = state.memory.count
+        return YouRowCard(delay: 0.22, skin: state.chosenRilo, mood: "curious",
+                          title: "what rilo knows",
+                          sub: n == 0 ? "nothing yet. talk to him and he'll remember."
+                                      : "\(n) thing\(n == 1 ? "" : "s") he remembers. see or delete them.") {
+            showMemory = true
         }
     }
 

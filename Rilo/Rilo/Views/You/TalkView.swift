@@ -39,6 +39,8 @@ struct TalkView: View {
     /* he only pushes back on a shrug once */
     @State var nudged = false
     @State var timers: [Task<Void, Never>] = []
+    /* the last few back-and-forths, so his brain can follow along */
+    @State var chat: [ChatLine] = []
     @State var speech: SpeechInput = Speech.make(demoLines: ["i want to get into guitar and sleep more"])
 
     var ready: Bool { !picked.isEmpty || !draft.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -135,6 +137,8 @@ struct TalkView: View {
     private func appear() {
         /* settles the opening line once, on mount */
         later(1100) { speaking = false }
+        /* get the on-device model loaded before they type */
+        state.brain.prewarm(context: state.brainContext)
         #if DEBUG
         if let p = DemoSeed.arg("-talkpick") {
             picked = p.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
@@ -166,7 +170,8 @@ struct TalkView: View {
 
     func answer(_ raw: String, asTyped: Bool = false) {
         let text = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !text.isEmpty else { return }
+        /* one at a time: wait for his answer */
+        guard !text.isEmpty, !thinking else { return }
 
         /* "maybe" isn't an answer — ask again, but only once */
         if !asTyped && Listen.isNonAnswer(text) && !nudged {
@@ -177,27 +182,35 @@ struct TalkView: View {
         }
 
         thinking = true
+        draft = ""
+        picked = []
         track("talk", "chat")
 
-        let added = Listen.hobbiesIn(text) + Listen.goalsIn(text)
-        for k in added { state.about.on[k] = true }
-        let reply = added.isEmpty
-            ? "got it. i'll keep that in mind."
-            : "added \(Listen.joinNice(added)). i'll use that when you're bored."
-
-        later(220) {
-            thinking = false
-            riloSays(reply, "proud")
-            draft = ""
-            picked = []
-            later(min(1500, 550 + reply.count * 14)) {
-                #if DEBUG
-                /* screenshots: keep his reply on screen */
-                if DemoSeed.flag("-talkreply") { return }
-                #endif
-                riloSays("anything else? or tap done.", "coach")
+        /* his brain: Apple's on-device model, or the scripted one (RiloBrain) */
+        let context = state.brainContext
+        let history = Array(chat.suffix(6))
+        let usedModel = state.brain.usesModel
+        let ask = Task { @MainActor in
+            let turn = await state.brain.chat(text, history: history, context: context)
+            guard !Task.isCancelled else { return }
+            state.learn(turn)
+            chat.append(ChatLine(you: text, rilo: turn.reply))
+            if chat.count > 6 { chat.removeFirst(chat.count - 6) }
+            later(220) {
+                thinking = false
+                riloSays(turn.reply, turn.mood)
+                /* he asked them something: leave the question up */
+                if usedModel && turn.reply.contains("?") { return }
+                later(min(1500, 550 + turn.reply.count * 14)) {
+                    #if DEBUG
+                    /* screenshots: keep his reply on screen */
+                    if DemoSeed.flag("-talkreply") { return }
+                    #endif
+                    riloSays("anything else? or tap done.", "coach")
+                }
             }
         }
+        timers.append(ask)
     }
 
     // MARK: voice (only when SpeechInput is available)

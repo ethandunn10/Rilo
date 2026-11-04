@@ -10,6 +10,15 @@ extension PlanView {
     var cardTop: some View {
         if asking {
             ScheduleAsk(skin: state.chosenRilo, onBuild: buildWithRilo, onCancel: { asking = false })
+        } else if building {
+            HStack(spacing: 10) {
+                RiloView(skin: state.chosenRilo, mood: "curious", size: 54)
+                    .accessibilityHidden(true)
+                Text("making your day…")
+                    .font(.fredoka(18, 600))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.vertical, 12)
         } else {
             whoMakesTheDay
         }

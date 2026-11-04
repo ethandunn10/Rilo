@@ -81,6 +81,8 @@ final class AppState {
     var drip: Drip { didSet { scheduleSave() } }
     /// DEMO ONLY: a fake clock ("HH:MM"), nil = the real one
     var demoClock: String? { didSet { scheduleSave() } }
+    /// what Rilo remembers about them (AppState+Memory)
+    var memory: [RiloMemory] { didSet { scheduleSave() } }
 
     // MARK: not saved
     /* saved since Phase 7 (the web kept these in memory) */
@@ -125,6 +127,8 @@ final class AppState {
     @ObservationIgnored let screenTimeService: any ScreenTimeService = ScreenTime.make()
     /// the phone's calendar (demo week or EventKit, see CalendarServices.make)
     @ObservationIgnored let calendarService: any CalendarService = CalendarServices.make()
+    /// Rilo's thinking: Apple's on-device model or the scripted one (RiloBrains.make)
+    @ObservationIgnored let brain: any RiloBrain = RiloBrains.make()
     /// the next 7 days read from the real calendar (not saved; reloaded on
     /// launch and when the app comes back). Read through `calendarWeek`.
     var calendarEvents: [CalendarEvent] = []
@@ -171,6 +175,7 @@ final class AppState {
         night = saved.night
         drip = saved.drip
         demoClock = saved.demoClock
+        memory = saved.memory
         /* Phase 7: the rest of what they did, and where they were */
         introTourDone = saved.introTourDone
         rather = saved.rather
@@ -198,7 +203,7 @@ final class AppState {
             introTourDone: introTourDone,
             calendar: calendar, night: night, demoClock: demoClock, drip: drip, strict: strict,
             screen: screen.rawValue, rather: rather, numberBeat: numberBeat,
-            riloWhy: riloWhy, riloLead: riloLead, pendingSkin: pendingSkin)
+            riloWhy: riloWhy, riloLead: riloLead, pendingSkin: pendingSkin, memory: memory)
     }
 
     private func scheduleSave() {

@@ -13,6 +13,8 @@ struct PlanView: View {
     @State var editing = DemoSeed.flag("-planedit")
     /// rilo asks a few things before he builds anything
     @State var asking = DemoSeed.flag("-planask")
+    /// the on-device model is building the day
+    @State var building = false
 
     /// the design's day, the fallback so the screen is never empty
     static let ROWS: [(String, String, String)] = [
@@ -36,12 +38,18 @@ struct PlanView: View {
         return blank ? [] : Self.ROWS.map { ScheduleRow(at: $0.0, title: $0.1, note: $0.2) }
     }
 
+    /// his brain builds the day: Apple's on-device model around everything
+    /// he knows, or MockAI.riloSchedule (RiloBrain)
     func buildWithRilo(_ answers: ScheduleAnswers) {
-        state.schedulePlan = SchedulePlan(mode: "rilo", rows: MockAI.riloSchedule(
-            hobbies: state.profileList("hobby"), goals: state.profileList("goal"),
-            school: state.school, bedtime: state.bedtime, scrollMins: Double(state.goalMins), answers: answers))
         asking = false
         editing = false
+        building = state.brain.usesModel
+        let context = state.brainContext
+        Task { @MainActor in
+            let rows = await state.brain.makeSchedule(context: context, answers: answers)
+            state.schedulePlan = SchedulePlan(mode: "rilo", rows: rows)
+            building = false
+        }
     }
 
     /// "make your own" starts empty on purpose: nothing to delete first

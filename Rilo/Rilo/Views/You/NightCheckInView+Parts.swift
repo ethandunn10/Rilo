@@ -32,7 +32,7 @@ extension NightCheckInView {
     var bubble: some View {
         ShrinkToFit {
             VStack(spacing: 5) {
-                Text(done ? reply.line : q.ask)
+                Text(done ? (thinking ? "…" : reply.line) : q.ask)
                     .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(22, 600))
                     .webLineHeight(22, 1.2)

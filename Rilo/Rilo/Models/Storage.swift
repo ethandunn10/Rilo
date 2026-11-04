@@ -67,6 +67,10 @@ nonisolated struct SavedState: Codable, Equatable, Sendable {
     var riloLead: [String] = []
     /// a skin unlock still waiting to be celebrated
     var pendingSkin: String? = nil
+
+    /* the on-device brain */
+    /// what Rilo remembers about them (AppState+Memory), newest last
+    var memory: [RiloMemory] = []
 }
 
 /// Field-by-field decoding: anything missing or unreadable takes its default.
@@ -100,7 +104,7 @@ nonisolated extension SavedState {
             strict: v(.strict, d.strict),
             screen: o(.screen), rather: v(.rather, d.rather), numberBeat: v(.numberBeat, d.numberBeat),
             riloWhy: v(.riloWhy, d.riloWhy), riloLead: v(.riloLead, d.riloLead),
-            pendingSkin: o(.pendingSkin))
+            pendingSkin: o(.pendingSkin), memory: v(.memory, d.memory))
     }
 }
 
