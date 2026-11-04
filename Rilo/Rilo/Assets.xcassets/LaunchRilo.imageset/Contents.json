@@ -1,0 +1,4 @@
+{
+  "images" : [ { "idiom" : "universal", "filename" : "LaunchRilo.png", "scale" : "3x" } ],
+  "info" : { "author" : "xcode", "version" : 1 }
+}
