@@ -74,7 +74,7 @@ What's different from the pretend version (Apple's rules, not bugs):
     - `com.ethandunn.rilo.pro.yearly`: $39.99, 1 year
 
     For each one, add an **Introductory Offer**: Free, 1 week. The IDs must match exactly; the app already uses them.
-22. Turn off the tester unlock for the real release: in `Rilo/Rilo/Models/FeatureFlags.swift` set `TESTERS_UNLOCK_ALL = false` and `SHOW_DEMO_PANEL = false`. Keep both `true` for TestFlight testers if you like.
+22. Turn off the tester unlock for the real release: in `Rilo/Rilo/Models/FeatureFlags.swift` set `TESTERS_UNLOCK_ALL = false` and `SHOW_DEMO_PANEL_SETTING = false`. Keep both `true` for TestFlight testers if you like.
 
 ## Part 5: TestFlight
 

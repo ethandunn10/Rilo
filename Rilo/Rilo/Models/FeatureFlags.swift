@@ -29,5 +29,14 @@ nonisolated enum FeatureFlags {
 
     /// The floating "demo" button (the tester's remote control, like the
     /// web demo's). Handy for TestFlight; set to false for the App Store.
-    static let SHOW_DEMO_PANEL = true
+    static let SHOW_DEMO_PANEL_SETTING = true
+
+    /// What the app reads. DEBUG `-nodemo` hides it for one launch
+    /// (App Store screenshots).
+    static let SHOW_DEMO_PANEL: Bool = {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-nodemo") { return false }
+        #endif
+        return SHOW_DEMO_PANEL_SETTING
+    }()
 }

@@ -31,7 +31,7 @@ To send feedback: take a screenshot in the app and choose "Share Beta Feedback",
 - `TESTERS_UNLOCK_ALL` in `Rilo/Rilo/Models/FeatureFlags.swift`: keep it `true` for testers. **Set it to `false` for the real App Store release.**
 - Bump the build number (Xcode ▸ Rilo target ▸ General ▸ Build).
 - Real blocking only works after the Family Controls steps in `SETUP_AFTER_PAID_ACCOUNT.md`. Until then, blocking is the demo version (the "demo" button in the corner opens a fake blocked app).
-- The "demo" button (the tester's remote control) shows in every build, like the web demo. Handy for testers. Before release set `SHOW_DEMO_PANEL = false` in the same FeatureFlags.swift file.
+- The "demo" button (the tester's remote control) shows in every build, like the web demo. Handy for testers. Before release set `SHOW_DEMO_PANEL_SETTING = false` in the same FeatureFlags.swift file.
 
 ## Known limits right now
 - Calendar connect, buddies, and Rilo's replies are demo versions (no real calendar, no real friends, scripted replies).
