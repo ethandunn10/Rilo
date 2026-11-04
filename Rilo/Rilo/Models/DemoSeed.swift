@@ -22,6 +22,26 @@ import Foundation
 ///                    editing / scrolled to the end (PlanView)
 ///   -demopanel       the demo panel starts open
 ///   -stepdown        this week's step-down offered (home)
+///   -screen strictcard  the strict mode card alone (StrictCardPreview), with
+///                    -strictpicking / -strictshowing / -strictconfirm
+///   -strict          strict mode on (1 week, all day); -strictending: and
+///                    its 24h switch-off countdown running
+///   -pending         limits: a loosening change waiting its 24h (with -strict)
+///   -limitsscroll <app|bottom>   limits scrolled to that card / the end
+///   -limitsmode <app>=<blocked|limited|free>   set one app's mode first
+///   -breakmins <5|10|15> / -needpick <text|post|school|other>   break / needit
+///                    with that length / reason picked; -suggestnth <n>: suggestion
+///                    after n taps of "suggest something else"
+///   -outofopens / -passused / -strict   shield, intercept, whyopen with
+///                    tiktok out of opens / the pass used / strict mode on
+///   -banner          shield with Rilo's notification down
+///   -waitdone        intercept with the wait already run down
+///   -bypass pass|borrow [-reason <text>]   intercept with that sheet up
+///   -whyreason <id> / -whystage reason|what|push|length / -whylength
+///                    quick|full / -why <text>   whyopen on that step
+///   -appkind pass|always / -burned <min>   appopen as a pass / always-
+///                    allowed session, or with that many minutes burned
+///   -loosen          the "making it easier?" sheet (BypassGuiltOverlay)
 ///   -tour            keep the Meet Rilo tour on the tab screens (off by
 ///                    default so screenshots show the screen itself)
 /// The seed runs the same AppState actions onboarding does, so the numbers
@@ -43,6 +63,8 @@ enum DemoSeed {
         return arguments[i + 1]
     }
 
+    static var screenArg: String? { arg("-screen") }
+
     /// `-screen foundation` / `foundation-<theme>`
     static var foundation: (on: Bool, theme: String?) {
         guard let s = arg("-screen"), s.hasPrefix("foundation") else { return (false, nil) }
@@ -58,6 +80,8 @@ enum DemoSeed {
         #endif
         let state = AppState()
         if let theme = arg("-theme") { state.theme = theme }
+        /* the strict card preview: seed like the You tab */
+        if screenArg == "strictcard" { seed(state, for: .you) }
         if let raw = arg("-screen"), let screen = Screen(rawValue: raw) {
             seed(state, for: screen)
         }
@@ -111,10 +135,22 @@ enum DemoSeed {
         case .shield, .intercept, .whyopen, .suggestion, .tired, .break, .needit:
             state.session.app = "tiktok"
             state.opens = OpenCounts(date: state.dateKey, counts: ["tiktok": 4])
+            /* sub-states of the pop-up (Intercept): */
+            /* -outofopens: tiktok's opens are all spent today */
+            if arguments.contains("-outofopens") {
+                state.day.opensUsed["tiktok"] = state.totalOpensFor("tiktok")
+            }
+            /* -passused: today's emergency pass is gone */
+            if arguments.contains("-passused") { state.day.passes = Limits.PASSES_PER_DAY }
+            /* -strict: strict mode on (15s wait, no halves, no borrowing) */
+            if arguments.contains("-strict") { state.strictOn(days: 7, when: "all") }
+            /* -banner: the shield with Rilo's notification down */
+            if screen == .shield && arguments.contains("-banner") { state.banner = true }
         case .appopen:
             let s = state.settingOf("tiktok")
-            state.session = Session(app: "tiktok", cap: Double(s.minutes), carried: 0, charged: 0,
-                                    kind: "open", minutes: s.minutes)
+            let kind = arg("-appkind") ?? "open"
+            state.session = Session(app: "tiktok", cap: kind == "pass" ? Limits.PASS_MINUTES : Double(s.minutes),
+                                    carried: 0, charged: 0, kind: kind, minutes: s.minutes)
         case .daysummary:
             let goal = Double(state.goalMins)
             state.dayResult = DayResult(used: goal - 25, goal: goal, hit: true, xp: 80, streak: 3,
@@ -137,9 +173,34 @@ enum DemoSeed {
             state.introTourDone = false
             state.handoff = true
         }
+        /* -loosen: Rilo's "making it easier?" sheet for a looser tiktok limit */
+        if arguments.contains("-loosen") {
+            var next = state.settingOf("tiktok")
+            next.opens += 1
+            state.loosenAsk = LoosenAsk(app: "tiktok", next: next)
+        }
         /* -stepdown: this week's step-down is on offer (Home's StepDown card) */
         if arguments.contains("-stepdown") {
             state.step = StepState(week: state.program.week, app: "", status: "offered")
+        }
+        /* -limitsmode app=mode: one app's setting changed first */
+        if let lm = arg("-limitsmode"), let eq = lm.firstIndex(of: "="),
+           let mode = AppMode(rawValue: String(lm[lm.index(after: eq)...])) {
+            let app = String(lm[..<eq])
+            var s = state.settingOf(app); s.mode = mode
+            state.appSettings[app] = s
+        }
+        /* -strict / -strictending: strict mode on, and winding down */
+        if arguments.contains("-strict") || arguments.contains("-strictending") || screenArg == "strictcard" && arguments.contains("-strictconfirm") {
+            state.strict = StrictState(on: true, days: 7, when: "all",
+                                       endingAt: arguments.contains("-strictending") ? JS.nowMs + 24 * 60 * 60 * 1000 - 19 * 60000 : nil)
+        }
+        /* -pending: a loosening change on the first limited app, waiting its 24h */
+        if arguments.contains("-pending"),
+           let app = state.tracked.first(where: { state.settingOf($0).mode == .limited }) {
+            let prev = state.settingOf(app)
+            var next = prev; next.opens += Limits.OPEN_STEP
+            state.pending = [Limits.makePending(app: app, prev: prev, next: next, now: JS.nowMs - 18 * 60000)]
         }
         /* -askday N: what the demo panel's "day N · ..." button does */
         if let d = arg("-askday"), let n = Int(d) { state.demoAskDay(n) }

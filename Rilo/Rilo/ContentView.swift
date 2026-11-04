@@ -10,6 +10,8 @@ struct ContentView: View {
         Group {
             if foundation.on {
                 FoundationPreview()
+            } else if DemoSeed.arg("-screen") == "strictcard" {
+                StrictCardPreview()
             } else {
                 RootView()
             }

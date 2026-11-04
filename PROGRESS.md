@@ -40,3 +40,16 @@ Couldn't match exactly:
 - Some titles wrap one word differently (iOS avoids a lone last word). Time cells in plan editing show "3:…" where the web cuts the text.
 - The web's step-down never shows after "skip a week" in a fresh demo, so that one has only an iOS shot.
 - If a tour step's target isn't on screen, the tour dims everything and centres its card (the web would leave the box in the wrong place).
+
+## Phase 4: Blocked-app pop-up + rules ✅
+- `shield` + Rilo's fake notification banner, `intercept` (countdown, opens left, emergency pass, borrow ½ open, "that's it for today", strict 15s wait, "limit it"), `whyopen` (reason → what for → Rilo pushes back → Quick ½ / Full 1, posting = Creator Mode), BypassGuilt ("you can, but…" and "making it easier?"), `appopen` (live timer, locks at zero, charges halves).
+- `limits` / `limitsonboard` (Blocked / Limited X opens × Y min / Free, pending changes "lands in …", strict 24h note), StrictCard (all states, for the You tab), `suggestion`, `tired`, `break`, `needit`.
+- All rules come from the ported rules engine in Models/ (halves, 2-minute continuation, pass, borrow, strict).
+- Screenshots: `screenshots/phase-4/`. Debug flags: `-outofopens`, `-passused`, `-strict`, `-strictending`, `-pending`, `-banner`, `-waitdone`, `-bypass pass|borrow`, `-reason x`, `-whyreason id`, `-whystage reason|what|push|length`, `-whylength quick|full`, `-why x`, `-appkind pass|always`, `-burned m`, `-loosen`, `-limitsscroll app|bottom`, `-limitsmode app=mode`, `-breakmins n`, `-needpick x`, `-suggestnth n`, `-screen strictcard` (+ `-strictpicking/-strictshowing/-strictconfirm`).
+
+Couldn't match exactly:
+- The web's AppOpen has no "time's up" screen (it goes home at zero), so neither does iOS.
+- The "making it easier?" overlay's blur is a frosted layer, a bit softer than the web's 3px backdrop blur.
+- The banner slides to the same spot as the web, which on iPhone overlaps the clock.
+
+**Question for you:** nothing on the web ever opens the `needit` screen ("i need it for something"). It's ported but unreachable, same as the web. Should it be wired up somewhere (e.g. from intercept), or removed?
