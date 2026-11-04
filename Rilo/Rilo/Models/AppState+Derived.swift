@@ -188,7 +188,7 @@ extension AppState {
     var showBanner: Bool { banner && screen == .shield }
     var showTour: Bool { !introTourDone && !handoff && Screen.tourScreens.contains(screen) }
     /// the web renders Results on its own, with no demo panel
-    var showDemoPanel: Bool { screen != .appopen && screen != .results }
+    var showDemoPanel: Bool { FeatureFlags.SHOW_DEMO_PANEL && screen != .appopen && screen != .results }
     /// paywall vs upgrade: where "next" goes
     var paywallNext: Screen { screen == .paywall ? .home : (cameFrom ?? .home) }
 }

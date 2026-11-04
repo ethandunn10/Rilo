@@ -26,4 +26,8 @@ nonisolated enum FeatureFlags {
         #endif
         return TESTERS_UNLOCK_ALL
     }()
+
+    /// The floating "demo" button (the tester's remote control, like the
+    /// web demo's). Handy for TestFlight; set to false for the App Store.
+    static let SHOW_DEMO_PANEL = true
 }
