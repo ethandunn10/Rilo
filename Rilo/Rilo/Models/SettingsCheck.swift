@@ -102,6 +102,29 @@ enum SettingsCheck {
         ok("replay tour → home with the tour (\(state.screen) done=\(state.introTourDone) handoff=\(state.handoff))", state.screen == .home && state.showTour)
         state.introTourDone = true
 
+        // Phase 8: the Screen Time seam (the demo service just remembers)
+        if let demo = state.screenTimeService as? DemoScreenTimeService, let app = state.tracked.first {
+            let turn = { try? await Task.sleep(for: .milliseconds(100)) }
+            state.appSettings[app] = AppSetting(mode: .limited, opens: 3, minutes: 15)
+            state.strictOn(days: 7, when: "all"); await turn()
+            ok("seam: rules shield \(app), strict on", demo.rules.strict && demo.rules.apps[app]?.shielded == true
+               && demo.rules.apps[app]?.opensLeft == state.availOf(app))
+            state.strictOffNow(); await turn()
+            ok("seam: strict off reaches the service", !demo.rules.strict)
+            state.go(.home); await settle()
+            state.openApp(app); await settle()
+            ok("seam: demo draws its own shield", state.screen == .shield)
+            state.startCheckedIn(app, CheckinPick(reason: "custom", why: "check", mins: 5, length: "quick", cost: 0.5))
+            await settle()
+            ok("seam: session lifts the shield", state.screen == .appopen && demo.session?.app == app && demo.session?.minutes == 5)
+            state.finishSession(app, minutesUsed: 2); await settle()
+            ok("seam: finishing re-shields", demo.session == nil && state.screen == .home)
+            state.skipToMidnight(); await turn()
+            ok("seam: day roll-over reaches the service", demo.rules.dateKey == state.dateKey && state.screenTimeService.takeEvents().isEmpty)
+        } else {
+            ok("seam: demo service in use", false)
+        }
+
         // start over
         state.startOver(); await settle()
         ok("start over → welcome, blank", state.screen == .welcome && state.name.isEmpty && !state.isPro)

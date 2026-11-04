@@ -9,6 +9,8 @@ extension AppState {
         screenTime = true
         track("screentime", "allowed")
         go(.crunching)
+        /* Phase 8: the real Screen Time prompt (the demo just says yes) */
+        requestScreenTimeAuth()
         /* Phase 7: the one moment we ask for notifications — right after
            they've said yes to Screen Time. The system prompt only. */
         /* not while DemoSeed is setting up a -screen (Track.muted), so the

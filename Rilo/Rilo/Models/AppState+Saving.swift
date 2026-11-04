@@ -79,8 +79,7 @@ extension AppState {
     func rollOverIfNeeded() {
         guard day.date != dateKey else { return }
         if inOnboarding || planChoice == nil {
-            day = Storage.freshDay(dateKey)
-            collectBorrow()
+            startFreshDay()
             return
         }
         /* mid-session or mid-pop-up: wait for them to get back home */
@@ -91,6 +90,9 @@ extension AppState {
     func appBecameActive() {
         rollOverIfNeeded()
         rescheduleNotifications(force: true)
+        /* Phase 8: shields match the rules, then whatever happened while away */
+        syncScreenTime(force: true)
+        handleScreenTimeEvents()
     }
 
     func appWentToBackground() {
@@ -109,7 +111,10 @@ extension AppState {
     }
 
     /// called after every save
-    func settingsChanged() { rescheduleNotifications() }
+    func settingsChanged() {
+        rescheduleNotifications()
+        syncScreenTime()
+    }
 
     func rescheduleNotifications(force: Bool = false) {
         let key = notifyKey

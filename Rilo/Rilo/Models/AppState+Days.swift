@@ -60,8 +60,7 @@ extension AppState {
         awardXp(gained)
 
         /* fresh day: opens and the pass reset, unused opens don't carry */
-        day = Storage.freshDay(dateKey)
-        collectBorrow()
+        startFreshDay()
         /* a day going by moves the first week's questions along */
         drip = FirstWeek.dripToDay(drip, drip.day + 1)
 
@@ -96,8 +95,7 @@ extension AppState {
         program = p
         leanDays = 0
         awardXp(gained)
-        day = Storage.freshDay(dateKey)
-        collectBorrow()
+        startFreshDay()
         /* a cleared week puts them past the first week of questions */
         drip = FirstWeek.dripToDay(drip, drip.day + 7)
         offerStepDown(nextWeek, finished: finished)
@@ -108,6 +106,14 @@ extension AppState {
 
     // MARK: time travel (demo)
 
+    /// Fresh day: opens and the pass reset, the borrow IOU comes due, and
+    /// every shield goes back up.
+    func startFreshDay() {
+        day = Storage.freshDay(dateKey)
+        collectBorrow()
+        screenTimeService.dayRolledOver(to: dateKey)
+    }
+
     /// The borrow IOU is the only thing that crosses midnight.
     func collectBorrow() {
         if borrow.app.isEmpty { return }
@@ -115,8 +121,7 @@ extension AppState {
     }
 
     func skipToMidnight() {
-        day = Storage.freshDay(dateKey)
-        collectBorrow()
+        startFreshDay()
         track("demo", "skipped to midnight")
     }
 

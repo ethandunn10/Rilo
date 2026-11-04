@@ -16,7 +16,7 @@ extension AppState {
     var inOnboarding: Bool { Screen.onboarding.contains(screen) }
 
     /// the apps they picked (capped at 5 on free). Nothing else.
-    var watched: [String] { Plan.watchedFor(Apps.pickedApps(apps), hasPro) }
+    var watched: [String] { Plan.watchedFor(screenTimeService.pickedAppKeys ?? Apps.pickedApps(apps), hasPro) }
     var tracked: [String] { watched }
 
     private func breakdownApp(_ app: String) -> BreakdownApp? {

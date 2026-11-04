@@ -31,8 +31,7 @@ extension AppState {
         /* an app with no limit just opens, for its own per-open length */
         if setting.mode == .free {
             let mins = max(1, min(wanted ?? Double(setting.minutes), Double(setting.minutes)))
-            session = Session(app: appName, cap: mins, carried: 0, charged: 0, kind: "free", minutes: setting.minutes)
-            goTo(.appopen)
+            beginAppSession(Session(app: appName, cap: mins, carried: 0, charged: 0, kind: "free", minutes: setting.minutes))
             return
         }
 
@@ -46,8 +45,7 @@ extension AppState {
             go(.intercept)
             return
         }
-        session = Session(app: appName, cap: cap, carried: carried, charged: charged, kind: "open", minutes: setting.minutes)
-        goTo(.appopen)
+        beginAppSession(Session(app: appName, cap: cap, carried: carried, charged: charged, kind: "open", minutes: setting.minutes))
     }
 
     /// They said why and which length they wanted. Rilo keeps both.
@@ -66,9 +64,8 @@ extension AppState {
         day.passes += 1
         awardXp(-Self.PASS_XP)
         track("pass", "\((why?.isEmpty == false) ? why! : "no reason given") · -\(Self.PASS_XP) xp")
-        session = Session(app: appName, cap: Limits.PASS_MINUTES, carried: 0, charged: 0, kind: "pass",
-                          minutes: settingOf(appName).minutes)
-        goTo(.appopen)
+        beginAppSession(Session(app: appName, cap: Limits.PASS_MINUTES, carried: 0, charged: 0, kind: "pass",
+                                minutes: settingOf(appName).minutes))
     }
 
     /// borrow half an open off tomorrow
@@ -83,6 +80,8 @@ extension AppState {
 
     func finishSession(_ appName: String, minutesUsed: Double) {
         let used = max(0, minutesUsed)
+        /* the shield goes back up */
+        screenTimeService.endSession(app: appName, minutesUsed: used)
         let total = session.carried + used
         /* every xp change in here reads the xp from before it, like the
            web's handler (the last award wins) */
@@ -150,19 +149,25 @@ extension AppState {
 
     /// "pretend you opened X": bump that app's real count for today
     func openApp(_ label: String) {
+        countOpen(label)
+
+        /* an always-allowed app has no shield and no pop-up — it just opens */
+        if settingOf(label).mode == .always {
+            beginAppSession(Session(app: label, cap: 15, carried: 0, charged: 0, kind: "always", minutes: 15))
+            return
+        }
+        /* the demo draws its own shield; with real Screen Time iOS already
+           showed one, so straight to Rilo's questions */
+        go(screenTimeService.drawsShieldInApp ? .shield : .intercept)
+    }
+
+    /// today's count for an app, and it becomes the current app
+    func countOpen(_ label: String) {
         let fresh = opens.date != dateKey
         var counts = fresh ? [:] : opens.counts
         counts[label] = (counts[label] ?? 0) + 1
         opens = OpenCounts(date: dateKey, counts: counts)
         session.app = label
-
-        /* an always-allowed app has no shield and no pop-up — it just opens */
-        if settingOf(label).mode == .always {
-            session = Session(app: label, cap: 15, carried: 0, charged: 0, kind: "always", minutes: 15)
-            goTo(.appopen)
-            return
-        }
-        go(.shield)
     }
 
     /// The reason screens (bored / tired / a break / need it) ARE the reason,

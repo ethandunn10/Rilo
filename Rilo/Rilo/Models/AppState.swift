@@ -121,6 +121,10 @@ final class AppState {
     @ObservationIgnored var lastNotifyKey: String? = nil
     @ObservationIgnored private var lastBreakdownKey: String? = nil
     @ObservationIgnored private var ticker: Task<Void, Never>? = nil
+    /// Phase 8: the phone's Screen Time (demo or real, see ScreenTime.make)
+    @ObservationIgnored let screenTimeService: any ScreenTimeService = ScreenTime.make()
+    /// what the shields were last set to (AppState+ScreenTime)
+    @ObservationIgnored var lastScreenTimeRules: ScreenTimeRules? = nil
 
     init(saved: SavedState = Storage.loadState()) {
         name = saved.name
@@ -253,7 +257,7 @@ final class AppState {
     /// pickedKey, time.now, screenTime, isPro — the breakdown is rebuilt
     /// when any of these change, once Screen Time has been answered
     private var breakdownKey: String {
-        "\(Plan.watchedFor(Apps.pickedApps(apps), isPro).joined(separator: ","))|\(time.now)|\(String(describing: screenTime))|\(isPro)"
+        "\(Plan.watchedFor(screenTimeService.pickedAppKeys ?? Apps.pickedApps(apps), isPro).joined(separator: ","))|\(time.now)|\(String(describing: screenTime))|\(isPro)"
     }
 
     private func breakdownDepsChanged() {

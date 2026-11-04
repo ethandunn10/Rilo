@@ -98,3 +98,21 @@ Not checked / needs you:
 - **The voice can only really be tested on your iPhone** (the simulator has no real mic input).
 - The notification banner itself isn't screenshotted: iOS's "Allow" button can't be tapped by the tools here.
 - **Question:** the tour's "do you post?" answer gives Pro for free (the web demo does this). With real StoreKit, that free Pro goes away on the next launch. Should that answer just turn Creator Mode on instead? (With the tester switch on, nobody notices yet.)
+
+## Phase 8: Screen Time blocking, ready to switch on ✅
+- All blocking goes through one `ScreenTimeService` (`Rilo/Rilo/Services/ScreenTimeService.swift`). The app uses `DemoScreenTimeService` now, so everything works exactly as before (checked with -selfcheck, -settingscheck and before/after pixel diffs in `screenshots/phase-8/`).
+- The real version is written and switched off, in `Rilo/ScreenTimeReal/` (outside the build). It covers:
+  - Family Controls permission
+  - Apple's app picker
+  - ManagedSettings shields
+  - DeviceActivity timers for opens/minutes
+  - the shield screen with Rilo's copy ("talk to rilo" / "close")
+  - the shield button action
+  - the timer monitor
+  - the shared App Group data
+  - the home-screen widget (Rilo's face + today's mood, small + medium)
+
+  All of it typechecks against the iOS 27.2 SDK with zero errors.
+- **The widget needs the paid account** (it reads Rilo's mood through an App Group, which the free account can't use, and adding its target now would break running on your iPhone), so it's in the setup doc.
+- **`SETUP_AFTER_PAID_ACCOUNT.md`** is the step-by-step list for switching it all on.
+- Apple's rules (not bugs): Rilo never learns real app names (Apple only gives a label), and timer windows are 15 minutes minimum, so "reopen within 2 minutes" can stretch to 15 for short opens.
