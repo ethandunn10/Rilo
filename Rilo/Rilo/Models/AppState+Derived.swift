@@ -86,7 +86,7 @@ extension AppState {
 
     /// what the calendar means for the week ahead
     var weekAhead: [CalendarPlanItem] {
-        calendar.on ? MockAI.calendarPlan(MockAI.DEMO_CALENDAR, apps: watched) : []
+        calendar.on ? MockAI.calendarPlan(calendarWeek, apps: watched) : []
     }
 
     // MARK: the first week of questions

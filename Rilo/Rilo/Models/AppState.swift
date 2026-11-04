@@ -123,6 +123,11 @@ final class AppState {
     @ObservationIgnored private var ticker: Task<Void, Never>? = nil
     /// Phase 8: the phone's Screen Time (demo or real, see ScreenTime.make)
     @ObservationIgnored let screenTimeService: any ScreenTimeService = ScreenTime.make()
+    /// the phone's calendar (demo week or EventKit, see CalendarServices.make)
+    @ObservationIgnored let calendarService: any CalendarService = CalendarServices.make()
+    /// the next 7 days read from the real calendar (not saved; reloaded on
+    /// launch and when the app comes back). Read through `calendarWeek`.
+    var calendarEvents: [CalendarEvent] = []
     /// what the shields were last set to (AppState+ScreenTime)
     @ObservationIgnored var lastScreenTimeRules: ScreenTimeRules? = nil
 

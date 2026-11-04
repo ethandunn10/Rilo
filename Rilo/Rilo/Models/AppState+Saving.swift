@@ -93,6 +93,8 @@ extension AppState {
         /* Phase 8: shields match the rules, then whatever happened while away */
         syncScreenTime(force: true)
         handleScreenTimeEvents()
+        /* the calendar may have changed while away */
+        reloadCalendar()
     }
 
     func appWentToBackground() {

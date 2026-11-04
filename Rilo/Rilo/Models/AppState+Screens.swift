@@ -207,6 +207,7 @@ extension AppState {
 
     func calendarSet(_ next: CalendarLink) {
         calendar = next
+        if !next.on { calendarEvents = [] }
         track("calendar", next.on ? "connected \(next.which)" : "disconnected")
     }
 

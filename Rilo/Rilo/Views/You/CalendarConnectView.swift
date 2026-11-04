@@ -4,8 +4,12 @@ import SwiftUI
 /// shape as the Screen Time permission: Rilo asks, the system sheet appears,
 /// and whichever way they answer decides how much he can plan around.
 ///
-/// DEMO ONLY: nothing is connected and no account is signed into (no
-/// EventKit). The events are MockAI.DEMO_CALENDAR.
+/// The calendar button is REAL (Services/CalendarService, EventKit): it
+/// shows the iOS prompt and reads every calendar on the phone (Apple,
+/// Google, Outlook... whatever is in Settings ▸ Calendar ▸ Accounts). With
+/// the demo service (screenshot seeds) it shows the pretend system sheet and
+/// the week is MockAI.DEMO_CALENDAR. The other sources (notes, reminders...)
+/// are still DEMO ONLY: the pretend sheet, nothing is read.
 /// App.jsx passes skin OG_SKIN, apps = watched, setCalendar = calendarSet.
 /// DEBUG `-calsheet <Calendar|Google Calendar|Notes|...>` starts with that
 /// system sheet up; `-calendaron` (DemoSeed) starts connected; `-calbottom`
@@ -17,6 +21,9 @@ struct CalendarConnectView: View {
     var onSkip: (() -> Void)? = nil
 
     @State private var sheet = DemoSeed.arg("-calsheet") ?? ""
+    /// they said no to the real prompt (or had before)
+    @State private var denied = false
+    @State private var asking = false
 
     /* The other places a plan actually lives. Rilo reads them the same way
        he reads the calendar — to know what's on, never to change anything. */
@@ -30,10 +37,29 @@ struct CalendarConnectView: View {
     private var calendar: CalendarLink { state.calendar }
     private var connected: Bool { calendar.on }
     private var plan: [CalendarPlanItem] {
-        connected ? MockAI.calendarPlan(MockAI.DEMO_CALENDAR, apps: state.watched) : []
+        connected ? MockAI.calendarPlan(state.calendarWeek, apps: state.watched) : []
     }
 
     private func setCalendar(_ next: CalendarLink) { state.calendarSet(next) }
+
+    private var isDemo: Bool { state.calendarService.isDemo }
+
+    /// the accounts the real calendars came from ("icloud, gmail")
+    private var accounts: [String] {
+        if isDemo || calendar.which == AppState.DEMO_CALENDAR_NAME { return [] }
+        return calendar.sources.filter { s in !Self.SOURCES.contains { $0.id == s } }
+    }
+
+    private func connectReal() {
+        guard !asking else { return }
+        asking = true
+        denied = false
+        Task {
+            let ok = await state.connectRealCalendar()
+            denied = !ok
+            asking = false
+        }
+    }
 
     private func toggleSource(_ id: String) {
         if calendar.sources.contains(id) {
@@ -107,9 +133,22 @@ struct CalendarConnectView: View {
                     .multilineTextAlignment(.center)
             }
 
+            if connected && !accounts.isEmpty {
+                Text("reading \(accounts.joined(separator: ", ").lowercased()).")
+                    .font(.inter(13, 600))
+                    .foregroundStyle(RC.ink2)
+                    .multilineTextAlignment(.center)
+            }
+
             /* what he found, and what he'll do about it */
             if connected {
                 VStack(alignment: .leading, spacing: 9) {
+                    if plan.isEmpty {
+                        Text("nothing big this week. i\u{2019}ll check again when you open me.")
+                            .font(.inter(14, 600))
+                            .webLineHeight(14, 1.35)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                     ForEach(Array(plan.enumerated()), id: \.offset) { _, p in
                         HStack(alignment: .top, spacing: 9) {
                             Text(p.day.uppercased())
@@ -149,20 +188,40 @@ struct CalendarConnectView: View {
                 .buttonStyle(.tap)
             } else {
                 VStack(spacing: 8) {
-                    Button { sheet = "Calendar" } label: {
-                        Text("connect apple calendar").modifier(CalendarBigButton())
+                    if isDemo {
+                        Button { sheet = "Calendar" } label: {
+                            Text("connect apple calendar").modifier(CalendarBigButton())
+                        }
+                        .buttonStyle(.tap)
+                        Button { sheet = "Google Calendar" } label: {
+                            Text("connect google calendar")
+                                .font(.fredoka(18, 600))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .capsuleSticker(fill: Color.white.opacity(0.92), drop: 4)
+                        }
+                        .buttonStyle(.tap)
+                    } else {
+                        /* the real iOS prompt; one allow reads every calendar on the phone */
+                        Button { connectReal() } label: {
+                            Text("connect my calendar").modifier(CalendarBigButton())
+                        }
+                        .buttonStyle(.tap)
+                        .disabled(asking)
                     }
-                    .buttonStyle(.tap)
-                    Button { sheet = "Google Calendar" } label: {
-                        Text("connect google calendar")
-                            .font(.fredoka(18, 600))
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 52)
-                            .capsuleSticker(fill: Color.white.opacity(0.92), drop: 4)
+                    Text("works with apple, google and outlook calendars on your phone")
+                        .font(.inter(12.5, 600))
+                        .foregroundStyle(RC.ink2)
+                        .multilineTextAlignment(.center)
+                    if denied {
+                        Text("no calendar access yet. you can allow it in settings \u{25B8} rilo \u{25B8} calendars.")
+                            .font(.inter(13, 600))
+                            .foregroundStyle(Color(hex: "#A33A2B"))
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .buttonStyle(.tap)
                     /* DEMO ONLY: skip the system sheet entirely */
-                    Button { setCalendar(CalendarLink(on: true, which: "Demo Calendar")) } label: {
+                    Button { setCalendar(CalendarLink(on: true, which: AppState.DEMO_CALENDAR_NAME)) } label: {
                         Text("demo: connect a fake calendar")
                             .font(.fredoka(13, 600))
                             .underline()
