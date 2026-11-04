@@ -149,7 +149,7 @@ private struct PickChip: View {
             Text(label)
                 .font(.fredoka(16, 600))
                 .foregroundStyle(on ? .white : RC.ink)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 14 + 2)   // css border sits outside the padding
                 .frame(minHeight: 44)
                 .background(Capsule().fill(on ? chipOnFill : chipOffFill))
                 .overlay(Capsule().strokeBorder(on ? RC.ink : .white, lineWidth: 2))
@@ -183,8 +183,8 @@ private struct CustomChip: View {
             .accessibilityLabel("Remove \(label)")
         }
         .foregroundStyle(on ? .white : RC.ink)
-        .padding(.leading, 14)
-        .padding(.trailing, 6)
+        .padding(.leading, 14 + 2)
+        .padding(.trailing, 6 + 2)
         .frame(minHeight: 44)
         .background(Capsule().fill(on ? chipOnFill : chipOffFill))
         .overlay(Capsule().strokeBorder(on ? RC.ink : .white, lineWidth: 2))
@@ -201,7 +201,7 @@ private struct GhostChip: View {
             Text(label)
                 .font(.fredoka(16, 600))
                 .foregroundStyle(RC.ink)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 14 + 2)
                 .frame(minHeight: 44)
                 .overlay(
                     Capsule().strokeBorder(dashed ? RC.ink : Color.rgba(18, 48, 26, 0.35),

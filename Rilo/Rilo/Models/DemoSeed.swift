@@ -42,6 +42,18 @@ import Foundation
 ///   -appkind pass|always / -burned <min>   appopen as a pass / always-
 ///                    allowed session, or with that many minutes burned
 ///   -loosen          the "making it easier?" sheet (BypassGuiltOverlay)
+///   -youscroll <id>  you tab scrolled to that part (see YouView), -youloosen
+///                    strict-wait|strict-now: its "making it easier?" sheet up
+///   -calendaron [-calsources a,b] / -calsheet <which>   calendar connected
+///                    (with those sources) / with that system sheet up
+///   -goalhours <h>   the daily goal set to h hours
+///   -nightcustom     nighttime on "another time" with the field open
+///   -scrollbottom    progress scrolled to the end (also Home)
+///   -picksel <skin> / -pickscroll   pickrilo previewing that skin / with
+///                    the grid scrolled to the end
+///   -buddycode <CODE> / -buddyfriends <n> / -nudged / -buddysaid <text>
+///                    buddies with a code, n demo friends, the first nudged,
+///                    and that line under the invite card
 ///   -tour            keep the Meet Rilo tour on the tab screens (off by
 ///                    default so screenshots show the screen itself)
 /// The seed runs the same AppState actions onboarding does, so the numbers
@@ -77,6 +89,9 @@ enum DemoSeed {
     static func launch() -> AppState {
         #if DEBUG
         if arguments.contains("-selfcheck") { SelfCheck.run() }
+        /* a seeded screen always starts from a fresh account (the saved xp
+           and level would otherwise carry over from the last launch) */
+        if screenArg != nil { Storage.clearState() }
         #endif
         let state = AppState()
         if let theme = arg("-theme") { state.theme = theme }
@@ -158,11 +173,30 @@ enum DemoSeed {
         case .creator where arguments.contains("-creatoractive"):
             state.creator.active = CreatorActive(task: "post", duration: 10, startedAt: JS.nowMs - 3 * 60000)
         case .levelup:
-            state.level = 3
-            state.pendingSkin = "bamboo"
+            /* what the You tab's "demo: +500 xp" does to the web's fresh
+               account (320 xp, level 2): 820 xp, level 4, shades unlocked */
+            state.xp = 820
+            state.level = 4
+            state.pendingSkin = "shades"
+        case .buddies:
+            /* -buddycode <CODE>: an invite code made; -buddyfriends <n>: that
+               many demo friends joined; -nudged: the first one nudged */
+            if let c = arg("-buddycode") { state.buddies.code = c }
+            if let n = arg("-buddyfriends").flatMap(Int.init) {
+                state.buddies.friends = MockAI.DEMO_FRIENDS.prefix(n).map { f in
+                    var f = f; f.code = "ABC123"; return f
+                }
+                if arguments.contains("-nudged"), !state.buddies.friends.isEmpty {
+                    state.buddies.friends[0].nudged = true
+                }
+            }
         case .rather:
             /* arrives with nothing picked, like onboarding; -picked keeps gym + studying */
             if !arguments.contains("-picked") { state.rather = [] }
+        case .you:
+            /* what the web shows right after onboarding + the trial */
+            state.xp = 320
+            state.level = 2
         case .upgrade:
             state.isPro = false
             state.planChoice = "free"
@@ -172,6 +206,13 @@ enum DemoSeed {
         if arguments.contains("-handoff") {
             state.introTourDone = false
             state.handoff = true
+        }
+        /* -goalhours <h>: the daily goal moved (You's goal stepper) */
+        if let g = arg("-goalhours"), let h = Double(g) { state.time.goal = h }
+        /* -calendaron [-calsources Notes,Reminders]: the demo calendar connected */
+        if arguments.contains("-calendaron") {
+            state.calendar = CalendarLink(on: true, which: "Demo Calendar",
+                                          sources: arg("-calsources")?.split(separator: ",").map(String.init) ?? [])
         }
         /* -loosen: Rilo's "making it easier?" sheet for a looser tiktok limit */
         if arguments.contains("-loosen") {
