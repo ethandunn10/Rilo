@@ -67,10 +67,10 @@ extension YouView {
         return VStack(alignment: .leading, spacing: 10) {
             Text("apps rilo watches").font(.fredoka(19, 600))
             AppPicker(apps: $s.apps, sheet: $appSheet, refused: $refused,
-                      maxApps: state.isPro ? .max : Plan.FREE_MAX_APPS,
+                      maxApps: state.hasPro ? .max : Plan.FREE_MAX_APPS,
                       onMaxed: { state.go(.upgrade) })
             AppPicker.refusedNote(refused)
-            if !state.isPro {
+            if !state.hasPro {
                 Text("free blocks \(Plan.FREE_MAX_APPS) apps. pro blocks as many as you like.")
                     .font(.inter(12, 700))
                     .foregroundStyle(RC.ink2)
@@ -102,7 +102,7 @@ extension YouView {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Button {
-                    if state.isPro { state.creatorModeOn = !on } else { state.go(.upgrade) }
+                    if state.hasPro { state.creatorModeOn = !on } else { state.go(.upgrade) }
                 } label: {
                     Circle()
                         .fill(.white)
@@ -118,7 +118,7 @@ extension YouView {
                 .accessibilityValue(on ? "on" : "off")
                 .accessibilityAddTraits(.isToggle)
             }
-            if on && state.isPro {
+            if on && state.hasPro {
                 Button { state.go(.creator) } label: {
                     Text("start a creator session")
                         .font(.fredoka(16, 600))
@@ -137,7 +137,7 @@ extension YouView {
     // MARK: the nightly check-in (pro)
 
     @ViewBuilder private var nightCard: some View {
-        if state.isPro {
+        if state.hasPro {
             let at = state.night.at.isEmpty ? "21:00" : state.night.at
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .center, spacing: 10) {
@@ -194,12 +194,12 @@ extension YouView {
 
     private var buddiesCard: some View {
         let count = state.buddies.friends.count
-        let sub = state.isPro
+        let sub = state.hasPro
             ? (count > 0 ? "\(count) added" : "invite code only. no profiles.")
             : "a friend sees your mood and streak, never your numbers."
         return YouRowCard(delay: 0.24, skin: state.chosenRilo, mood: "wave", title: "buddies", sub: sub,
-                          badge: !state.isPro) {
-            state.go(state.isPro ? .buddies : .upgrade)
+                          badge: !state.hasPro) {
+            state.go(state.hasPro ? .buddies : .upgrade)
         }
         .tourTarget("you-buddies", radius: 26)
     }

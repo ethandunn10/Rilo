@@ -97,6 +97,41 @@ enum SelfCheck {
         iss("hoursIn", Listen.hoursIn("like five hours, i want two and a half"), [5, 2.5])
         iss("fmtMins", Plan.fmtMins(135), "2h 15m")
 
+        // Phase 7: saving round-trips, and a broken save is a fresh start
+        var saved = Storage.DEFAULT_STATE
+        saved.name = "Sam"; saved.xp = 999; saved.level = 5; saved.screen = "rather"
+        saved.rather = ["gym"]; saved.introTourDone = true; saved.isPro = true
+        saved.appSettings = ["tiktok": lim]; saved.night.at = "22:15"
+        let data = (try? JSONEncoder().encode(saved)) ?? Data()
+        iss("save round-trip", Storage.decode(data), saved)
+        iss("save garbage", Storage.decode(Data("not json".utf8)) == nil, true)
+        let partial = Storage.decode(Data(#"{"xp":5,"name":3,"screen":"pickapps","day":{"nope":1}}"#.utf8))
+        iss("save partial xp", partial?.xp, 5)
+        iss("save partial bad name", partial?.name, "")
+        iss("save partial bad day", partial?.day.date, Storage.today())
+        iss("save partial screen", partial.map(AppState.restoredScreen), .pickapps)
+        saved.screen = "shield"
+        iss("restore transient", AppState.restoredScreen(saved), .home)
+        saved.screen = nil; saved.planChoice = nil
+        iss("restore old fresh", AppState.restoredScreen(saved), .welcome)
+
+        // Phase 7: the reminders
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = TimeZone(identifier: "UTC")!
+        let eight = cal.date(from: DateComponents(year: 2026, month: 11, day: 4, hour: 20))!
+        let N = RiloNotifications.self
+        let p1 = N.plan(isPro: true, night: NightCheck(), checkedInToday: false, bedtime: Bedtime(on: true),
+                        drip: Drip(day: 2, done: ["goal"]), now: eight, cal: cal)
+        iss("notify checkin tonight", p1.first?.id, "checkin-0")
+        iss("notify checkin at", p1.first?.at.hour, 21)
+        iss("notify 7 nights", p1.filter { $0.id.hasPrefix("checkin") }.count, 7)
+        iss("notify ask", p1.first { $0.id.hasPrefix("ask") }?.title, "want me to plan around practice and tests?")
+        iss("notify ask screen", p1.first { $0.id.hasPrefix("ask") }?.screen, "plan")
+        iss("notify bedtime", p1.last?.at.hour, 22)
+        let p2 = N.plan(isPro: false, night: NightCheck(), checkedInToday: true, bedtime: Bedtime(),
+                        drip: Drip(day: 7), now: eight, cal: cal)
+        iss("notify free: nothing", p2.count, 0)
+
         say("[selfcheck] \(fail == 0 ? "all good" : "\(fail) FAILED")")
     }
 }

@@ -6,8 +6,9 @@ import SwiftUI
 /// he adds the first-week question as a third step.
 ///
 /// DEMO ONLY: what they write is matched against patterns in MockAI.
-/// Voice: the web has no mic; `SpeechInput` adds one only when available
-/// (never in the demo, except DEBUG `-voice`). Then tapping Rilo talks.
+/// Voice: real on-device speech-to-text when `SpeechInput` is available
+/// (DEBUG `-voice` fakes it). Then HOLDING Rilo talks; letting go sends it.
+/// No speech (or a "no" to the mic) → typing only, like the web.
 ///
 /// DEBUG launch args (with `-screen nightcheckin`):
 ///   -checkstep N          answer the first N questions with demo lines
@@ -69,11 +70,12 @@ struct NightCheckInView: View {
         VStack(spacing: 10) {
             topRow
             bubble
+            /* with a mic, Rilo is the talk button: hold him, say it, let go */
             RiloStage(skin: state.chosenRilo, mood: done ? reply.mood : "curious", size: 180,
-                      state: listening ? .listening : .idle) {
-                guard speech.isAvailable, !done else { return }
-                listening ? speech.stop() : startMic()
-            }
+                      state: listening ? .listening : .idle,
+                      onHold: speech.isAvailable && !done ? { down in
+                          down ? startMic() : speech.stop()
+                      } : nil)
             if speech.isAvailable { WaveBars(on: listening, color: .white) }
             if !done { pill }
             if !showText.isEmpty && !done {

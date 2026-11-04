@@ -1,6 +1,7 @@
 import SwiftUI
 
-/// `.tap` / `.tap-94` / `.tap-97` ...: buttons shrink slightly when pressed.
+/// `.tap` / `.tap-94` / `.tap-97` ...: buttons shrink slightly when pressed,
+/// with a light haptic as the finger goes down (Haptics.tap).
 struct TapScale: ButtonStyle {
     var scale: CGFloat = 0.96
     func makeBody(configuration: Configuration) -> some View {
@@ -8,6 +9,9 @@ struct TapScale: ButtonStyle {
             .contentShape(Rectangle())
             .scaleEffect(configuration.isPressed ? scale : 1)
             .animation(.easeOut(duration: 0.15), value: configuration.isPressed)
+            .onChange(of: configuration.isPressed) { _, pressed in
+                if pressed { Haptics.tap() }
+            }
     }
 }
 

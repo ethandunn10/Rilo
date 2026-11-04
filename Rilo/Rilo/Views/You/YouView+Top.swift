@@ -69,7 +69,7 @@ extension YouView {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10, alignment: .top), count: 3),
                       alignment: .leading, spacing: 10) {
                 ForEach(Themes.all) { t in
-                    let open = t.tier == "free" || state.isPro || Levels.UNLOCK_ALL
+                    let open = t.tier == "free" || state.hasPro
                     ThemeSwatch(t: t, on: state.theme == t.id) {
                         if open { state.setThemeTracked(t.id) } else { state.lockedTheme(t.id) }
                     }

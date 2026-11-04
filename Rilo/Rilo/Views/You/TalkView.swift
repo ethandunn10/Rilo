@@ -5,8 +5,10 @@ import SwiftUI
 /// a hobby, a goal — and he adds it. Typed, with tappable quick answers; the
 /// onboarding questions that used to run through here are gone on the web.
 ///
-/// Voice: the web has no mic. `SpeechInput` adds one only when it says it's
-/// available (never in the demo, except DEBUG `-voice`).
+/// Voice: the mic button shows when `SpeechInput` is available (real
+/// on-device speech-to-text; DEBUG `-voice` fakes it). Hold it to talk, the
+/// words stream into the field, letting go sends them. No speech (or a "no"
+/// to the mic) → typing only, like the web.
 ///
 /// DEBUG launch args (with `-screen talkchat`):
 ///   -talkpick "soccer,gym"   chips already tapped

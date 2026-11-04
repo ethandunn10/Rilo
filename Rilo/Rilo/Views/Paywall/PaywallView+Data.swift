@@ -32,6 +32,17 @@ extension PaywallView {
         PlanRow(id: "month", name: "monthly", sub: "billed every month", price: "$4.99/mo"),
         PlanRow(id: "free", name: "free", sub: "5 apps, your limits and your plan", price: "$0"),
     ]
+
+    /// PLANS with the App Store's own localized prices once StoreKit has
+    /// loaded them; the web's text above until then (or if it never does).
+    static func plans(_ prices: PlanPrices?) -> [PlanRow] {
+        guard let p = prices else { return PLANS }
+        return [
+            PlanRow(id: "year", name: PLANS[0].name, sub: "\(p.yearPerMonth) a month, billed yearly", price: "\(p.year)/yr"),
+            PlanRow(id: "month", name: PLANS[1].name, sub: PLANS[1].sub, price: "\(p.month)/mo"),
+            PLANS[2],
+        ]
+    }
 }
 
 /// The dark "pro adds" card.

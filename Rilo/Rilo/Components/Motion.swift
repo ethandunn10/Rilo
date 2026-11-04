@@ -76,18 +76,26 @@ struct RiseIn: ViewModifier {
     }
 }
 
+/// `pop .3s cubic-bezier(.2,.9,.3,1.1)`: from opacity 0, scale 0.6, 30px
+/// down, to scale 1.06 at 60%, then settling to 1.
 struct PopIn: ViewModifier {
     var delay: Double = 0
-    @State private var shown = false
+    var duration: Double = 0.3
+    /// 0 = hidden, 1 = the 60% overshoot, 2 = settled
+    @State private var step = 0
     @Environment(\.accessibilityReduceMotion) private var reduce
 
     func body(content: Content) -> some View {
+        let s = reduce ? 2 : step
         content
-            .opacity(shown || reduce ? 1 : 0)
-            .scaleEffect(shown || reduce ? 1 : 0.6)
-            .offset(y: shown || reduce ? 0 : 30)
+            .opacity(s == 0 ? 0 : 1)
+            .scaleEffect(s == 0 ? 0.6 : (s == 1 ? 1.06 : 1))
+            .offset(y: s == 0 ? 30 : 0)
             .onAppear {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.6).delay(delay)) { shown = true }
+                let curve = Animation.timingCurve(0.2, 0.9, 0.3, 1.1, duration: duration * 0.6).delay(delay)
+                withAnimation(curve) { step = 1 } completion: {
+                    withAnimation(.timingCurve(0.2, 0.9, 0.3, 1.1, duration: duration * 0.4)) { step = 2 }
+                }
             }
     }
 }

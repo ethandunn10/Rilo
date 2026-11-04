@@ -80,7 +80,7 @@ extension PlanView {
     /// rilo's nightly check-in (pro; free sees it, locked)
     @ViewBuilder
     private var checkIn: some View {
-        let isPro = state.isPro
+        let isPro = state.hasPro
         let due = state.checkInDue
         let checked = state.checkedInToday
         if state.canCheckIn || !isPro {

@@ -72,7 +72,7 @@ struct YouView: View {
             }
         }
         .appSheetHost(apps: $s.apps, sheet: $appSheet, refused: $refused,
-                      maxApps: state.isPro ? .max : Plan.FREE_MAX_APPS,
+                      maxApps: state.hasPro ? .max : Plan.FREE_MAX_APPS,
                       onMaxed: { state.go(.upgrade) })
         .overlay {
             /* loosening strict mode goes past rilo first */

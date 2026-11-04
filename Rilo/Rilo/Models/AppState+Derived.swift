@@ -16,7 +16,7 @@ extension AppState {
     var inOnboarding: Bool { Screen.onboarding.contains(screen) }
 
     /// the apps they picked (capped at 5 on free). Nothing else.
-    var watched: [String] { Plan.watchedFor(Apps.pickedApps(apps), isPro) }
+    var watched: [String] { Plan.watchedFor(Apps.pickedApps(apps), hasPro) }
     var tracked: [String] { watched }
 
     private func breakdownApp(_ app: String) -> BreakdownApp? {
@@ -78,7 +78,7 @@ extension AppState {
 
     // MARK: the nightly check-in (Pro)
 
-    var canCheckIn: Bool { isPro }
+    var canCheckIn: Bool { hasPro }
     var checkedInToday: Bool { night.date == dateKey }
     var checkInDue: Bool {
         canCheckIn && !checkedInToday && nowMins >= Addons.toMins(night.at.isEmpty ? "21:00" : night.at)
@@ -95,9 +95,9 @@ extension AppState {
         FirstWeek.askFor(day: drip.day, done: drip.done, askedOn: drip.askedOn, slot: slot,
                          morning: FirstWeek.isMorning(nowMins))
     }
-    var planAsk: Ask? { isPro ? slotAsk("plan") : nil }
-    var checkinAsk: Ask? { isPro ? slotAsk("checkin") : nil }
-    var homeAsk: Ask? { slotAsk("home") ?? (isPro ? nil : slotAsk("plan") ?? slotAsk("checkin")) }
+    var planAsk: Ask? { hasPro ? slotAsk("plan") : nil }
+    var checkinAsk: Ask? { hasPro ? slotAsk("checkin") : nil }
+    var homeAsk: Ask? { slotAsk("home") ?? (hasPro ? nil : slotAsk("plan") ?? slotAsk("checkin")) }
 
     // MARK: the plan check + per-app state
 

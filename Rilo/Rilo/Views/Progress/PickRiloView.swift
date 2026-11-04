@@ -23,7 +23,7 @@ struct PickRiloView: View {
     static let deepGreen = Color(hex: "#1F6B2E")
 
     var body: some View {
-        let cur = Levels.skinState(selected, isPro: state.isPro, level: state.level)
+        let cur = Levels.skinState(selected, isPro: state.hasPro, level: state.level)
 
         ZStack {
             SkyView(hills: .mid).ignoresSafeArea()
@@ -99,7 +99,7 @@ struct PickRiloView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 8), count: 5), spacing: 8) {
                 ForEach(Levels.SKIN_LADDER, id: \.skin) { item in
                     PickRiloTile(item: item,
-                                 status: Levels.skinState(item.skin, isPro: state.isPro, level: state.level),
+                                 status: Levels.skinState(item.skin, isPro: state.hasPro, level: state.level),
                                  on: selected == item.skin) { tap(item.skin) }
                 }
             }
@@ -118,7 +118,7 @@ struct PickRiloView: View {
     }
 
     private func tap(_ skin: String) {
-        let s = Levels.skinState(skin, isPro: state.isPro, level: state.level)
+        let s = Levels.skinState(skin, isPro: state.hasPro, level: state.level)
         /* once the paid plan is real, a locked skin sells the plan instead */
         if !s.unlocked && s.reason == "pro" {
             state.pickRiloLocked(s.info.name)

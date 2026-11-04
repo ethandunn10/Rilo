@@ -120,6 +120,7 @@ struct RiloView: View {
     // MARK: poke
 
     private func poke() {
+        Haptics.soft()
         let picked = RiloLines.next(after: lastIndex)
         lastIndex = picked.index
         line = picked.line

@@ -12,13 +12,14 @@ import SwiftUI
 ///   AppState+Screens   the little callbacks App.jsx wires inline per screen + DemoPanel
 ///
 /// Screens read and write it with `@Environment(AppState.self) var state`.
-/// Saved to UserDefaults (Storage) whenever a saved field changes, exactly
-/// the fields the web saves.
+/// Saved to UserDefaults (Storage) whenever a saved field changes: everything
+/// the web saves, plus where they are and the onboarding answers the web
+/// kept in memory (Phase 7). Restored on launch (AppState+Saving).
 @Observable @MainActor
 final class AppState {
     // MARK: navigation (App.jsx `nav`)
     /// the screen showing (the web's last nav entry)
-    private(set) var screen: Screen = .welcome
+    private(set) var screen: Screen = .welcome { didSet { scheduleSave() } }
     /// how the last change of screen should animate
     private(set) var navDirection: NavDirection = .forward
     /// true while a slide is running; navigation is ignored then (like the web)
@@ -38,7 +39,12 @@ final class AppState {
     var xp: Int { didSet { scheduleSave() } }
     /// high-water level — XP can drop, a level never does
     var level: Int { didSet { scheduleSave() } }
-    var isPro: Bool { didSet { scheduleSave(); breakdownDepsChanged() } }
+    var isPro: Bool {
+        didSet {
+            scheduleSave(); breakdownDepsChanged()
+            if isPro && !oldValue && loaded { Haptics.success() }
+        }
+    }
     var chosenRilo: String { didSet { scheduleSave() } }
     var theme: String { didSet { scheduleSave() } }
     var opens: OpenCounts { didSet { scheduleSave() } }
@@ -77,19 +83,20 @@ final class AppState {
     var demoClock: String? { didSet { scheduleSave() } }
 
     // MARK: not saved
+    /* saved since Phase 7 (the web kept these in memory) */
     /// a skin waiting to be celebrated, shown next time we head home
-    var pendingSkin: String? = nil
+    var pendingSkin: String? = nil { didSet { scheduleSave() } }
     /// what Rilo said about his own plan, when he made it
-    var riloWhy: [String: String] = [:]
-    var riloLead: [String] = []
-    /// the demo restarts onboarding each launch, so the tour is offered again
-    var introTourDone = false
+    var riloWhy: [String: String] = [:] { didSet { scheduleSave() } }
+    var riloLead: [String] = [] { didSet { scheduleSave() } }
+    /// the Meet Rilo tour runs once
+    var introTourDone = false { didSet { scheduleSave() } }
     /// a loosening change waiting on rilo's "are you sure"
     var loosenAsk: LoosenAsk? = nil
     /// the beat between finishing onboarding and the tour starting
     var handoff = false
     /// which beat of the YourNumber sequence they're on
-    var numberBeat = 0
+    var numberBeat = 0 { didSet { scheduleSave() } }
     /// the reason they gave on the check-in, for this session
     var promise: Checkin? = nil
     /// "you said quick check on messages, and you used the whole open"
@@ -102,7 +109,7 @@ final class AppState {
     /// "you closed 7 min early" — shown on Home once
     var savedNote: SavedNote? = nil
     /// what they said they'd rather be doing (Rather ids)
-    var rather: [String] = []
+    var rather: [String] = [] { didSet { scheduleSave() } }
     /// what the day summary shows
     var dayResult: DayResult? = nil
     /// ticks once a second while anything is pending, so countdowns move
@@ -110,6 +117,8 @@ final class AppState {
 
     @ObservationIgnored private var saveQueued = false
     @ObservationIgnored private var loaded = false
+    /// what the notifications were last scheduled for (AppState+Saving)
+    @ObservationIgnored var lastNotifyKey: String? = nil
     @ObservationIgnored private var lastBreakdownKey: String? = nil
     @ObservationIgnored private var ticker: Task<Void, Never>? = nil
 
@@ -153,6 +162,14 @@ final class AppState {
         night = saved.night
         drip = saved.drip
         demoClock = saved.demoClock
+        /* Phase 7: the rest of what they did, and where they were */
+        introTourDone = saved.introTourDone
+        rather = saved.rather
+        numberBeat = saved.numberBeat
+        riloWhy = saved.riloWhy
+        riloLead = saved.riloLead
+        pendingSkin = saved.pendingSkin
+        screen = Self.restoredScreen(saved)
         loaded = true
         lastBreakdownKey = breakdownKey
         startTicker()
@@ -169,10 +186,10 @@ final class AppState {
             day: day, borrow: borrow, pending: pending, step: step, focus: focus, history: history,
             streak: streak, leanDays: leanDays, checkins: checkins, bedtime: bedtime, school: school,
             buddies: buddies, schedule: schedulePlan, creator: creator, creatorModeOn: creatorModeOn,
-            /* the web's saveState call doesn't include introTourDone, so the
-               default (false) is what lands in storage */
-            introTourDone: false,
-            calendar: calendar, night: night, demoClock: demoClock, drip: drip, strict: strict)
+            introTourDone: introTourDone,
+            calendar: calendar, night: night, demoClock: demoClock, drip: drip, strict: strict,
+            screen: screen.rawValue, rather: rather, numberBeat: numberBeat,
+            riloWhy: riloWhy, riloLead: riloLead, pendingSkin: pendingSkin)
     }
 
     private func scheduleSave() {
@@ -182,7 +199,15 @@ final class AppState {
             guard let self else { return }
             self.saveQueued = false
             Storage.saveState(self.savedState)
+            self.settingsChanged()
         }
+    }
+
+    /// Save right now (the app is going to the background).
+    func saveNow() {
+        guard loaded else { return }
+        saveQueued = false
+        Storage.saveState(savedState)
     }
 
     // MARK: navigation
@@ -199,6 +224,7 @@ final class AppState {
         withAnimation(.timingCurve(curve.x1, curve.y1, curve.x2, curve.y2, duration: curve.duration)) {
             screen = next
         }
+        arrived(at: next)
         Task { @MainActor [weak self] in
             try? await Task.sleep(for: .seconds(NavMotion.settleAfter))
             self?.isSliding = false

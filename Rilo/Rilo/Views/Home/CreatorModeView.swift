@@ -78,7 +78,7 @@ struct CreatorModeView: View {
 
     @ViewBuilder
     private var content: some View {
-        if !state.isPro {
+        if !state.hasPro {
             VStack(spacing: 0) {
                 RiloView(skin: "gold", mood: "coach", size: 112)
                 Text("Creator Mode is Pro")

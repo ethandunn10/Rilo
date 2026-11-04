@@ -53,7 +53,8 @@ extension NightCheckInView {
     }
 
     var pill: some View {
-        Text(listening ? "tap to stop · \(left)s" : "thirty seconds, that's it")
+        Text(listening ? "let go to stop · \(left)s"
+                       : speech.isAvailable ? "hold rilo and say it" : "thirty seconds, that's it")
             .font(.fredoka(16, 600))
             .foregroundStyle(listening ? Color(hex: "#2B3A6B") : .white)
             .padding(.vertical, 8)

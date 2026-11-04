@@ -177,45 +177,32 @@ extension AppState {
 
     // MARK: start over
 
+    /// Everything back to a brand-new account: every saved field, the
+    /// onboarding answers, the tour, and Rilo's reminders.
     func startOver() {
         Storage.clearState()
-        let d = Storage.DEFAULT_STATE
-        name = d.name
-        about = d.about
-        apps = d.apps
-        time = d.time
-        plan = d.plan
-        planChoice = d.planChoice
-        xp = d.xp
-        level = d.level
-        isPro = d.isPro
-        pendingSkin = nil
-        chosenRilo = d.chosenRilo
-        theme = d.theme
+        RiloNotifications.shared.cancelAll()
+        restore(Storage.DEFAULT_STATE)
         opens = OpenCounts(date: dateKey)
-        stats = Stats()
-        /* the whole limit system back to factory */
-        appSettings = d.appSettings
-        limitMode = d.limitMode
-        borrow = d.borrow
-        pending = []
-        step = d.step
-        focus = d.focus
+        day = Storage.freshDay(dateKey)
+        /* the in-memory bits too */
+        pendingSkin = nil
         riloWhy = [:]
         riloLead = []
-        strict = d.strict
-        day = Storage.freshDay(dateKey)
-        history = []
-        streak = 0
-        leanDays = 0
-        program = d.program
-        checkins = []
+        introTourDone = false
+        rather = []
+        numberBeat = 0
+        loosenAsk = nil
+        handoff = false
         promise = nil
         overNote = ""
-        savedNote = nil
-        demoClock = nil
         session = Session()
+        cameFrom = nil
+        banner = false
+        savedNote = nil
+        dayResult = nil
         /* straight back to Welcome, no slide — it's a new tester */
+        /* (what gets saved next is just the default state, on Welcome) */
         jump(to: .welcome)
     }
 }

@@ -9,7 +9,7 @@ extension CreatorModeView {
     private var taskLabel: String { posting ? "posting a video" : "doing research" }
 
     var alertCopy: AlertCopy? {
-        guard state.isPro, active != nil, shownScreen == "instagram" else { return nil }
+        guard state.hasPro, active != nil, shownScreen == "instagram" else { return nil }
         switch alert {
         case "nudge":
             return AlertCopy(title: "Back to your creator task.",

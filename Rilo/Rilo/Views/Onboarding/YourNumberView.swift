@@ -177,7 +177,7 @@ struct YourNumberView: View {
                         .foregroundStyle(RC.ink)
                         .padding(.bottom, 10)
                     if let b = state.breakdown {
-                        BreakdownBars(breakdown: b, compact: true, isPro: state.isPro) { state.go(.upgrade) }
+                        BreakdownBars(breakdown: b, compact: true, isPro: state.hasPro) { state.go(.upgrade) }
                     }
                 }
                 /* 14/16 inside the 2px border */

@@ -9,7 +9,13 @@ struct RootView: View {
         ZStack {
             screenView(state.screen)
                 .id(state.screen)
-                .transition(ScreenTransition(nav: state.navBox))
+                /* the incoming screen runs on goTo's curve (pop-in 0.36s /
+                   rise-back 0.34s); the outgoing one always eases in over
+                   0.3s, like the web's sink-out / drop-out */
+                .transition(AsymmetricTransition(
+                    insertion: ScreenTransition(nav: state.navBox),
+                    removal: ScreenTransition(nav: state.navBox)
+                        .animation(.easeIn(duration: NavMotion.exitDuration))))
 
             if state.showBanner { BannerOverlay().zIndex(40) }
             if state.loosenAsk != nil { BypassGuiltOverlay().zIndex(50) }

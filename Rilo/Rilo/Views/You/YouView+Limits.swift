@@ -27,7 +27,7 @@ extension YouView {
     // MARK: strict mode (rilo pro)
 
     @ViewBuilder private var strictCard: some View {
-        if state.isPro {
+        if state.hasPro {
             StrictCard(dataTourTarget: "you-strict", cardDelay: 0.2, skin: state.chosenRilo,
                        strict: state.strict,
                        onTurnOn: { state.strictOn(days: $0, when: $1) },
@@ -149,7 +149,7 @@ extension YouView {
     }
 
     private var planCard: some View {
-        let pro = state.isPro
+        let pro = state.hasPro
         return VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .center, spacing: 10) {
                 Text("your plan")

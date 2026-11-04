@@ -198,7 +198,7 @@ extension AppState {
         /* past level 10 most levels don't unlock a skin */
         if unlocked.isEmpty { return false }
         /* with real gating on this is Pro-only */
-        if !Levels.UNLOCK_ALL && !isPro { return false }
+        if !hasPro { return false }
 
         pendingSkin = unlocked[0].skin
         return true
@@ -207,7 +207,7 @@ extension AppState {
     // MARK: Creator Mode
 
     func startCreatorSession(task: String, duration: Double?) {
-        if !isPro { return }
+        if !hasPro { return }
         creator.active = CreatorActive(task: task, duration: duration, startedAt: JS.nowMs)
         track("creator", "started \(task) · \(duration.flatMap { $0 != 0 ? "\(JS.num($0))m" : nil } ?? "no limit")")
     }

@@ -103,7 +103,7 @@ struct ProgressScreenView: View {
             Text("where your time goes")
                 .font(.fredoka(18, 600))
                 .padding(.bottom, 10)
-            BreakdownBars(breakdown: breakdown, compact: true, isPro: state.isPro) {
+            BreakdownBars(breakdown: breakdown, compact: true, isPro: state.hasPro) {
                 state.go(.upgrade)
             }
         }

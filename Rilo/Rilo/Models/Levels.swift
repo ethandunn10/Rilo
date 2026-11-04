@@ -112,8 +112,9 @@ nonisolated enum Levels {
         return LevelProgress(current: xp, next: nextAt, pct: pct, atMax: false)
     }
 
-    /// DEMO SWITCH — false means real Pro + level gating is on.
-    static let UNLOCK_ALL = false
+    /// DEMO SWITCH — false means real Pro + level gating is on. Set it in
+    /// Models/FeatureFlags.swift (the one tester switch), not here.
+    static var UNLOCK_ALL: Bool { FeatureFlags.UNLOCK_ALL }
 
     static func skinTier(_ skin: String) -> String {
         skinInfo(skin).level == 1 ? "free" : "pro"

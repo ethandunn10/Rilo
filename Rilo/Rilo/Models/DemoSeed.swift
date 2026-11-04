@@ -57,6 +57,9 @@ import Foundation
 ///   -plan year|month|free   paywall / upgrade with that row selected
 ///   -resultstaps     results with a tester's onboarding taps counted
 ///   -settingscheck   (with -screen you) run SettingsCheck, see that file
+///   -notifynow       schedule the check-in reminder 5 seconds out
+///   -askpermission   show the notification permission prompt
+///   (no -screen)     a normal launch: whatever was saved comes back
 ///   -tour            keep the Meet Rilo tour on the tab screens (off by
 ///                    default so screenshots show the screen itself)
 /// The seed runs the same AppState actions onboarding does, so the numbers
@@ -108,6 +111,12 @@ enum DemoSeed {
         if arguments.contains("-settingscheck") {
             Task { @MainActor in await SettingsCheck.run(state) }
         }
+        /* -notifynow: the check-in reminder 5 seconds out (asks permission
+           first if it hasn't been asked) */
+        if arguments.contains("-notifynow") { RiloNotifications.shared.checkinIn5s() }
+        /* -askpermission: the notification prompt, the way PermissionView's
+           "allow" triggers it */
+        if arguments.contains("-askpermission") { RiloNotifications.shared.askPermission() }
         #endif
         return state
     }

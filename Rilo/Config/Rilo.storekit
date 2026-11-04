@@ -1,0 +1,100 @@
+{
+  "identifier" : "6E1A9C47-3B8D-4F2E-9A51-7C2D8B4E0F13",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+
+  ],
+  "settings" : {
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21600001",
+      "localizations" : [
+        {
+          "description" : "",
+          "displayName" : "Rilo Pro",
+          "locale" : "en_US"
+        }
+      ],
+      "name" : "Rilo Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6600000001",
+          "introductoryOffer" : {
+            "internalID" : "6600000011",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "Every Pro feature, billed once a year.",
+              "displayName" : "Rilo Pro Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.ethandunn.rilo.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Rilo Pro Yearly",
+          "subscriptionGroupID" : "21600001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "4.99",
+          "familyShareable" : false,
+          "groupNumber" : 2,
+          "internalID" : "6600000002",
+          "introductoryOffer" : {
+            "internalID" : "6600000012",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P1W"
+          },
+          "localizations" : [
+            {
+              "description" : "Every Pro feature, billed every month.",
+              "displayName" : "Rilo Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "com.ethandunn.rilo.pro.monthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Rilo Pro Monthly",
+          "subscriptionGroupID" : "21600001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : [
+
+          ]
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

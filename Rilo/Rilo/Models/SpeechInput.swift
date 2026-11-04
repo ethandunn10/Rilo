@@ -1,11 +1,11 @@
 import Foundation
 
-/// Talking to Rilo instead of typing. The web demo has no microphone (see
-/// the note at the top of app/src/lib/listen.js): every answer is typed, so
-/// the screens show the mic UI only when `isAvailable` is true.
+/// Talking to Rilo instead of typing. The screens show the mic UI only when
+/// `isAvailable` is true; otherwise they're typing only, like the web demo
+/// (which has no microphone, see app/src/lib/listen.js).
 ///
-/// Phase 7 adds a real Apple Speech implementation behind this same
-/// protocol. Until then the only implementation is `DemoSpeechInput`.
+/// Implementations: `AppleSpeechInput` (real, on-device speech-to-text) and
+/// `DemoSpeechInput` (DEBUG `-voice` canned lines, or "no mic").
 @MainActor
 protocol SpeechInput: AnyObject {
     /// false → no mic anywhere, typing only (what the web does today)
@@ -17,16 +17,21 @@ protocol SpeechInput: AnyObject {
     func stop()
 }
 
-/// The one place that picks the speech engine, so Phase 7 swaps one line.
+/// The one place that picks the speech engine.
 enum Speech {
     @MainActor
     static func make(demoLines: [String]) -> SpeechInput {
-        DemoSpeechInput(lines: demoLines)
+        /* DEBUG `-voice`: canned lines, since the simulator has no real mic */
+        if DemoSpeechInput.debugOn { return DemoSpeechInput(lines: demoLines) }
+        /* the real thing, wherever the phone can recognise US English */
+        if let apple = AppleSpeechInput() { return apple }
+        /* no speech-to-text here: no mic, typing only (the web today) */
+        return DemoSpeechInput(lines: demoLines, available: false)
     }
 }
 
-/// DEMO ONLY. With no real recognition the web falls back to typing, so by
-/// default this is unavailable and the screens are exactly the web's.
+/// DEMO ONLY. Unavailable by default (the typing-only fallback when there's
+/// no real recognition), so the screens are exactly the web's.
 /// DEBUG `-voice` turns it on to show the listening UI: it "hears" a canned
 /// line word by word (one per start, in order) and finishes on its own.
 @MainActor

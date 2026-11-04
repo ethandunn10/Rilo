@@ -9,9 +9,9 @@ import SwiftUI
 ///
 /// The web deleted its mic pieces (MicButton, WaveBars and the green
 /// "listening" rings — see lib/listen.js). They're ported here from the
-/// last web version that had them (commit fd37a54^) so the native app can
-/// switch voice on behind `SpeechInput`. They only ever show when a
-/// `SpeechInput` says it's available, which in the demo it isn't.
+/// last web version that had them (commit fd37a54^) and drive the real
+/// speech-to-text behind `SpeechInput`. They only show when a `SpeechInput`
+/// says it's available; otherwise the screens are typing only.
 struct RiloStage: View {
     enum StageState { case idle, talking, listening }
 
@@ -20,13 +20,26 @@ struct RiloStage: View {
     var size: CGFloat = 210
     var state: StageState = .idle
     var onTap: () -> Void = {}
+    /// set → he's the talk button: hold him to talk (true down, false up)
+    var onHold: ((Bool) -> Void)? = nil
 
     @Environment(\.accessibilityReduceMotion) private var reduce
 
     private var box: CGFloat { size + 110 }
 
     var body: some View {
-        Button(action: onTap) {
+        if let onHold {
+            HoldToTalk(onStart: { onHold(true) }, onStop: { onHold(false) }) { stage }
+                .accessibilityLabel(state == .listening ? "stop talking" : "hold rilo to talk")
+                .accessibilityAction { onHold(state != .listening) }
+        } else {
+            Button(action: onTap) { stage }
+                .buttonStyle(.tap(0.94))
+                .accessibilityLabel("rilo")
+        }
+    }
+
+    private var stage: some View {
             ZStack {
                 /* soft disc so the rings have something to roll out from */
                 Circle()
@@ -43,9 +56,7 @@ struct RiloStage: View {
                          motion: state == .listening ? .none : .idle)
             }
             .frame(width: box, height: box)
-        }
-        .buttonStyle(.tap(0.94))
-        .accessibilityLabel("rilo")
+            .contentShape(Rectangle())
     }
 }
 
@@ -129,8 +140,9 @@ struct MicIcon: View {
     }
 }
 
-/// Tap once to start, again to stop (the native app has no pointer-hold
-/// quirks to work around, so it's a plain toggle).
+/// HOLD to talk: listening only while a finger is on it, and letting go
+/// stops and hands over what was heard (the mic permission text promises
+/// exactly this). VoiceOver can't hold, so for it a double-tap toggles.
 struct MicButton: View {
     var listening: Bool
     var size: CGFloat = 84
@@ -141,9 +153,7 @@ struct MicButton: View {
     @State private var start = Date()
 
     var body: some View {
-        Button {
-            listening ? onStop() : onStart()
-        } label: {
+        HoldToTalk(disabled: disabled, onStart: onStart, onStop: onStop) {
             MicIcon(size: size * 0.4)
                 .frame(width: size, height: size)
                 .background(
@@ -162,11 +172,32 @@ struct MicButton: View {
                 .background(DropShadowShape(base: Circle(), drop: 4).fill(RC.line))
                 .scaleEffect(listening ? 1.08 : 1)
                 .animation(.easeOut(duration: 0.15), value: listening)
+                .contentShape(Circle())
         }
-        .buttonStyle(.plainTap)
-        .disabled(disabled)
         .opacity(disabled ? 0.5 : 1)
-        .accessibilityLabel(listening ? "stop talking" : "tap to talk")
+        .accessibilityLabel(listening ? "stop talking" : "hold to talk")
+        .accessibilityAction { listening ? onStop() : onStart() }
+    }
+}
+
+/// Press-and-hold: `onStart` when the finger lands, `onStop` when it lifts
+/// (or the touch is cancelled, e.g. a scroll takes it, so the mic can
+/// never stay on by itself).
+struct HoldToTalk<Content: View>: View {
+    var disabled = false
+    let onStart: () -> Void
+    let onStop: () -> Void
+    @ViewBuilder var content: () -> Content
+
+    @GestureState private var held = false
+
+    var body: some View {
+        content()
+            .gesture(DragGesture(minimumDistance: 0).updating($held) { _, h, _ in h = true },
+                     including: disabled ? .none : .all)
+            .onChange(of: held) { _, down in down ? onStart() : onStop() }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isButton)
     }
 }
 

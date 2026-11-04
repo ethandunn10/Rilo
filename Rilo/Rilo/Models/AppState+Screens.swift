@@ -9,6 +9,11 @@ extension AppState {
         screenTime = true
         track("screentime", "allowed")
         go(.crunching)
+        /* Phase 7: the one moment we ask for notifications — right after
+           they've said yes to Screen Time. The system prompt only. */
+        /* not while DemoSeed is setting up a -screen (Track.muted), so the
+           system prompt never covers seeded screens or screenshots */
+        if !Track.muted { RiloNotifications.shared.askPermission() }
     }
 
     func permissionDeny() {
@@ -58,8 +63,9 @@ extension AppState {
         let trial = which == "start free trial"
         track("paywall", which)
         planChoice = trial ? "trial" : "free"
-        /* prototype: the trial button is what makes someone Pro */
-        isPro = trial
+        /* the trial button (after StoreKit says yes) is what makes someone
+           Pro; "free" never takes away a subscription they already have */
+        isPro = trial || ProStore.shared.entitled == true
     }
 
     /// back from onboarding's paywall goes to Your plan; from a locked

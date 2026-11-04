@@ -78,3 +78,23 @@ Couldn't match exactly:
 - Results' "back to the app" goes to Welcome (on the web, reloading starts there).
 
 **Question for you:** the paywall (web and iOS) says "free watches 5" apps, but AGENTS.md says Free is 2 apps. Which is right? I kept the web's 5.
+
+## Phase 7: Make it a real app ✅
+- **Saving:** everything is saved on the phone (UserDefaults JSON) and comes back after closing the app. Mid-onboarding it reopens on the same step with your answers. After onboarding it reopens on home. On a new day it runs the day roll-over (history, streak, XP) and shows the day summary. It saves when the app goes to the background. A broken save starts fresh instead of crashing. "Start over" wipes it all. (`Models/Storage.swift`, `AppState+Saving.swift`)
+- **Notifications** (local only, `Models/Notifications.swift`): iOS asks right after "allow" on the Screen Time step (no extra screen). Reminders are only scheduled once you've said yes:
+  - nightly check-in (Pro) at your check-in time: "check in with rilo" / "how'd today go?" → opens the check-in
+  - tomorrow's first-week question (days 1–7) at 8:00 (school question) or 16:00 (the others): the question + its sub-line → plan/home
+  - bedtime (if on) at bedtime: "bedtime mode" / "rilo's asleep. so should you be."
+  - **Question:** 8:00 and 16:00 are my picks for the question reminders. Change them if you like.
+- **Talk to Rilo with your voice:** real on-device speech-to-text (Apple Speech). Hold the mic (or hold Rilo in the check-in) to talk and let go to send. Mic + speech permission is asked the first time you press it. If you say no, it's typing only, like the web. Replies are still scripted. (`Models/AppleSpeechInput.swift`)
+- **Haptics:** a light tap on every button, a soft one when you tap Rilo, success on level up / Pro / goal hit, warning on the shield / out of opens. The pop-in and screen-change animations were retimed to match the web (0.3s).
+- **App icon + launch screen:** the Rilo icon from phase 1 (the web has none; Xcode makes every size from the 1024 image). The launch screen is the original Rilo on the grass-sky blue. The iPhone app is portrait only.
+- **Paywall with real StoreKit 2:** `Models/PurchaseService.swift` (`StoreKitPurchaseService`): products `com.ethandunn.rilo.pro.monthly` ($4.99/mo) and `com.ethandunn.rilo.pro.yearly` ($39.99/yr), both with a 7-day free trial. Real prices show when the store answers. There's a small "restore purchases" link (Apple requires one). Pro turns on when bought and off when it ends. Local test file: `Rilo/Config/Rilo.storekit`, wired into the shared Rilo scheme.
+- **Tester switch:** `Models/FeatureFlags.swift` → `TESTERS_UNLOCK_ALL = true` unlocks every Pro feature, skin and theme. **Set it to false before the real release.** (DEBUG `-gated` turns the locks back on for one launch.)
+- Screenshots: `screenshots/phase-7/`.
+
+Not checked / needs you:
+- **Purchases can only be tested by running from Xcode** (not from the command line). In Xcode: Product ▸ Scheme ▸ Edit Scheme ▸ Run ▸ Options ▸ StoreKit Configuration should say `Rilo.storekit` (pick it if it's blank). Then run → paywall → "start 7-day free trial" → Pro turns on. Debug ▸ StoreKit ▸ Manage Transactions lets you refund/expire it.
+- **The voice can only really be tested on your iPhone** (the simulator has no real mic input).
+- The notification banner itself isn't screenshotted: iOS's "Allow" button can't be tapped by the tools here.
+- **Question:** the tour's "do you post?" answer gives Pro for free (the web demo does this). With real StoreKit, that free Pro goes away on the next launch. Should that answer just turn Creator Mode on instead? (With the tester switch on, nobody notices yet.)
