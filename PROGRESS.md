@@ -184,6 +184,14 @@ Everything is listed step by step in **`SETUP_AFTER_PAID_ACCOUNT.md`**:
 - The notification banner itself wasn't screenshotted (the tools can't tap iOS's "Allow").
 - Before the real release: set `TESTERS_UNLOCK_ALL = false` and `SHOW_DEMO_PANEL_SETTING = false` in `Rilo/Rilo/Models/FeatureFlags.swift`.
 
+## Before launch: accounts + Supabase (decided Nov 4, not started)
+Right now each person's Rilo lives only on their own phone (no account, no server). Before the App Store launch, add Supabase for:
+- **Sign in** (Sign in with Apple, so no passwords), so a person's Rilo follows them to a new phone or iPad and survives deleting the app.
+- **Backup/sync** of what Rilo knows: profile, goals, plan, XP and level, streak, settings, what Rilo remembers.
+- **Real buddy mode:** invite codes, and friends see mood and streak only, never numbers.
+
+When that happens, update the privacy policy in APP_STORE.md, the App Store privacy label ("Data Not Collected" changes), PrivacyInfo.xcprivacy, and the 13+ age rating answers. Teens' data will be on a server, so keep it minimal and add "delete my account" in the You tab (Apple requires it).
+
 ## 📱 First 3 things to test on your phone tomorrow
 (Plug in your iPhone, pick it at the top of Xcode, press Run. The free account works; if your phone asks, turn on Settings ▸ Privacy & Security ▸ Developer Mode, and trust your developer profile in Settings ▸ General ▸ VPN & Device Management.)
 1. **Onboarding + saving:** go through setup start to finish (try a few back buttons), let the tour run, then swipe the app away and reopen it. Everything should still be there, and you land on home.
