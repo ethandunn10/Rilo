@@ -89,3 +89,13 @@ Every step has a back button.
 | Payments | Fake paywall, same as the web. No StoreKit. |
 | `/results` hidden route, `track()` taps | Kept as a hidden screen reachable from the demo panel. Taps are counted locally. |
 | Share card "share" | Shows the card. The real iOS share sheet can come later. |
+
+## After the one-to-one port (added later by Ethan)
+These come after phases 1–6 and go beyond the web demo. Max 2 helper agents and 1 simulator at a time.
+
+- **Phase 7: make it a real app (free account).** Everything saves on the phone across relaunches. Local notifications for check-ins/reminders, with the permission ask in onboarding (web copy). Real on-device speech-to-text (Speech framework + mic permission) for Talk, with replies still scripted. Haptics. App icon (all sizes) + launch screen. StoreKit 2 paywall ($4.99/mo, $39.99/yr, 7-day trial) with a local `.storekit` file for simulator testing, plus one `UNLOCK_ALL` switch for testers.
+- **Phase 8: Screen Time blocking, ready to switch on.** One `ScreenTimeService`. The demo version is used now. The real version (FamilyControls, FamilyActivityPicker, ManagedSettings shields, DeviceActivity schedules, shield + shield-action extensions) is written but kept out of the build until the paid account. `SETUP_AFTER_PAID_ACCOUNT.md`. A home-screen widget if the free account allows it.
+- **Phase 9: polish + QA.** Every flow as a new user, on iPhone SE and Pro Max, VoiceOver labels, bigger text sizes, no placeholders or dead buttons.
+- **Phase 10: launch prep.** `PrivacyInfo.xcprivacy`, `APP_STORE.md` (listing, 13+ age rating, privacy policy draft), App Store screenshots in `screenshots/app-store/`, `TESTFLIGHT_NOTES.md`.
+
+Note: Phase 7 changes two things in the table above on purpose. Saving now keeps onboarding progress instead of restarting like the web. Payments use real StoreKit code, tested only with the local StoreKit file. Nothing is charged.
