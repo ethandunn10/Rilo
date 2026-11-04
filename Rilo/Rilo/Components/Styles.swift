@@ -42,7 +42,18 @@ struct Sticker: ViewModifier {
         content
             .background(shape.fill(fill))
             .overlay(shape.strokeBorder(border, lineWidth: borderWidth))
-            .background(drop > 0 ? shape.fill(dropColor).offset(y: drop) : nil)
+            .background(drop > 0 ? DropShadowShape(base: shape, drop: drop).fill(dropColor) : nil)
+    }
+}
+
+/// The part of a hard `box-shadow: 0 Npx 0` that peeks out below the shape.
+/// CSS never paints the shadow under the element itself, so translucent
+/// fills (rgba(255,255,255,.45) buttons) must not show ink through them.
+struct DropShadowShape<S: Shape>: Shape {
+    let base: S
+    let drop: CGFloat
+    func path(in rect: CGRect) -> Path {
+        base.path(in: rect.offsetBy(dx: 0, dy: drop)).subtracting(base.path(in: rect))
     }
 }
 
@@ -57,7 +68,7 @@ struct CapsuleSticker: ViewModifier {
         content
             .background(Capsule().fill(fill))
             .overlay(Capsule().strokeBorder(border, lineWidth: borderWidth))
-            .background(drop > 0 ? Capsule().fill(dropColor).offset(y: drop) : nil)
+            .background(drop > 0 ? DropShadowShape(base: Capsule(), drop: drop).fill(dropColor) : nil)
     }
 }
 
@@ -130,8 +141,8 @@ struct BackButton: View {
                     .font(.fredoka(16, 600))
                     .foregroundStyle(light ? .white : RC.ink)
             }
-            .padding(.leading, 11)
-            .padding(.trailing, 15)
+            .padding(.leading, 11 + 2)   // css border sits outside the padding
+            .padding(.trailing, 15 + 2)
             .frame(minHeight: 40)
             .background(Capsule().fill(light ? Color.white.opacity(0.14) : Color.white.opacity(0.92)))
             .overlay(Capsule().strokeBorder(light ? Color.white.opacity(0.6) : RC.ink, lineWidth: 2))

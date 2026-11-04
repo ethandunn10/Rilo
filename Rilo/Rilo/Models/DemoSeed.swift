@@ -6,6 +6,12 @@ import Foundation
 ///                    apps and Rilo-built limits
 ///   -screen foundation[-<theme>]   the Phase 1 FoundationPreview
 ///   -theme <id>      grass | bamboo | sakura | sunset | snow
+///   -beat <0|1|2>    Your number on that beat, settled (no auto-advance)
+///   -picked          Rather with gym + studying already picked;
+///                    pickapps with tiktok, instagram, youtube ticked
+///   -appsheet [-appquery <text>]   pickapps with the add-app sheet open
+///   -permsheet / -permdenied   permission with the iOS alert / the deny branch
+///   -hold            crunching stays put (no 1.5s auto-advance)
 ///   -tour            keep the Meet Rilo tour on the tab screens (off by
 ///                    default so screenshots show the screen itself)
 /// The seed runs the same AppState actions onboarding does, so the numbers
@@ -77,6 +83,11 @@ enum DemoSeed {
             state.day.sinceBlocked = 0
         }
 
+        /* -picked: PickApps with tiktok, instagram and youtube ticked */
+        if screen == .pickapps && arguments.contains("-picked") {
+            state.apps = PickedApps(on: ["tiktok": true, "instagram": true, "youtube": true], extra: [])
+        }
+
         switch screen {
         case .shield, .intercept, .whyopen, .suggestion, .tired, .break, .needit:
             state.session.app = "tiktok"
@@ -92,6 +103,9 @@ enum DemoSeed {
         case .levelup:
             state.level = 3
             state.pendingSkin = "bamboo"
+        case .rather:
+            /* arrives with nothing picked, like onboarding; -picked keeps gym + studying */
+            if !arguments.contains("-picked") { state.rather = [] }
         case .upgrade:
             state.isPro = false
             state.planChoice = "free"
@@ -99,5 +113,9 @@ enum DemoSeed {
             break
         }
         state.jump(to: screen)
+        #if DEBUG
+        /* -beat N: Your number on that beat, settled (YourNumberView) */
+        if let b = arg("-beat"), let n = Int(b) { state.numberBeat = n }
+        #endif
     }
 }
