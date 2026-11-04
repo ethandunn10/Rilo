@@ -16,6 +16,15 @@ struct GoalStepper: View {
         return mins != 0 ? "\(whole)h \(mins)m" : "\(whole)h"
     }
 
+    /// "2h 30m" → "2 hours 30 minutes" for VoiceOver
+    static func spokenHours(_ h: Double) -> String {
+        let whole = Int(h.rounded(.down))
+        let mins = JS.roundInt((h - Double(whole)) * 60)
+        let hrs = whole == 1 ? "1 hour" : "\(whole) hours"
+        if whole == 0 { return "\(mins) minutes" }
+        return mins != 0 ? "\(hrs) \(mins) minutes" : hrs
+    }
+
     @State private var fill: Double = 0
 
     var body: some View {
@@ -27,8 +36,9 @@ struct GoalStepper: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .layoutPriority(1)
+                    .accessibilityHidden(true)
                 HStack(spacing: 6) {
-                    stepButton("−", a11y: "Lower goal") {
+                    stepButton("−", a11y: "take away 30 minutes") {
                         var t = time
                         t.goal = max(floor, time.goal - 0.5)
                         setTime(t)
@@ -38,7 +48,8 @@ struct GoalStepper: View {
                         .foregroundStyle(Color(hex: "#1F6B2E"))
                         .frame(minWidth: 70)
                         .multilineTextAlignment(.center)
-                    stepButton("+", a11y: "Raise goal") {
+                        .accessibilityLabel("\(label), \(Self.spokenHours(time.goal))")
+                    stepButton("+", a11y: "add 30 minutes") {
                         var t = time
                         t.goal = min(min(time.now, Self.MAX), time.goal + 0.5)
                         setTime(t)
@@ -57,6 +68,7 @@ struct GoalStepper: View {
             }
             .frame(height: 22)
             .clipShape(Capsule())
+            .accessibilityHidden(true)   // the number above says the same
         }
         .onAppear { fill = pct }
         .onChange(of: time.goal) {

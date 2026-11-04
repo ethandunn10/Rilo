@@ -38,6 +38,7 @@ struct RatherView: View {
             HStack(spacing: 10) {
                 RiloView(skin: AppState.OG_SKIN, mood: "curious", size: 92, talks: true)
                 Text("if you got a chunk of that time back, what would you rather spend it on?")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(24, 700))
                     .webLineHeight(24, 1.15)
                     .foregroundStyle(RC.ink)
@@ -63,6 +64,7 @@ struct RatherView: View {
                     Button { extras.removeAll { $0 == e } } label: { RatherChip(label: e, on: true) }
                         .buttonStyle(.tap)
                         .accessibilityAddTraits(.isSelected)
+                        .accessibilityHint("tap to remove")
                 }
 
                 if adding { addRow } else { addButton }
@@ -77,6 +79,7 @@ struct RatherView: View {
                     .font(.fredoka(20, 700))
                     .foregroundStyle(Color(hex: "#2E8B3E"))
                     .frame(width: 22, height: 22)
+                    .accessibilityHidden(true)
                 Text("add your own")
                     .font(.fredoka(18, 600))
                     .foregroundStyle(RC.ink)
@@ -106,6 +109,7 @@ struct RatherView: View {
                 .background(RoundedRectangle(cornerRadius: 18, style: .continuous).fill(.white))
                 .overlay(RoundedRectangle(cornerRadius: 18, style: .continuous).strokeBorder(RC.line, lineWidth: 2))
                 .onAppear { inputFocused = true }
+                .accessibilityLabel("your own thing")
 
             Button(action: addOwn) {
                 Text("+")
@@ -178,6 +182,7 @@ private struct RatherChip: View {
                 }
             }
             .frame(width: on ? 22 : 26, height: on ? 22 : 26)
+            .accessibilityHidden(true)
             Text(label)
                 .font(.fredoka(18, 600))
                 .foregroundStyle(on ? .white : RC.ink)

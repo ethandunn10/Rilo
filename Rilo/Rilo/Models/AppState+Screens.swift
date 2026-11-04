@@ -105,7 +105,9 @@ extension AppState {
 
     func daySummaryDone() {
         dayResult = nil
-        goTo(.home, dir: .back)
+        /* the summary is blank without its result, so the move home must
+           not be dropped by a slide still running (a quick tap) */
+        goToSoon(.home, dir: .back)
     }
 
     // MARK: whyopen / intercept / shield / reason screens

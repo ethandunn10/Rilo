@@ -15,6 +15,8 @@ struct ScheduleCard: View {
     @Binding var focus: FocusBlock
     var spacing: CGFloat = 10
 
+    static let DAY_NAME = ["mon": "monday", "tue": "tuesday", "wed": "wednesday", "thu": "thursday",
+                           "fri": "friday", "sat": "saturday", "sun": "sunday"]
     static let DAY_LABEL = ["mon": "m", "tue": "t", "wed": "w", "thu": "t", "fri": "f", "sat": "s", "sun": "s"]
     /// a focus block is "lock it for the next N minutes", from now
     static let FOCUS_LENGTHS = [30, 45, 60, 90]
@@ -35,7 +37,7 @@ struct ScheduleCard: View {
         VStack(alignment: .leading, spacing: spacing) {
             /* bedtime */
             row("bedtime mode", "rilo sleeps, your apps lock till morning.",
-                on: bedtime.on, label: "Bedtime mode") { bedtime.on.toggle() }
+                on: bedtime.on, label: "bedtime mode") { bedtime.on.toggle() }
 
             if bedtime.on {
                 window(from: $bedtime.from, to: $bedtime.to)
@@ -45,7 +47,7 @@ struct ScheduleCard: View {
 
             /* school */
             row("school mode", "locks on a schedule, not where you are.",
-                on: school.on, label: "School mode") { school.on.toggle() }
+                on: school.on, label: "school mode") { school.on.toggle() }
 
             if school.on {
                 VStack(spacing: 8) {
@@ -61,7 +63,7 @@ struct ScheduleCard: View {
                                     .overlay(Capsule().strokeBorder(RC.line, lineWidth: 2))
                             }
                             .buttonStyle(.tap)
-                            .accessibilityLabel(d)
+                            .accessibilityLabel(Self.DAY_NAME[d] ?? d)
                             .accessibilityAddTraits(on ? .isSelected : [])
                         }
                     }
@@ -74,7 +76,7 @@ struct ScheduleCard: View {
             /* focus block: the one you start yourself, right now */
             row("focus block",
                 focus.on ? "on till \(Addons.fmtClock(focus.until)). apps locked." : "lock everything for a while, starting now.",
-                on: focus.on, label: "Focus block") {
+                on: focus.on, label: "focus block") {
                 focus = focus.on ? FocusBlock(on: false, until: "") : FocusBlock(on: true, until: Self.endsIn(45))
             }
 
@@ -90,6 +92,7 @@ struct ScheduleCard: View {
                                 .overlay(Capsule().strokeBorder(RC.line, lineWidth: 2))
                         }
                         .buttonStyle(.tap)
+                        .accessibilityLabel("focus for \(m) minutes")
                     }
                 }
             }
@@ -115,6 +118,7 @@ struct ScheduleCard: View {
         HStack(alignment: .center, spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.fredoka(19, 600))
+                    .accessibilityAddTraits(.isHeader)
                 Text(sub)
                     .font(.inter(13, 600))
                     .foregroundStyle(RC.ink2)
@@ -127,9 +131,10 @@ struct ScheduleCard: View {
 
     private func window(from: Binding<String>, to: Binding<String>) -> some View {
         HStack(spacing: 8) {
-            TimeField(value: from)
+            TimeField(value: from, a11y: "from")
             Text("to").font(.inter(13, 700)).foregroundStyle(RC.ink2)
-            TimeField(value: to)
+                .accessibilityHidden(true)
+            TimeField(value: to, a11y: "to")
         }
     }
 }
@@ -162,6 +167,7 @@ struct ScheduleToggle: View {
 /// system time picker, which sits invisibly on top.
 private struct TimeField: View {
     @Binding var value: String
+    var a11y = "time"
 
     private var date: Binding<Date> {
         Binding(get: {
@@ -184,6 +190,7 @@ private struct TimeField: View {
         Text(shown)
             .font(.fredoka(15, 600))
             .foregroundStyle(RC.ink)
+            .accessibilityHidden(true)   // the picker on top reads the time
             .padding(.horizontal, 10 + 2)
             .frame(maxWidth: .infinity, minHeight: 42, maxHeight: 42, alignment: .leading)
             .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white))
@@ -191,6 +198,7 @@ private struct TimeField: View {
             .overlay {
                 DatePicker("", selection: date, displayedComponents: .hourAndMinute)
                     .labelsHidden()
+                    .accessibilityLabel(a11y)
                     .scaleEffect(x: 1.6, y: 1.2)
                     .opacity(0.02)
             }

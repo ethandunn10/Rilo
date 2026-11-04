@@ -28,6 +28,10 @@ extension YouView {
                     .font(.inter(13, 600))
                     .foregroundStyle(Color(hex: "#C9E6CE"))
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("level \(state.level), \(Levels.skinInfo(state.chosenRilo).name) rilo")
+            .accessibilityValue(prog.atMax || prog.next == nil ? "\(state.xp) xp, max level"
+                                : "\(state.xp) of \(prog.next ?? 0) xp, \(prog.pct) percent")
             .frame(maxWidth: .infinity, alignment: .leading)
         }
         .foregroundStyle(.white)
@@ -62,6 +66,7 @@ extension YouView {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .firstTextBaseline) {
                 Text("app theme").font(.fredoka(19, 600))
+                    .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 0)
                 Text("rilo pro").font(.inter(12, 700)).foregroundStyle(RC.ink3)
             }
@@ -91,6 +96,8 @@ struct YouSection: View {
             .tracking(12 * 0.09)
             .foregroundStyle(RC.ink2)
             .padding(.leading, 4)
+            .accessibilityLabel(title)
+            .accessibilityAddTraits(.isHeader)
             .padding(.top, first ? 2 : 14)
             .padding(.bottom, -2)
     }
@@ -131,6 +138,7 @@ private struct YouStat: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .accessibilityElement(children: .combine)
         .padding(.vertical, 12 + 2)
         .padding(.horizontal, 6 + 2)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

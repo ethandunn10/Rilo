@@ -30,6 +30,7 @@ struct ShieldView: View {
                         RiloView(skin: state.chosenRilo, mood: locked ? "letdown" : "coach", size: 180, talks: true)
 
                         Text(locked ? "rilo locked \(app)" : "\(app)?")
+                            .accessibilityAddTraits(.isHeader)
                             .font(.fredoka(30, 700))
                             .webLineHeight(30, 1.15)
                             .multilineTextAlignment(.center)
@@ -121,5 +122,6 @@ struct InterceptAppChip: View {
         .padding(.trailing, 14 + 1.5)
         .background(Capsule().fill(fill))
         .overlay(Capsule().strokeBorder(.white, lineWidth: 1.5))
+        .accessibilityElement(children: .combine)
     }
 }

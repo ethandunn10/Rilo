@@ -33,6 +33,7 @@ extension NightCheckInView {
         ShrinkToFit {
             VStack(spacing: 5) {
                 Text(done ? reply.line : q.ask)
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(22, 600))
                     .webLineHeight(22, 1.2)
                 if !done, let sub = q.sub {
@@ -55,6 +56,8 @@ extension NightCheckInView {
     var pill: some View {
         Text(listening ? "let go to stop · \(left)s"
                        : speech.isAvailable ? "hold rilo and say it" : "thirty seconds, that's it")
+            .accessibilityLabel(listening ? "let go to stop, \(left) seconds"
+                                : speech.isAvailable ? "hold rilo and say it" : "thirty seconds, that's it")
             .font(.fredoka(16, 600))
             .foregroundStyle(listening ? Color(hex: "#2B3A6B") : .white)
             .padding(.vertical, 8)
@@ -73,6 +76,7 @@ extension NightCheckInView {
                 .foregroundStyle(Color(hex: "#2B3A6B"))
                 .tint(Color(hex: "#2B3A6B"))
                 .submitLabel(.send)
+                .accessibilityLabel("your answer")
                 .onSubmit { answer(draft) }
                 .padding(.horizontal, 16)
                 .frame(height: 48)
@@ -111,6 +115,7 @@ extension NightCheckInView {
     var tomorrowCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("tomorrow").font(.fredoka(18, 600))
+                .accessibilityAddTraits(.isHeader)
             if tasks.isEmpty {
                 Text("nothing booked. i'll keep your usual plan.")
                     .font(.inter(14, 600))
@@ -121,6 +126,7 @@ extension NightCheckInView {
                         Text(t.title).font(.fredoka(16, 600))
                         Text(t.note).font(.inter(12, 600)).opacity(0.75)
                     }
+                    .accessibilityElement(children: .combine)
                 }
             }
         }

@@ -14,6 +14,7 @@ struct YourNumberView: View {
 
     @State private var bigDays = 0
     @State private var bigFlip = 0
+    @State private var columnHeight: CGFloat = 345
 
     /// DEBUG `-beat N`: show that beat settled (no auto-advance, counters
     /// on their final numbers) so a screenshot isn't mid-animation.
@@ -107,16 +108,21 @@ struct YourNumberView: View {
                    entry animation (fill: both) ends on translateY(0), which
                    replaces the -50%, so the column's TOP sits at 43%. Only
                    with reduced motion (no animation) is it centred there. */
+                /* short phones (SE): lift the column so it ends above the
+                   pile instead of running into it (tall phones: unchanged) */
+                let top = max(110,
+                              min(geo.size.height * 0.43, geo.size.height - YourNumberPile.budget - columnHeight))
                 VStack(spacing: 0) {
                     if reduced { Spacer(minLength: 0) }
                     numberColumn
                         .id("num-\(beat)")
                         .frame(width: geo.size.width)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
                     Spacer(minLength: 0)
                 }
-                .frame(width: geo.size.width, height: reduced ? geo.size.height * 0.86 : geo.size.height * 0.57)
+                .frame(width: geo.size.width, height: reduced ? geo.size.height * 0.86 : geo.size.height - top)
                 .position(x: geo.size.width / 2,
-                          y: reduced ? geo.size.height * 0.43 : geo.size.height * (0.43 + 0.57 / 2))
+                          y: reduced ? geo.size.height * 0.43 : top + (geo.size.height - top) / 2)
             }
         }
         .ignoresSafeArea()
@@ -151,6 +157,12 @@ struct YourNumberView: View {
         }
         .padding(.horizontal, 18)
         .multilineTextAlignment(.center)
+        /* read the final numbers, not the count-up */
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(beat == 0
+            ? "\(A11ySpeak.mins(perDay)) a day, on these apps. \(days) days a year. awake, scrolling."
+            : "the same time, spent your way. \(flip.count) \(flip.unit). that's what it's worth.")
+        .accessibilityAddTraits(.isHeader)
         .modifier(BeatRise(reduced: reduced))
     }
 
@@ -160,6 +172,7 @@ struct YourNumberView: View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 13) {
                 Text("let's get some of it back.")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(30, 700))
                     .webLineHeight(30, 1.1)
                     .foregroundStyle(RC.ink)

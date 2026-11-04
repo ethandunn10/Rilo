@@ -33,6 +33,9 @@ struct WhyOpenPill: View {
         }
         .buttonStyle(.tap)
         .disabled(!enabled)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(A11ySpeak.text(title) + (sub.map { ", " + A11ySpeak.text($0) } ?? ""))
+        .accessibilityAddTraits(on ? [.isButton, .isSelected] : .isButton)
     }
 }
 
@@ -63,11 +66,13 @@ struct WhyOpenWhat: View {
         VStack(alignment: .leading, spacing: 9) {
             Text(reason == "post" ? "what are you posting?" : "what for?")
                 .font(.fredoka(19, 600))
+                .accessibilityAddTraits(.isHeader)
             TextField("", text: $why, prompt: Text(reason == "post" ? "the video i filmed, the photo from…" : "say what for…")
                 .foregroundStyle(Color(hex: "#757575")))
                 .font(.inter(16, 600))
                 .foregroundStyle(RC.ink)
                 .focused($focused)
+                .accessibilityLabel(reason == "post" ? "what are you posting?" : "what for?")
                 .padding(.horizontal, 18 + 2)
                 .frame(height: 50)
                 .background(Capsule().fill(.white))
@@ -129,6 +134,7 @@ struct WhyOpenLength: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 11) {
             Text("how long do you need?")
+                .accessibilityAddTraits(.isHeader)
                 .font(.inter(13, 700))
                 .foregroundStyle(RC.ink2)
                 .padding(.top, 2)

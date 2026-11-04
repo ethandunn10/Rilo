@@ -11,6 +11,7 @@ struct CrunchingView: View {
             VStack(spacing: 18) {
                 RiloView(skin: AppState.OG_SKIN, mood: "curious", size: 190, talks: true)
                 Text("rilo's crunching your numbers…")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(26, 600))
                     .foregroundStyle(RC.ink)
                     .multilineTextAlignment(.center)
@@ -49,5 +50,6 @@ struct CrunchDots: View {
                 }
             }
         }
+        .accessibilityHidden(true)
     }
 }

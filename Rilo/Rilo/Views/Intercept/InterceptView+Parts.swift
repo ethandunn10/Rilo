@@ -9,6 +9,7 @@ struct InterceptTop: View {
     var body: some View {
         VStack(spacing: 9) {
             Text(headline)
+                .accessibilityAddTraits(.isHeader)
                 .font(.fredoka(27, 700))
                 .webLineHeight(27, 1.15)
                 .multilineTextAlignment(.center)
@@ -25,6 +26,7 @@ struct InterceptTop: View {
 
             if !subline.isEmpty {
                 Text(subline)
+                    .accessibilityLabel(A11ySpeak.text(subline))
                     .font(.inter(13.5, 600))
                     .foregroundStyle(RC.ink2)
                     .multilineTextAlignment(.center)
@@ -49,6 +51,7 @@ struct InterceptTop: View {
             /* the wait */
             if !ready {
                 Text("hold on… \(countdown)s")
+                    .accessibilityLabel("hold on, \(countdown) seconds")
                     .font(.fredoka(17, 600))
                     .foregroundStyle(.white)
                     .monospacedDigit()
@@ -180,5 +183,8 @@ struct InterceptWays: View {
         }
         .buttonStyle(.tap)
         .disabled(!ready)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(A11ySpeak.text(title) + ", " + A11ySpeak.text(sub))
+        .accessibilityAddTraits(.isButton)
     }
 }

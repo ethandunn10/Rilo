@@ -180,7 +180,7 @@ private struct CustomChip: View {
                     .background(Circle().fill(on ? Color.white.opacity(0.22) : Color.rgba(18, 48, 26, 0.1)))
             }
             .buttonStyle(.plainTap)
-            .accessibilityLabel("Remove \(label)")
+            .accessibilityLabel("remove \(label)")
         }
         .foregroundStyle(on ? .white : RC.ink)
         .padding(.leading, 14 + 2)
@@ -272,10 +272,15 @@ private struct AddRow: View {
 struct ChipFlow: Layout {
     var spacing: CGFloat = 7
 
+    /// Tester feedback: the chips felt cramped on small phones. On a narrow
+    /// card (iPhone SE: ~299pt) the rows get a little more air between them;
+    /// on the iPhone 17 (326pt) and up it's the web's gap exactly.
+    private func rowGap(_ width: CGFloat) -> CGFloat { width < 315 ? spacing + 4 : spacing }
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? .infinity
         let rows = arrange(width: width, subviews: subviews)
-        let h = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(0, rows.count - 1))
+        let h = rows.map(\.height).reduce(0, +) + rowGap(width) * CGFloat(max(0, rows.count - 1))
         let w = rows.map(\.width).max() ?? 0
         return CGSize(width: proposal.width ?? w, height: h)
     }
@@ -289,7 +294,7 @@ struct ChipFlow: Layout {
                 subviews[i].place(at: CGPoint(x: x, y: y + (row.height - s.height) / 2), proposal: ProposedViewSize(s))
                 x += s.width + spacing
             }
-            y += row.height + spacing
+            y += row.height + rowGap(bounds.width)
         }
     }
 

@@ -47,6 +47,7 @@ struct CreatorModeView: View {
                                 .tracking(11 * 0.08)
                                 .foregroundStyle(RC.ink2)
                             Text("creator mode")
+                                .accessibilityAddTraits(.isHeader)
                                 .font(.fredoka(28, 700))
                         }
                     }
@@ -82,6 +83,7 @@ struct CreatorModeView: View {
             VStack(spacing: 0) {
                 RiloView(skin: "gold", mood: "coach", size: 112)
                 Text("Creator Mode is Pro")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(24, 700))
                     .padding(.vertical, 20)
                 Text("Focused Instagram sessions for posting a video or doing research, with Creator time kept separate from your daily goal.")
@@ -110,11 +112,13 @@ struct CreatorModeView: View {
                     .font(.inter(12, 500))
                     .foregroundStyle(RC.ink3)
             }
+            .accessibilityElement(children: .combine)
             .creatorCard()
 
             VStack(alignment: .leading, spacing: 10) {
                 Text("What are you opening Instagram for?")
                     .font(.fredoka(18, 600))
+                    .accessibilityAddTraits(.isHeader)
                 HStack(spacing: 8) {
                     option("post a video", purpose == "post") { purpose = "post" }
                     option("research", purpose == "research") { purpose = "research" }
@@ -125,9 +129,11 @@ struct CreatorModeView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("How long?")
                     .font(.fredoka(18, 600))
+                    .accessibilityAddTraits(.isHeader)
                 HStack(spacing: 7) {
                     ForEach([5.0, 10.0, nil] as [Double?], id: \.self) { item in
                         option(item.map { "\(JS.num($0)) min" } ?? "no limit", duration == item) { duration = item }
+                            .accessibilityLabel(item.map { "\(JS.num($0)) minutes" } ?? "no limit")
                     }
                 }
             }

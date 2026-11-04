@@ -31,6 +31,7 @@ struct LevelUpView: View {
 
                 VStack(spacing: 6) {
                     Text("new rilo unlocked!")
+                        .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(36, 700))
                     Text("\(info.name) rilo is yours.")
                         .font(.inter(17, 600))

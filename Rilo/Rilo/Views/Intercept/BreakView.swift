@@ -33,6 +33,7 @@ struct BreakView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 Text("how long?")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(17, 600))
                     .foregroundStyle(RC.ink2)
                 HStack(spacing: 8) {
@@ -41,6 +42,7 @@ struct BreakView: View {
                     }
                 }
                 Text("\(mins):00")
+                    .accessibilityLabel("\(mins) minutes")
                     .font(.fredoka(46, 700))
                     .frame(maxWidth: .infinity)
             }
@@ -81,6 +83,7 @@ struct BreakView: View {
                 .overlay(Capsule().strokeBorder(on ? RC.ink : .white, lineWidth: 2))
         }
         .buttonStyle(.tap(0.94))
+        .accessibilityLabel("\(m) minutes")
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 }

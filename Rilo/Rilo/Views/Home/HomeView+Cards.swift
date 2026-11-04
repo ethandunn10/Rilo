@@ -40,6 +40,10 @@ extension HomeView {
             .padding(.top, 12)
             .accessibilityHidden(true)
         }
+        /* "1 hour 20 minutes of 2 hours today, 67 percent" */
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(A11ySpeak.mins(used)) of \(A11ySpeak.mins(goal)) today")
+        .accessibilityValue(over ? "over your goal" : "\(Int(pct)) percent of your goal")
         .homeCard()
         .tourTarget("score", radius: 22)
         .rise(0.12, distance: 14, duration: 0.5)
@@ -65,6 +69,7 @@ extension HomeView {
                 SVGPath("M9 5 L16 12 L9 19")
                     .stroke(Color(hex: "#1F6B2E"), style: .svg(2.5))
                     .frame(width: 20, height: 20)
+                    .accessibilityHidden(true)
             }
             .homeCard()
         }
@@ -118,7 +123,11 @@ extension HomeView {
             .opacity(locked ? 0.55 : 1)
         }
         .buttonStyle(.tap)
-        .accessibilityLabel("Open \(label)")
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("open \(label)")
+        .accessibilityValue(setting.mode == .limited
+            ? (locked ? "no opens left" : Opens.spoken(max(0, total - used), setting.minutes))
+            : setting.mode == .blocked ? "blocked" : "free, counts toward your day")
     }
 
     private func rowNote(_ text: String) -> some View {

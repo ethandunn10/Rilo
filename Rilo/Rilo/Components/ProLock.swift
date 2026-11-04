@@ -20,6 +20,7 @@ struct ProLock: View {
         Button(action: onTap) {
             HStack(alignment: .center, spacing: 10) {
                 RiloView(skin: skin, mood: "coach", size: 56)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.fredoka(19, 600))
@@ -37,6 +38,7 @@ struct ProLock: View {
                     .padding(.horizontal, 11)
                     .padding(.vertical, 5)
                     .background(Capsule().fill(RC.ink))
+                    .accessibilityHidden(true)   // the badge says "rilo pro"
                 ProBadge()
             }
             .padding(padding)

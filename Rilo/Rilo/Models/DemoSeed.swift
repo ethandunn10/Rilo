@@ -57,6 +57,8 @@ import Foundation
 ///   -plan year|month|free   paywall / upgrade with that row selected
 ///   -resultstaps     results with a tester's onboarding taps counted
 ///   -settingscheck   (with -screen you) run SettingsCheck, see that file
+///   -flowcheck       (no -screen) run FlowCheck: every flow, from a wiped
+///                    save; results in Documents/flowcheck.txt
 ///   -notifynow       schedule the check-in reminder 5 seconds out
 ///   -askpermission   show the notification permission prompt
 ///   (no -screen)     a normal launch: whatever was saved comes back
@@ -98,6 +100,8 @@ enum DemoSeed {
         /* a seeded screen always starts from a fresh account (the saved xp
            and level would otherwise carry over from the last launch) */
         if screenArg != nil { Storage.clearState() }
+        /* -flowcheck: every flow from a brand-new account (FlowCheck) */
+        if arguments.contains("-flowcheck") { Storage.clearState() }
         #endif
         let state = AppState()
         if let theme = arg("-theme") { state.theme = theme }
@@ -110,6 +114,10 @@ enum DemoSeed {
         /* -settingscheck: tap through every You-tab setting in code */
         if arguments.contains("-settingscheck") {
             Task { @MainActor in await SettingsCheck.run(state) }
+        }
+        /* -flowcheck: walk every flow in code, see Models/FlowCheck */
+        if arguments.contains("-flowcheck") {
+            Task { @MainActor in await FlowCheck.run(state) }
         }
         /* -notifynow: the check-in reminder 5 seconds out (asks permission
            first if it hasn't been asked) */

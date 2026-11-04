@@ -110,6 +110,7 @@ struct StrictCard: View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("strict mode").font(.fredoka(19, 600))
+                    .accessibilityAddTraits(.isHeader)
                 Text("no half opens, no borrowing, 24 hours to loosen anything.")
                     .font(.inter(13, 600))
                     .foregroundStyle(RC.ink2)
@@ -128,8 +129,9 @@ struct StrictCard: View {
                     .overlay(Capsule().strokeBorder(RC.line, lineWidth: 2))
             }
             .buttonStyle(.tap)
-            .accessibilityLabel("Strict mode")
+            .accessibilityLabel("strict mode")
             .accessibilityValue(strict.on ? "on" : "off")
+            .accessibilityAddTraits(.isToggle)
         }
     }
 
@@ -292,6 +294,7 @@ private struct StrictChip: View {
                 }
                 /* content-box: the off ring's 2px border sits outside its 20px */
                 .frame(width: on ? 20 : 24, height: on ? 20 : 24)
+                .accessibilityHidden(true)
                 Text(label).font(.fredoka(16, 600))
                 Spacer(minLength: 0)
             }
@@ -326,6 +329,7 @@ struct StrictBundleTable: View {
                 Text("strict").font(.inter(11, 700)).tracking(0.66)
                     .foregroundStyle(on ? Color(hex: "#1F6B2E") : RC.ink3))
                 .textCase(.uppercase)
+                .accessibilityHidden(true)   // each row says normal / strict itself
                 .padding(.bottom, 5)
                 .overlay(alignment: .bottom) { Rectangle().fill(Color.rgba(18, 48, 26, 0.14)).frame(height: 1.5) }
 
@@ -335,6 +339,8 @@ struct StrictBundleTable: View {
                         .foregroundStyle(on ? Self.faded : RC.ink3),
                     Text(r.strict).font(.inter(12, 600)).webLineHeight(12, 1.3)
                         .foregroundStyle(on ? RC.ink : Self.faded))
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(r.what). normal: \(r.normal). strict: \(r.strict).")
                     .padding(.vertical, 7)
                     .overlay(alignment: .bottom) { Rectangle().fill(Color.rgba(18, 48, 26, 0.07)).frame(height: 1) }
             }

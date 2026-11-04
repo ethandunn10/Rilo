@@ -14,6 +14,8 @@ struct RiloApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                /* follow the Text Size setting, up to what the layouts survive */
+                .dynamicTypeSize(...RiloTextSize.cap)
         }
     }
 }

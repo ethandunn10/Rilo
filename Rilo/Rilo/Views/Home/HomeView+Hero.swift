@@ -38,6 +38,7 @@ extension HomeView {
             }
             .buttonStyle(.tap(0.94))
             .accessibilityLabel("chat with rilo")
+            .accessibilityValue(RiloView.spoken(state.riloMood))
             .tourTarget("home-talk")
             .padding(.leading, 16 + 1.5)
             .padding(.bottom, 24 + 1.5)

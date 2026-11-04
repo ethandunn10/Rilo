@@ -21,7 +21,8 @@ extension PlanView {
         HStack(alignment: .center, spacing: 10) {
             Group {
                 if editing {
-                    PlanCell(text: Binding(get: { row.at }, set: { editRow(i, \.at, $0) }))
+                    PlanCell(text: Binding(get: { row.at }, set: { editRow(i, \.at, $0) }), inset: 3)
+                        .accessibilityLabel("time")
                 } else {
                     Text(row.at)
                         .font(.fredoka(15, 600))
@@ -33,12 +34,15 @@ extension PlanView {
             Circle()
                 .strokeBorder(Color(hex: "#7FA38A"), lineWidth: 2.5)
                 .frame(width: 14, height: 14)
+                .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: 1) {
                 if editing {
                     PlanCell(text: Binding(get: { row.title }, set: { editRow(i, \.title, $0) }))
+                        .accessibilityLabel("what")
                     PlanCell(text: Binding(get: { row.note }, set: { editRow(i, \.note, $0) }),
                              placeholder: "what happens to your apps", size: 12)
+                        .accessibilityLabel("what happens to your apps")
                 } else {
                     Text(row.title)
                         .font(.fredoka(17, 600))
@@ -60,9 +64,11 @@ extension PlanView {
                         .overlay(Circle().strokeBorder(RC.ink, lineWidth: 2))
                 }
                 .buttonStyle(.plainTap)
-                .accessibilityLabel("Remove \(row.title)")
+                .accessibilityLabel("remove \(row.title)")
             }
         }
+        /* reading: one element per row; editing: each field on its own */
+        .accessibilityElement(children: editing ? .contain : .combine)
         .padding(.vertical, 9)
     }
 
@@ -105,12 +111,14 @@ struct PlanCell: View {
     @Binding var text: String
     var placeholder = ""
     var size: CGFloat = 15
+    /// the 44pt time cell uses less side padding so "10:30" fits instead of "3:…"
+    var inset: CGFloat = 8
 
     var body: some View {
         TextField("", text: $text, prompt: Text(placeholder).foregroundStyle(Color.rgba(18, 48, 26, 0.4)))
             .font(.fredoka(size, 600))
             .foregroundStyle(RC.ink)
-            .padding(.horizontal, 8 + 1.5)
+            .padding(.horizontal, inset + 1.5)
             .frame(height: 26)
             .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.white))
             .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)

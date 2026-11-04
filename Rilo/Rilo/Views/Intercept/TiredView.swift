@@ -34,6 +34,7 @@ struct TiredView: View {
                     .font(.inter(14, 600))
                     .foregroundStyle(Color(hex: "#D9DCF2"))
             }
+            .accessibilityElement(children: .combine)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(18 + 2)
             .bubble(RoundedRectangle(cornerRadius: 24, style: .continuous),

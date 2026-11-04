@@ -30,12 +30,15 @@ struct RiloStage: View {
     var body: some View {
         if let onHold {
             HoldToTalk(onStart: { onHold(true) }, onStop: { onHold(false) }) { stage }
-                .accessibilityLabel(state == .listening ? "stop talking" : "hold rilo to talk")
+                .accessibilityLabel(state == .listening ? "stop talking" : "talk to rilo")
+                .accessibilityValue(RiloView.spoken(mood))
+                .accessibilityHint(state == .listening ? "sends what you said" : "double tap to start, double tap again to send")
                 .accessibilityAction { onHold(state != .listening) }
         } else {
             Button(action: onTap) { stage }
                 .buttonStyle(.tap(0.94))
-                .accessibilityLabel("rilo")
+                .accessibilityLabel(RiloView.spoken(mood))
+                .accessibilityHint("tap to hear his line again")
         }
     }
 
@@ -175,7 +178,8 @@ struct MicButton: View {
                 .contentShape(Circle())
         }
         .opacity(disabled ? 0.5 : 1)
-        .accessibilityLabel(listening ? "stop talking" : "hold to talk")
+        .accessibilityLabel(listening ? "stop talking" : "talk to rilo")
+        .accessibilityHint(listening ? "sends what you said" : "double tap to start, double tap again to send")
         .accessibilityAction { listening ? onStop() : onStart() }
     }
 }

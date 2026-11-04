@@ -90,6 +90,10 @@ struct BreakdownBars: View {
                                 : AnyShapeStyle(LinearGradient(colors: [theme.hills[1], theme.hills[2]],
                                                                startPoint: .leading, endPoint: .trailing)))
         }
+        /* one line per bar: "TikTok, 1 hour 20 minutes, 42 percent" */
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(label)
+        .accessibilityValue(A11ySpeak.mins(mins) + (pct.map { ", \($0) percent" } ?? ""))
     }
 }
 

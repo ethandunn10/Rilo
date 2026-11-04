@@ -15,5 +15,7 @@ struct Dots: View {
             }
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("step \(active + 1) of \(count)")
     }
 }

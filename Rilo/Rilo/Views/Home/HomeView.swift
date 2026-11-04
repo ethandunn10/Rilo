@@ -55,6 +55,7 @@ struct HomeView: View {
     private var column: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text(state.name.isEmpty ? "hey there" : "hey \(state.name.lowercased())")
+                .accessibilityAddTraits(.isHeader)
                 .font(.fredoka(26, 700))
                 .foregroundStyle(RC.ink)
                 .rise(0, distance: 14, duration: 0.5)

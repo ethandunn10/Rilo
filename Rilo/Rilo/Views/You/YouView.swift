@@ -32,6 +32,7 @@ struct YouView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 Text(state.name.isEmpty ? "you" : state.name.lowercased())
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(30, 700))
                     .rise(0, distance: 14, duration: 0.4)
                     .padding(.horizontal, 20)

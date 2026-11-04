@@ -34,8 +34,6 @@ struct Opens: View {
                         .foregroundStyle(on ? Color.white.opacity(0.75) : RC.ink3)
                 }
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(Limits.opensText(left, minutes))
 
             if note {
                 Text(Limits.opensText(left, minutes))
@@ -43,6 +41,44 @@ struct Opens: View {
                     .foregroundStyle(on ? Color(hex: "#C9E6CE") : RC.ink3)
             }
         }
+        /* circles + note read once, as words */
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(states.isEmpty && total <= 0 ? "no opens" : Self.spoken(left, minutes))
+    }
+
+    /// "2½ opens left · 15 min each" → "2 and a half opens left, 15 minutes each"
+    static func spoken(_ left: Double, _ minutes: Int) -> String {
+        let v = max(0, (left * 2).rounded() / 2)
+        let whole = Int(v.rounded(.down))
+        let half = v - Double(whole) >= 0.5
+        let mins = "\(minutes) minute\(minutes == 1 ? "" : "s") each"
+        if v <= 0 { return "no opens left, \(mins)" }
+        if whole == 0 { return "half an open left, \(mins)" }
+        let n = half ? "\(whole) and a half opens" : (whole == 1 ? "1 open" : "\(whole) opens")
+        return "\(n) left, \(mins)"
+    }
+}
+
+/// Speakable text for VoiceOver: "½" → "a half", "·" → a pause, "min" → minutes.
+enum A11ySpeak {
+    static func text(_ s: String) -> String {
+        var t = s
+        for d in 0...9 { t = t.replacingOccurrences(of: "\(d)½", with: "\(d) and a half") }
+        t = t.replacingOccurrences(of: "½", with: "half")
+        t = t.replacingOccurrences(of: " · ", with: ", ")
+        t = t.replacingOccurrences(of: " min ", with: " minutes ")
+        if t.hasSuffix(" min") { t = String(t.dropLast(4)) + " minutes" }
+        return t
+    }
+
+    /// minutes → "1 hour 20 minutes"
+    static func mins(_ m: Double) -> String {
+        let total = max(0, Int(m.rounded()))
+        let h = total / 60, r = total % 60
+        let hs = h == 1 ? "1 hour" : "\(h) hours"
+        let ms = r == 1 ? "1 minute" : "\(r) minutes"
+        if h == 0 { return ms }
+        return r == 0 ? hs : "\(hs) \(ms)"
     }
 }
 

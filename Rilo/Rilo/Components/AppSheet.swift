@@ -34,7 +34,7 @@ struct AppSheet: View {
                 .ignoresSafeArea()
                 .opacity(shown ? 1 : 0)
                 .animation(.easeOut(duration: 0.28), value: shown)
-                .accessibilityLabel("Close")
+                .accessibilityLabel("close")
 
                 panel(maxHeight: geo.size.height * 0.78)
                     .offset(y: shown ? 0 : geo.size.height * 0.8 + 40)
@@ -62,6 +62,7 @@ struct AppSheet: View {
 
             HStack(spacing: 10) {
                 Text("add an app")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(22, 600))
                     .foregroundStyle(RC.ink)
                 Spacer(minLength: 0)
@@ -87,7 +88,7 @@ struct AppSheet: View {
                 .frame(height: 48)
                 .background(Capsule().fill(.white))
                 .overlay(Capsule().strokeBorder(RC.ink, lineWidth: 2))
-                .accessibilityLabel("Search apps")
+                .accessibilityLabel("search apps")
 
             /* the list scrolls inside the sheet; the sheet is only as tall
                as it needs to be, up to 78% of the screen */

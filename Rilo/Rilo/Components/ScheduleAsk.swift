@@ -42,10 +42,12 @@ struct ScheduleAsk: View {
                 RiloView(skin: skin, mood: "curious", size: 62, talks: true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(q.ask)
+                        .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(21, 600))
                         .webLineHeight(21, 1.2)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("\(step + 1) of \(questions.count)\(q.multi ? " · pick any" : "")")
+                        .accessibilityLabel("question \(step + 1) of \(questions.count)\(q.multi ? ", pick any" : "")")
                         .font(.inter(12, 700))
                         .foregroundStyle(RC.ink2)
                 }
@@ -65,6 +67,7 @@ struct ScheduleAsk: View {
                             .overlay(Capsule().strokeBorder(RC.line, lineWidth: 2))
                     }
                     .buttonStyle(.tap)
+                    .accessibilityAddTraits(isOn(o.id) ? .isSelected : [])
                 }
             }
 

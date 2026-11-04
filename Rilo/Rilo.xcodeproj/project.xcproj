@@ -43,6 +43,7 @@
         "INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents": "YES",
         "INFOPLIST_FILE": "Config/Info.plist",
         "INFOPLIST_KEY_CFBundleDisplayName": "Rilo",
+        "INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription": "so rilo can save your weekly card to your photos when you tap save image.",
         "INFOPLIST_KEY_NSMicrophoneUsageDescription": "rilo only listens while you hold the talk button, so you can talk to him instead of typing.",
         "INFOPLIST_KEY_NSSpeechRecognitionUsageDescription": "rilo turns what you say into text right on your phone, so you can talk to him instead of typing.",
         "INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad": "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight",

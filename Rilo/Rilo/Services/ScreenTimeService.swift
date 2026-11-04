@@ -176,7 +176,7 @@ enum ScreenTime {
     static func make() -> any ScreenTimeService {
         #if DEBUG
         /* the screenshot seeds and checks always run on the demo */
-        if DemoSeed.screenArg != nil || DemoSeed.flag("-selfcheck") { return DemoScreenTimeService() }
+        if DemoSeed.screenArg != nil || DemoSeed.flag("-selfcheck") || DemoSeed.flag("-flowcheck") { return DemoScreenTimeService() }
         #endif
         #if RILO_FAMILY_CONTROLS
         return FamilyControlsScreenTimeService()

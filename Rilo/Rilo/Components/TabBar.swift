@@ -31,7 +31,7 @@ struct TabBar: View {
                 .background(Circle().fill(RC.line).offset(y: 3))
             }
             .buttonStyle(.tap)
-            .accessibilityLabel("Your Rilo")
+            .accessibilityLabel("your rilo")
             Spacer(minLength: 0)
             tab("progress", icon: AnyView(SVGPath("M5 19 V13 M12 19 V8 M19 19 V4")
                 .stroke(col("progress"), style: .svg(2.6))))
@@ -44,7 +44,8 @@ struct TabBar: View {
         .padding(.horizontal, 10 + 14)
         .padding(.top, 8)
         .frame(height: 64, alignment: .center)
-        .padding(.bottom, 0)
+        /* SE: no home indicator under the bar, so give the labels a little room */
+        .padding(.bottom, WebLayout.hasHomeButton ? 6 : 0)
         .frame(maxWidth: .infinity)
         .background(alignment: .top) {
             UnevenRoundedRectangle(topLeadingRadius: 26, topTrailingRadius: 26)

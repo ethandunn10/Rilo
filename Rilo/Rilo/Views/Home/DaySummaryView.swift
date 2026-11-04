@@ -20,11 +20,13 @@ struct DaySummaryView: View {
                          size: 180, motion: r.hit ? .jump : .idle, talks: true)
 
                 Text(r.hit ? "that's a day." : "we went over.")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(32, 700))
                     .webLineHeight(32, 1.15)
                     .multilineTextAlignment(.center)
 
                 Text("\(Plan.fmtMins(r.used)) used · \(Plan.fmtMins(r.goal)) goal")
+                    .accessibilityLabel("\(A11ySpeak.mins(r.used)) used, \(A11ySpeak.mins(r.goal)) goal")
                     .font(.inter(16, 600))
                     .foregroundStyle(RC.ink2)
                     .multilineTextAlignment(.center)
@@ -65,6 +67,7 @@ struct DaySummaryView: View {
                 .font(.inter(12, 700))
         }
         .multilineTextAlignment(.center)
+        .accessibilityElement(children: .combine)
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14 + 2)
         .padding(.horizontal, 8 + 2)

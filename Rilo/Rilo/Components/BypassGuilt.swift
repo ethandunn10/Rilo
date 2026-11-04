@@ -86,6 +86,7 @@ struct BypassGuilt: View {
                 RiloView(skin: skin, mood: "letdown", size: 66, motion: .idle)
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title ?? "you can, but…")
+                        .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(18, 600))
                         .webLineHeight(18, 1.2)
                     Text(Self.ratherLine(hobbies: hobbies, goals: goals))

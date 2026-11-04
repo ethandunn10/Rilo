@@ -40,7 +40,11 @@ struct DemoPanelOverlay: View {
     }
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
+        /* phones with a home button (SE) are too short for the bottom-left
+           spot (it lands on the main button), so there it sits in the empty
+           part of the status bar, between the clock and the battery */
+        let se = WebLayout.hasHomeButton
+        ZStack(alignment: open ? .bottomLeading : (se ? .topTrailing : .bottomLeading)) {
             Color.clear.allowsHitTesting(false)
             if open {
                 panel
@@ -50,15 +54,21 @@ struct DemoPanelOverlay: View {
                         .font(.fredoka(12, 600))
                         .foregroundStyle(RC.ink)
                         .padding(.horizontal, 10 + 1.5)
-                        .frame(minHeight: 30)
+                        .frame(minHeight: se ? 18 : 30)
                         .background(Capsule().fill(Color.white.opacity(0.75)))
                         .overlay(Capsule().strokeBorder(Color.rgba(18, 48, 26, 0.35), lineWidth: 1.5))
+                        .dynamicTypeSize(.large)
                 }
                 .buttonStyle(.plainTap)
-                .padding(.leading, 10)
-                .padding(.bottom, WebLayout.bottom(96))
+                .accessibilityLabel("open the demo panel")
+                .padding(se ? .trailing : .leading, se ? 62 : 10)
+                .padding(se ? .top : .bottom, se ? 1 : WebLayout.bottom(96))
+                .ignoresSafeArea(edges: se ? .top : [])
             }
         }
+        /* the closed "demo" button stays put instead of riding up on the
+           keyboard and covering the field being typed in */
+        .ignoresSafeArea(open ? [] : .keyboard)
     }
 
     private var panel: some View {
@@ -110,6 +120,7 @@ struct DemoButton<Label: View>: View {
         }
         .buttonStyle(.plainTap)
         .disabled(dim)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 }
 

@@ -5,7 +5,12 @@ import Foundation
 nonisolated enum JS {
     /// Math.round: halves go up (toward +infinity), so Math.round(-2.5) is -2.
     static func round(_ x: Double) -> Double { (x + 0.5).rounded(.down) }
-    static func roundInt(_ x: Double) -> Int { Int(round(x)) }
+    /// Phase 9: a NaN/infinite number (e.g. 0 / 0 on a brand-new account)
+    /// reads 0 instead of crashing Int(); the web would print "NaN"
+    static func roundInt(_ x: Double) -> Int {
+        let r = round(x)
+        return r.isFinite && abs(r) < 1e15 ? Int(r) : 0
+    }
 
     /// String(n) for a JS number: 15 → "15", 7.5 → "7.5"
     static func num(_ x: Double) -> String {

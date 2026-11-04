@@ -37,6 +37,7 @@ extension YouView {
         return VStack(alignment: .leading, spacing: 10) {
             Text("when you scroll the most")
                 .font(.fredoka(17, 600))
+                .accessibilityAddTraits(.isHeader)
                 .padding(.bottom, 8)
             ChipFlow(spacing: 7) {
                 ForEach(options, id: \.id) { w in
@@ -66,6 +67,7 @@ extension YouView {
         @Bindable var s = state
         return VStack(alignment: .leading, spacing: 10) {
             Text("apps rilo watches").font(.fredoka(19, 600))
+                .accessibilityAddTraits(.isHeader)
             AppPicker(apps: $s.apps, sheet: $appSheet, refused: $refused,
                       maxApps: state.hasPro ? .max : Plan.FREE_MAX_APPS,
                       onMaxed: { state.go(.upgrade) })
@@ -94,6 +96,7 @@ extension YouView {
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("creator mode").font(.fredoka(19, 600))
+                        .accessibilityAddTraits(.isHeader)
                     Text("Turn it on to add a Home button for focused Instagram posting or research. Pro feature.")
                         .font(.inter(12, 600))
                         .webLineHeight(12, 1.35)
@@ -114,7 +117,7 @@ extension YouView {
                         .background(Capsule().fill(on ? RC.greenDeep : Color(hex: "#AAB8AD")))
                 }
                 .buttonStyle(.plainTap)
-                .accessibilityLabel("Turn Creator Mode on or off")
+                .accessibilityLabel("creator mode")
                 .accessibilityValue(on ? "on" : "off")
                 .accessibilityAddTraits(.isToggle)
             }
@@ -142,8 +145,10 @@ extension YouView {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(alignment: .center, spacing: 10) {
                     RiloView(skin: state.chosenRilo, mood: "sleepy", size: 54)
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("nightly check-in").font(.fredoka(19, 600))
+                            .accessibilityAddTraits(.isHeader)
                         Text(state.checkedInToday
                              ? "done for today. tomorrow is planned."
                              : "he asks at \(Addons.fmtClock(at)).")
@@ -157,12 +162,13 @@ extension YouView {
                         var n = state.night
                         n.at = v
                         state.youSetNight(n)
-                    }))
-                    .accessibilityLabel("Check-in time")
+                    }), a11y: "check-in time")
                     Button { state.go(.nightcheckin) } label: {
                         Text("check in now")
                             .font(.fredoka(15, 600))
                             .foregroundStyle(.white)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.7)
                             .padding(.horizontal, 16 + 2)
                             .frame(minHeight: 42)
                             .background(Capsule().fill(RC.ink))
@@ -219,6 +225,7 @@ struct YouRowCard: View {
         Button(action: action) {
             HStack(alignment: .center, spacing: 10) {
                 RiloView(skin: skin, mood: mood, size: 54)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(.fredoka(19, 600))
                     Text(sub)
@@ -247,6 +254,8 @@ struct WebTimeInput: View {
     var padding: CGFloat = 10
     var color: Color = RC.ink
     var border: Color = RC.line
+    /// what VoiceOver calls the picker
+    var a11y = "time"
 
     private var date: Binding<Date> {
         Binding(get: {
@@ -269,6 +278,7 @@ struct WebTimeInput: View {
     var body: some View {
         HStack(spacing: 0) {
             Text(shown).font(.fredoka(fontSize, 600))
+                .accessibilityHidden(true)   // the picker on top reads the time
             Spacer(minLength: 4)
             ZStack {
                 Circle().stroke(color, lineWidth: 1.6).frame(width: 13, height: 13)
@@ -277,6 +287,7 @@ struct WebTimeInput: View {
                     .frame(width: 13, height: 13)
             }
             .padding(.trailing, 6)
+            .accessibilityHidden(true)
         }
         .foregroundStyle(color)
         .padding(.horizontal, padding + 2)
@@ -286,6 +297,7 @@ struct WebTimeInput: View {
         .overlay {
             DatePicker("", selection: date, displayedComponents: .hourAndMinute)
                 .labelsHidden()
+                .accessibilityLabel(a11y)
                 .scaleEffect(x: 1.6, y: 1.2)
                 .colorMultiply(.clear)   // invisible, still tappable
                 .opacity(0.02)

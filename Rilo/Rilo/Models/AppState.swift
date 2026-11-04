@@ -243,6 +243,29 @@ final class AppState {
         goTo(next == .home && pendingSkin != nil ? .levelup : next, dir: dir)
     }
 
+    /// goTo for moves the app makes after something already happened (a
+    /// session ended, a day was scored, an app session began): if a slide
+    /// is still running, wait for it instead of dropping the move. Dropping
+    /// it would leave them on a screen whose job is done (e.g. App open
+    /// after "close app" was tapped mid-slide, with nothing left to tap).
+    /// Taps keep using goTo/go, which ignore a second tap mid-slide.
+    func goToSoon(_ next: Screen, dir: NavDirection = .forward) {
+        if !isSliding { goTo(next, dir: dir); return }
+        Task { @MainActor [weak self] in
+            while self?.isSliding == true { try? await Task.sleep(for: .milliseconds(40)) }
+            self?.goTo(next, dir: dir)
+        }
+    }
+
+    /// go() with the same wait (the tour walking between tabs)
+    func goSoon(_ next: Screen, dir: NavDirection = .forward) {
+        if !isSliding { go(next, dir: dir); return }
+        Task { @MainActor [weak self] in
+            while self?.isSliding == true { try? await Task.sleep(for: .milliseconds(40)) }
+            self?.go(next, dir: dir)
+        }
+    }
+
     /// Jump with no slide (start over, and the `-screen` launch argument).
     func jump(to next: Screen) {
         navDirection = .forward

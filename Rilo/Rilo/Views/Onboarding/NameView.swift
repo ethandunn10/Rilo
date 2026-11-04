@@ -26,6 +26,7 @@ struct NameView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     RiloView(skin: AppState.OG_SKIN, mood: "wave", size: 190, talks: true)
                     Text("what should i call you?")
+                        .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(30, 700))
                         .webLineHeight(30, 1.1)
                         .foregroundStyle(RC.ink)
@@ -59,6 +60,7 @@ struct NameView: View {
         HStack(spacing: 9) {
             TextField("", text: $draft, prompt: Text("first name").foregroundStyle(Color(hex: "#757575")))
                 .focused($focused)
+                .accessibilityLabel("first name")
                 .font(.fredoka(19, 600))
                 .foregroundStyle(RC.ink)
                 .tint(RC.ink)

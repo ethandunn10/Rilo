@@ -27,6 +27,7 @@ struct PermissionView: View {
                             .foregroundStyle(RC.ink)
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
+                            .accessibilityAddTraits(.isHeader)
                             .id(denied)
                             .rise(0.1, duration: 0.5)
                         Spacer(minLength: 0)

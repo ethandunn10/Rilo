@@ -106,6 +106,7 @@ struct PlanView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 8) {
                     Text("today's plan")
+                        .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(30, 700))
                     Text("pro")
                         .font(.fredoka(12, 600))
@@ -113,6 +114,7 @@ struct PlanView: View {
                         .padding(.vertical, 3)
                         .padding(.horizontal, 9)
                         .background(Capsule().fill(RC.ink))
+                        .accessibilityLabel("rilo pro")
                 }
                 Text("made by rilo from your goals")
                     .font(.inter(14, 600))
@@ -154,6 +156,7 @@ struct PlanLockedOverlay: View {
             VStack(spacing: 8) {
                 RiloView(skin: "gold", mood: "coach", size: 140)
                 Text("today's plan")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(26, 600))
                     .foregroundStyle(RC.ink)
                 Text("your day, built around your goals")

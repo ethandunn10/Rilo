@@ -51,6 +51,7 @@ struct PaywallPerks: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("pro adds")
                 .font(.fredoka(17, 600))
+                .accessibilityAddTraits(.isHeader)
                 .foregroundStyle(.white)
                 .padding(.bottom, 2)
             ForEach(PaywallView.PERKS, id: \.title) { p in
@@ -62,6 +63,7 @@ struct PaywallPerks: View {
                                 .stroke(RC.ink, style: .svg(2.6 * 13 / 16))
                                 .frame(width: 13, height: 13)
                         )
+                        .accessibilityHidden(true)
                     Text("\(Text(p.title).font(.inter(15, 700)).foregroundStyle(.white)) · \(p.sub)")
                         .font(.inter(15, 600))
                         .foregroundStyle(Color(hex: "#C9E6CE"))
@@ -86,6 +88,7 @@ struct PaywallFreeCard: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("free does the basics")
                 .font(.fredoka(17, 600))
+                .accessibilityAddTraits(.isHeader)
                 .foregroundStyle(RC.ink)
             ForEach(PaywallView.FREE_BITS, id: \.self) { t in
                 HStack(alignment: .firstTextBaseline, spacing: 8) {

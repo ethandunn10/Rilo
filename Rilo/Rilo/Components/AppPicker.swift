@@ -40,6 +40,7 @@ struct AppPicker: View {
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
                                 .strokeBorder(RC.ink, style: StrokeStyle(lineWidth: 2, dash: [6, 3]))
                         )
+                        .accessibilityHidden(true)
                     Text("add another app")
                         .font(.fredoka(18, 600))
                     Spacer(minLength: 0)

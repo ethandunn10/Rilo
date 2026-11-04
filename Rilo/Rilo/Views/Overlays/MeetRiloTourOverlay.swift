@@ -197,7 +197,7 @@ struct MeetRiloTourOverlay: View {
                     .frame(minHeight: 30)
             }
             .buttonStyle(.tap)
-            .accessibilityLabel("Skip tour")
+            .accessibilityLabel("skip tour")
             Spacer(minLength: 0)
             if step > 0 {
                 Button { step = max(0, step - 1) } label: {
@@ -233,7 +233,7 @@ struct MeetRiloTourOverlay: View {
     /// Walk to this step's screen, then wait for its target to hold still
     /// and commit the box there in one move.
     private func place() async {
-        if slide.screen != state.screen { state.go(slide.screen) }
+        if slide.screen != state.screen { state.goSoon(slide.screen) }
         ready = false
         gaveUp = false
         guard let id = slide.target else {

@@ -21,6 +21,7 @@ struct ProgressWeekCard: View {
 
     /// monday-first labels under the bars, oldest day on the left
     static let DAY_LABELS = ["m", "t", "w", "t", "f", "s", "s"]
+    static let DAY_NAMES = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
 
     struct Bar { var mins: Double; var goal: Double; var hit: Bool; var real: Bool }
 
@@ -58,6 +59,8 @@ struct ProgressWeekCard: View {
                             .font(.inter(11, 700))
                             .foregroundStyle(ink2)
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(A11ySpeak.mins(mins)) back \(label)")
                     .padding(.vertical, 8)
                     .padding(.horizontal, 6)
                     .frame(maxWidth: .infinity)
@@ -94,6 +97,8 @@ struct ProgressWeekCard: View {
                     .font(.fredoka(15, 600))
                     .foregroundStyle(ProgressScreenView.deepGreen)
             }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
 
             HStack(alignment: .bottom, spacing: 10) {
                 ForEach(Array(bars.enumerated()), id: \.offset) { i, b in
@@ -105,6 +110,11 @@ struct ProgressWeekCard: View {
                             .font(.fredoka(13, 600))
                             .foregroundStyle(RC.ink3)
                     }
+                    /* "monday, 1 hour 20 minutes, under your goal" */
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Self.DAY_NAMES[i])
+                    .accessibilityValue(!b.real ? "no data yet"
+                        : "\(A11ySpeak.mins(b.mins)), \(b.hit ? "under your goal" : "over your goal")")
                     .frame(maxWidth: .infinity)
                 }
             }

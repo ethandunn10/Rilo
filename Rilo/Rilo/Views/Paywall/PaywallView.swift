@@ -56,6 +56,7 @@ struct PaywallView: View {
                     .padding(.horizontal, 12)
                     .background(Capsule().fill(RC.ink))
                 Text("get the full coach")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(32, 700))
                     .foregroundStyle(RC.ink)
                     .multilineTextAlignment(.center)

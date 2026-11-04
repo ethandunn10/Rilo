@@ -144,7 +144,7 @@ extension AppState {
             self.promise = nil
         }
 
-        goTo(.home, dir: .back)
+        goToSoon(.home, dir: .back)
     }
 
     /// "pretend you opened X": bump that app's real count for today

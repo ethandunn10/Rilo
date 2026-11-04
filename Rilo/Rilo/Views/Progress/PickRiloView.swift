@@ -53,14 +53,16 @@ struct PickRiloView: View {
                     .background(Circle().fill(Color.white.opacity(0.7)))
             }
             .buttonStyle(.tap)
-            .accessibilityLabel("Back to home")
+            .accessibilityLabel("back to home")
 
             Spacer()
             Text("your rilo")
+                .accessibilityAddTraits(.isHeader)
                 .font(.fredoka(26, 700))
             Spacer()
 
             Text("lv \(state.level)")
+                .accessibilityLabel("level \(state.level)")
                 .font(.fredoka(14, 600))
                 .foregroundStyle(Self.deepGreen)
                 .frame(minWidth: 44, alignment: .trailing)
@@ -88,6 +90,7 @@ struct PickRiloView: View {
                 .background(Capsule().fill(cur.unlocked ? .white : RC.ink))
                 .padding(.top, 2)
         }
+        .accessibilityElement(children: .combine)
         .frame(maxWidth: .infinity)
         .frame(height: 228, alignment: .bottom)
     }

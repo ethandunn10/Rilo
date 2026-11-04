@@ -49,6 +49,7 @@ struct WhyOpenView: View {
                         HStack(spacing: 10) {
                             RiloView(skin: state.chosenRilo, mood: "curious", size: 88, talks: true)
                             Text("what are you opening \(app) for?")
+                                .accessibilityAddTraits(.isHeader)
                                 .font(.fredoka(25, 700))
                                 .webLineHeight(25, 1.1)
                                 .fixedSize(horizontal: false, vertical: true)

@@ -42,6 +42,7 @@ struct BuddiesView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("buddies")
+                        .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(30, 700))
                     Text("they see your rilo and your streak. never your hours.")
                         .font(.inter(13, 600))
@@ -118,6 +119,7 @@ struct BuddiesView: View {
                         .font(.inter(13, 600))
                         .foregroundStyle(RC.ink2)
                 }
+                .accessibilityElement(children: .combine)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 trailing()
             }
@@ -129,8 +131,10 @@ struct BuddiesView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("your invite code")
                     .font(.fredoka(18, 600))
+                    .accessibilityAddTraits(.isHeader)
                 if !state.buddies.code.isEmpty {
                     Text(state.buddies.code)
+                        .speechSpellsOutCharacters()
                         .font(.fredoka(34, 700))
                         .tracking(34 * 0.18)
                         .foregroundStyle(ProgressScreenView.deepGreen)
@@ -156,6 +160,7 @@ struct BuddiesView: View {
                         .foregroundStyle(RC.ink)
                         .textInputAutocapitalization(.characters)
                         .autocorrectionDisabled()
+                        .accessibilityLabel("a friend's code")
                         .onChange(of: join) { _, v in
                             let next = String(v.uppercased().prefix(6))
                             if next != v { join = next }

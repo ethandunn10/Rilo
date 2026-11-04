@@ -47,6 +47,7 @@ struct AskCard: View {
                 if let skin { RiloView(skin: skin, mood: "curious", size: 54) }
                 VStack(alignment: .leading, spacing: 3) {
                     Text(ask.ask)
+                        .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(18, 600))
                         .webLineHeight(18, 1.2)
                         .fixedSize(horizontal: false, vertical: true)

@@ -48,7 +48,7 @@ extension AppState {
         if let app = s.app {
             screenTimeService.startSession(ScreenTimeSession(app: app, minutes: s.cap, kind: s.kind, startedAt: JS.nowMs))
         }
-        goTo(.appopen)
+        goToSoon(.appopen)
     }
 
     // MARK: things that happened while Rilo wasn't on screen

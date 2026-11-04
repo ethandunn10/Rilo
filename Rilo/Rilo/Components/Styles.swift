@@ -122,10 +122,25 @@ struct PillButton: View {
 /// Web layout: the designs are drawn at 390x844 with the status bar inside
 /// that frame. iOS lays content inside the safe area instead, so a web top
 /// padding of N maps to N minus the ~47pt status bar the design assumed.
+///
+/// Phones with a home button (iPhone SE) have a 20pt status bar and no
+/// home indicator, so the iPhone 17 numbers would push content right up
+/// against the status bar and the bottom edge. They get a little room back.
 enum WebLayout {
-    static func top(_ web: CGFloat) -> CGFloat { max(4, web - 47) }
+    static func top(_ web: CGFloat) -> CGFloat {
+        hasHomeButton ? max(12, web - 40) : max(4, web - 47)
+    }
     /// web bottom paddings include the 34pt home-indicator area
-    static func bottom(_ web: CGFloat) -> CGFloat { max(8, web - 26) }
+    static func bottom(_ web: CGFloat) -> CGFloat {
+        hasHomeButton ? max(12, web - 12) : max(8, web - 26)
+    }
+
+    /// 16:9 screens (SE, 8, 8 Plus) are the ones with a home button.
+    static var hasHomeButton: Bool {
+        let scene = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
+        guard let b = scene?.screen.bounds, b.width > 0 else { return false }
+        return max(b.width, b.height) / min(b.width, b.height) < 1.9
+    }
 }
 
 /// One back button, used on every screen that has somewhere to go back to.

@@ -39,6 +39,7 @@ struct NeedItView: View {
             HStack(alignment: .bottom, spacing: 6) {
                 RiloView(skin: state.chosenRilo, mood: "curious", size: 140, talks: true)
                 Text("fair. what for?")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(22, 600))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.vertical, 14 + 1.5)

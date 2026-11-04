@@ -21,6 +21,7 @@ struct ProgressScreenView: View {
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 12) {
                     Text("progress")
+                        .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(30, 700))
                         .rise(0, distance: 14, duration: 0.4)
 
@@ -71,6 +72,11 @@ struct ProgressScreenView: View {
                     .font(.inter(13, 600))
                     .foregroundStyle(Self.paleGreen)
             }
+            /* "level 4, 120 of 200 xp, 60 percent" */
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("level \(state.level)")
+            .accessibilityValue(prog.atMax ? "\(state.xp) xp, max level"
+                                           : "\(state.xp) of \(prog.next ?? 0) xp, \(prog.pct) percent")
             .frame(maxWidth: .infinity, alignment: .leading)
 
             if let nextSkin {
@@ -85,6 +91,8 @@ struct ProgressScreenView: View {
                         .webLineHeight(10, 1.15)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("next: \(nextSkin.name) rilo at level \(nextSkin.level)")
                 .frame(width: 74)
             }
         }
@@ -102,6 +110,7 @@ struct ProgressScreenView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text("where your time goes")
                 .font(.fredoka(18, 600))
+                .accessibilityAddTraits(.isHeader)
                 .padding(.bottom, 10)
             BreakdownBars(breakdown: breakdown, compact: true, isPro: state.hasPro) {
                 state.go(.upgrade)
@@ -160,6 +169,7 @@ private struct Stat: View {
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .accessibilityElement(children: .combine)
         .padding(.vertical, 12 + 2)
         .padding(.horizontal, 6 + 2)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

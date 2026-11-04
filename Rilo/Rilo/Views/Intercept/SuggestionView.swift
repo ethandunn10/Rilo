@@ -44,6 +44,7 @@ struct SuggestionView: View {
                 Text(s.meta).font(.inter(14, 600)).foregroundStyle(Color(hex: "#C9E6CE"))
             }
             .foregroundStyle(.white)
+            .accessibilityElement(children: .combine)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(18)
             .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(RC.ink))

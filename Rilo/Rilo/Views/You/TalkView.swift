@@ -97,6 +97,7 @@ struct TalkView: View {
     private var bubbleView: some View {
         ShrinkToFit {
             Text(thinking ? "…" : bubble)
+                .accessibilityLabel(thinking ? "rilo is thinking" : bubble)
                 .font(.fredoka(22, 600))
                 .webLineHeight(22, 1.2)
                 .foregroundStyle(RC.ink)

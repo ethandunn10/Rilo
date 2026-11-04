@@ -39,8 +39,11 @@ struct RiloView: View {
                     .contentShape(Rectangle())
                     .onTapGesture(perform: poke)
                     .overlay(alignment: .top) { bubble }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel(Self.spoken(shownMood))
                     .accessibilityAddTraits(.isButton)
-                    .accessibilityLabel("poke rilo")
+                    .accessibilityHint("tap to hear what he says")
+                    .accessibilityAction { poke() }
             } else {
                 art
             }
@@ -58,7 +61,8 @@ struct RiloView: View {
                 .offset(y: squish(ctx.date).2 * height)
                 .offset(y: wrapperOffset(t))
         }
-        .accessibilityLabel(Self.label[mood] ?? Self.label["coach"]!)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Self.spoken(shownMood))
     }
 
     @ViewBuilder
@@ -125,6 +129,7 @@ struct RiloView: View {
         lastIndex = picked.index
         line = picked.line
         squishAt = Date()
+        AccessibilityNotification.Announcement(picked.line.say).post()
         hideTask?.cancel()
         hideTask = Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(RiloLines.sayMs))
@@ -151,6 +156,21 @@ struct RiloView: View {
         let m = RiloSkins.moods.contains(mood) ? mood : "coach"
         return "rilo-\(s)-\(m)"
     }
+
+    /// what VoiceOver says: "rilo, proud" (plus what he just said, if he did)
+    static func spoken(_ mood: String) -> String {
+        "rilo, " + (moodWord[mood] ?? "confident")
+    }
+
+    static let moodWord: [String: String] = [
+        "coach": "confident and winking",
+        "wave": "waving hello",
+        "proud": "proud",
+        "curious": "curious",
+        "sleepy": "sleepy",
+        "letdown": "let down",
+        "angry": "annoyed",
+    ]
 
     static let label: [String: String] = [
         "coach": "Rilo, confident and winking",

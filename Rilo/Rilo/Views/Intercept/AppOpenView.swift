@@ -31,12 +31,15 @@ struct AppOpenView: View {
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white))
 
                 Text("\(app) · \(clock) left")
+                    .accessibilityAddTraits(.isHeader)
+                    .accessibilityLabel("\(app), \(Int(shownLeft / 60)) minutes \(Int(shownLeft.truncatingRemainder(dividingBy: 60))) seconds left")
                     .font(.fredoka(30, 600))
                     .monospacedDigit()
 
                 /* carrying on a session they only just closed */
                 if session.carried > 0 {
                     Text("same session · \(JS.roundInt(session.carried)) min already used")
+                        .accessibilityLabel("same session, \(JS.roundInt(session.carried)) minutes already used")
                         .font(.inter(12.5, 600))
                         .foregroundStyle(Color.white.opacity(0.8))
                         .padding(.vertical, 5)

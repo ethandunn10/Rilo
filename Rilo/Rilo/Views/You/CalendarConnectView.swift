@@ -97,6 +97,7 @@ struct CalendarConnectView: View {
                 .font(.fredoka(connected ? 24 : 27, 600))
                 .webLineHeight(connected ? 24 : 27, 1.25)
                 .multilineTextAlignment(.center)
+                .accessibilityAddTraits(.isHeader)
                 .fixedSize(horizontal: false, vertical: true)
 
             if !connected {
@@ -122,6 +123,7 @@ struct CalendarConnectView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .accessibilityElement(children: .combine)
                     }
                 }
                 .modifier(CalendarPanel())
@@ -184,6 +186,7 @@ struct CalendarConnectView: View {
         VStack(alignment: .leading, spacing: 9) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("anything else i can read?").font(.fredoka(17, 600))
+                    .accessibilityAddTraits(.isHeader)
                 Text("optional. read only, same as the calendar.")
                     .font(.inter(12.5, 600))
                     .foregroundStyle(RC.ink2)

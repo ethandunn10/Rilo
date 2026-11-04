@@ -72,6 +72,7 @@ struct YourPlanView: View {
                 RiloView(skin: AppState.OG_SKIN, mood: "proud", size: 92, talks: true)
                 VStack(alignment: .leading, spacing: 3) {
                     Text("here's your plan.")
+                        .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(26, 700))
                         .foregroundStyle(RC.ink)
                     Text(avgMins != 0 ? "pick your goal and i'll fit your limits to it."
@@ -104,7 +105,12 @@ struct YourPlanView: View {
                     Text("\(Plan.fmtMins(avgMins)) a day")
                         .font(.fredoka(24, 700))
                         .foregroundStyle(RC.ink)
+                        /* narrow phones: the label wraps, the number stays on one line */
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .layoutPriority(1)
                 }
+                .accessibilityElement(children: .combine)
                 .padding(.bottom, 10)
                 .overlay(alignment: .bottom) {
                     Rectangle().fill(Color.rgba(18, 48, 26, 0.10)).frame(height: 1.5)
@@ -124,6 +130,7 @@ struct YourPlanView: View {
             Text("your limits")
                 .font(.fredoka(19, 600))
                 .foregroundStyle(RC.ink)
+                .accessibilityAddTraits(.isHeader)
 
             ForEach(limited, id: \.self) { app in
                 let s = state.settingOf(app)
@@ -137,11 +144,20 @@ struct YourPlanView: View {
                          : s.mode == .blocked ? "blocked" : "no limit")
                         .font(.inter(13.5, 700))
                         .foregroundStyle(Color(hex: "#1F6B2E"))
+                        /* big Text Size: keep "3 opens × 10 min" on one line */
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        .layoutPriority(1)
                 }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("\(app): " + (s.mode == .limited
+                    ? A11ySpeak.text("\(Limits.fmtOpens(s.opens)) opens") + ", \(s.minutes) minutes each"
+                    : s.mode == .blocked ? "blocked" : "no limit"))
             }
 
             Button { state.go(.limitsonboard) } label: {
                 Text("edit")
+                    .accessibilityLabel("edit your limits")
                     .font(.fredoka(13.5, 600))
                     .foregroundStyle(RC.ink2)
                     .padding(.horizontal, 13.5)
@@ -160,6 +176,7 @@ struct YourPlanView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("what you'll do instead")
                     .font(.fredoka(19, 600))
+                    .accessibilityAddTraits(.isHeader)
                 Text("this is the part that actually works")
                     .font(.inter(12.5, 600))
                     .foregroundStyle(Color(hex: "#9FD8A9"))
@@ -168,6 +185,7 @@ struct YourPlanView: View {
             ForEach(state.insteadSwaps, id: \.id) { row in
                 HStack(alignment: .top, spacing: 10) {
                     Circle().fill(RC.green).frame(width: 7, height: 7).padding(.top, 7)
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 0) {
                         Text("\(row.when): \(row.what)")
                             .font(.fredoka(16, 600))
@@ -179,6 +197,7 @@ struct YourPlanView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityElement(children: .combine)
                 }
             }
         }
@@ -199,6 +218,7 @@ struct YourPlanView: View {
                 .tracking(11.5 * 0.08)
                 .textCase(.uppercase)
                 .foregroundStyle(RC.ink2)
+                .accessibilityAddTraits(.isHeader)
             ForEach(Self.LOCKED, id: \.name) { f in
                 HStack(alignment: .top, spacing: 9) {
                     PlanLockIcon().padding(.top, 2)
@@ -212,6 +232,8 @@ struct YourPlanView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityHint("locked, rilo pro")
                 }
             }
         }

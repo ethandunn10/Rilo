@@ -58,6 +58,7 @@ private struct TalkChip: View {
     var body: some View {
         Button(action: action) {
             Text(on ? "✓ \(label)" : label)
+                .accessibilityLabel(label)
                 .font(.fredoka(15, 600))
                 .foregroundStyle(on ? .white : RC.ink)
                 .lineLimit(1)
@@ -85,6 +86,7 @@ private struct TalkField: View {
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled(false)
             .submitLabel(.send)
+            .accessibilityLabel("message to rilo")
             .onSubmit(onSubmit)
             .padding(.horizontal, 18)
             .frame(height: 52)

@@ -28,6 +28,7 @@ struct LimitCard: View {
                 Text(app)
                     .font(.fredoka(19, 600))
                     .frame(maxWidth: .infinity, alignment: .leading)
+                    .accessibilityAddTraits(.isHeader)
             }
 
             VStack(spacing: 7) {
@@ -90,6 +91,7 @@ struct LimitCard: View {
                 }
                 /* content-box: the off ring's 2px border sits outside its 20px */
                 .frame(width: on ? 20 : 24, height: on ? 20 : 24)
+                .accessibilityHidden(true)
                 Text(Limits.MODE_LABEL[m] ?? m.rawValue)
                     .font(.fredoka(16, 600))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -115,6 +117,7 @@ struct LimitCard: View {
                     .foregroundStyle(Color(hex: "#9FD8A9"))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
             Button { onCancelPending(p.id) } label: {
                 Text("cancel")
                     .font(.fredoka(13, 600))
@@ -145,13 +148,15 @@ struct LimitStepper: View {
             Text(label)
                 .font(.inter(13, 700))
                 .foregroundStyle(RC.ink2)
+                .accessibilityHidden(true)
             Spacer(minLength: 0)
             HStack(spacing: 6) {
-                stepButton("−", disabled: atMin, a11y: "less \(label)", action: onLess)
+                stepButton("−", disabled: atMin, a11y: "fewer \(label)", action: onLess)
                 Text(value)
                     .font(.fredoka(19, 700))
                     .foregroundStyle(Color(hex: "#1F6B2E"))
                     .frame(minWidth: 58)
+                    .accessibilityLabel("\(label), \(A11ySpeak.text(value))")
                 stepButton("+", disabled: atMax, a11y: "more \(label)", action: onMore)
             }
         }

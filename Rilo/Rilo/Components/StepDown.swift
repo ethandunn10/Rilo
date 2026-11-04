@@ -43,6 +43,7 @@ struct StepDownCard: View {
             RiloView(skin: skin, mood: "proud", size: 58, talks: true)
             VStack(alignment: .leading, spacing: 2) {
                 Text("no more stepping down")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(18, 600))
                 Text("your limits fit your goal and you\u{2019}re hitting it. this is the plan now.")
                     .font(.inter(13, 600))
@@ -60,6 +61,7 @@ struct StepDownCard: View {
                 RiloView(skin: skin, mood: phase == "preview" ? "curious" : "coach", size: 58, talks: true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(phase == "preview" ? "HEADS UP · TOMORROW" : "THIS WEEK\u{2019}S STEP DOWN")
+                        .accessibilityAddTraits(.isHeader)
                         .font(.inter(11, 700))
                         .tracking(11 * 0.08)
                         .foregroundStyle(RC.ink2)

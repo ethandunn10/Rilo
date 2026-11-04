@@ -64,6 +64,7 @@ struct NightTimeView: View {
             RiloView(skin: AppState.OG_SKIN, mood: "sleepy", size: 150, talks: true)
 
             Text("when should i check in?")
+                .accessibilityAddTraits(.isHeader)
                 .font(.fredoka(27, 700))
                 .webLineHeight(27, 1.15)
                 .multilineTextAlignment(.center)
@@ -93,7 +94,7 @@ struct NightTimeView: View {
                 if custom {
                     WebTimeInput(value: Binding(get: { current }, set: { at = $0 }),
                                  height: 52, radius: 18, fontSize: 18, padding: 16,
-                                 color: Self.NIGHT_INK, border: Color.white.opacity(0.6))
+                                 color: Self.NIGHT_INK, border: Color.white.opacity(0.6), a11y: "check-in time")
                 }
             }
 

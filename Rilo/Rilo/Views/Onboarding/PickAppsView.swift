@@ -74,6 +74,7 @@ struct PickAppsView: View {
         HStack(spacing: 8) {
             VStack(alignment: .leading, spacing: 6) {
                 Text("which apps steal your time?")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(32, 700))
                     .webLineHeight(32, 1.05)
                     .foregroundStyle(RC.ink)

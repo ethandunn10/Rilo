@@ -116,6 +116,7 @@ struct HomeToast<Content: View>: View {
                 .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).strokeBorder(RC.line, lineWidth: 2))
         }
         .buttonStyle(.tap)
+        .accessibilityHint("tap to clear")
         .padding(.horizontal, 12)
         .padding(.bottom, HomeToastLayout.bottom)
         .frame(maxHeight: .infinity, alignment: .bottom)
@@ -142,6 +143,7 @@ struct HomeStrictAsk: View {
             VStack(spacing: 8) {
                 RiloView(skin: skin, mood: "letdown", size: 120, talks: true)
                 Text("that's two days over.")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(23, 700))
                     .webLineHeight(23, 1.2)
                 Text("want me to get strict for a week? no half opens, no borrowing, and loosening anything waits 24 hours. your pass still works.")

@@ -98,6 +98,7 @@ struct LimitsView: View {
         HStack(alignment: .center, spacing: 8) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("your limits")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(30, 700))
                 if state.strict.on {
                     Text("strict mode. loosening anything takes 24 hours.")

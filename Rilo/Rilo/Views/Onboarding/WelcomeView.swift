@@ -35,6 +35,7 @@ struct WelcomeView: View {
                             .padding(.horizontal, 16 + 2)
                             .capsuleSticker(fill: RC.card, drop: 3)
                         Text("hey, i'm rilo.")
+                            .accessibilityAddTraits(.isHeader)
                             .font(.fredoka(44, 700))
                             .webLineHeight(44, 1.02)
                             .foregroundStyle(RC.ink)

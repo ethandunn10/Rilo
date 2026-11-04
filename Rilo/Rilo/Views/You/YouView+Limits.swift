@@ -129,6 +129,7 @@ extension YouView {
         Button { state.replayIntroTour() } label: {
             HStack(alignment: .center, spacing: 10) {
                 RiloView(skin: state.chosenRilo, mood: "wave", size: 46)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 0) {
                     Text("meet Rilo again").font(.fredoka(18, 600))
                     Text("replay the quick tour of what he can do")
@@ -154,6 +155,7 @@ extension YouView {
             HStack(alignment: .center, spacing: 10) {
                 Text("your plan")
                     .font(.fredoka(19, 600))
+                    .accessibilityAddTraits(.isHeader)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 Text(pro ? "rilo pro (trial)" : "free")
                     .font(.fredoka(15, 600))

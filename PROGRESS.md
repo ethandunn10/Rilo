@@ -116,3 +116,28 @@ Not checked / needs you:
 - **The widget needs the paid account** (it reads Rilo's mood through an App Group, which the free account can't use, and adding its target now would break running on your iPhone), so it's in the setup doc.
 - **`SETUP_AFTER_PAID_ACCOUNT.md`** is the step-by-step list for switching it all on.
 - Apple's rules (not bugs): Rilo never learns real app names (Apple only gives a label), and timer windows are 15 minutes minimum, so "reopen within 2 minutes" can stretch to 15 for short opens.
+
+## Phase 9: Polish + QA ✅ (flow check being finished, see below)
+- **Small and big phones:** every screen and sub-state (71) was shot on an iPhone SE and an iPhone 18 Pro Max, and every problem was fixed:
+  - SE top/bottom padding (home-button phones get their own spacing)
+  - the "demo" button no longer covers buttons on the SE
+  - the tab bar's bottom space on the SE
+  - "your number" text no longer runs into the pile of days
+  - "3h 12m a day" stays on one line
+  - plan time cells show "3:15" instead of "3:…"
+  - the share card shrinks to fit the SE
+  - **option pickers get more room between rows on small phones** (the open tester complaint)
+
+  The iPhone 17 look is unchanged.
+- **Bigger text:** the fonts now follow the phone's Text Size setting, capped at the largest standard size (xxxLarge). The accessibility sizes above that broke words mid-line on the SE, so they show at xxxLarge.
+- **VoiceOver:**
+  - every button has a spoken label
+  - Rilo reads as "rilo, proud" etc.
+  - the opens circles read as "2 and a half opens left, 15 minutes each"
+  - progress bars read their value
+  - section titles are headers
+  - decorations (sky, butterflies, confetti) are skipped
+- **Dead buttons / placeholders:** none left. The share card's "save image" now really saves or shares the card image (with a photo permission line). The unused placeholder screen file is deleted.
+- **Bugs fixed:** tapping "close app" (or "nice" on the day summary) very fast could leave you stuck on a screen with nothing to tap. A possible crash dividing by zero in the breakdown is fixed too.
+- **Automatic checks:** `-flowcheck` (new) walks every flow: onboarding with back from every step, the tour, opening apps (quick/full/leave early/run out/pass/borrow/strict), plan, check-in, talk, levels, settings, paywall, start over, relaunch, new day. `-selfcheck` and `-settingscheck` too.
+- Screenshots: `screenshots/phase-9/` (JPEG to keep the repo small): `se-*`, `promax-*`, `xxxl-*`, `axm-*`, `axl-*`, plus `before/`.

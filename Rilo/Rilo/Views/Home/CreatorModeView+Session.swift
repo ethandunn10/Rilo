@@ -61,6 +61,7 @@ extension CreatorModeView {
                     }
                     VStack(spacing: 8) {
                         Text(posting ? "\u{1F3A5}" : "\u{1F50E}").font(.system(size: 42))
+                            .accessibilityHidden(true)
                         Text(posting ? "your video is ready to post" : "look for ideas with a purpose")
                             .font(.fredoka(19, 700))
                             .foregroundStyle(RC.ink)
@@ -144,6 +145,7 @@ extension CreatorModeView {
                     .padding(.top, 3)
                     .padding(.bottom, 5)
                 Text(copy.title)
+                    .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(24, 700))
                     .webLineHeight(24, 1.08)
                     .padding(.bottom, 8)

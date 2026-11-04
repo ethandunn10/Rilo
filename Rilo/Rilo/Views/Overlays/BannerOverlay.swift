@@ -45,7 +45,7 @@ struct BannerOverlay: View {
                 )
             }
             .buttonStyle(.plainTap)
-            .accessibilityLabel("rilo: tap to talk")
+            .accessibilityLabel("notification from rilo, now: tap to talk")
             .padding(.horizontal, 8)
             .padding(.top, top)
             .opacity(shown || reduce ? 1 : 0)

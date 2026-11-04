@@ -58,6 +58,8 @@ extension PlanView {
         if !week.isEmpty {
             VStack(alignment: .leading, spacing: 5) {
                 Text("FROM YOUR CALENDAR")
+                    .accessibilityLabel("from your calendar")
+                    .accessibilityAddTraits(.isHeader)
                     .font(.inter(11, 700))
                     .tracking(11 * 0.08)
                     .foregroundStyle(RC.ink2)
@@ -87,6 +89,7 @@ extension PlanView {
             Button { state.go(isPro ? .nightcheckin : .upgrade) } label: {
                 HStack(spacing: 10) {
                     Text("🌙").font(.system(size: 20))
+                        .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 0) {
                         Text(checked ? "checked in" : "check in with rilo")
                             .font(.fredoka(16, 600))

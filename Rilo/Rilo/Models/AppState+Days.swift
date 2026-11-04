@@ -66,7 +66,7 @@ extension AppState {
 
         dayResult = DayResult(used: used, goal: goal, hit: res.hit, xp: gained, streak: res.streak,
                               under: max(0, goal - used), repeated: repeated)
-        goTo(.daysummary)
+        goToSoon(.daysummary)
     }
 
     /// Seven clean days in one tap, so a tester can see a week clear.
@@ -101,7 +101,7 @@ extension AppState {
         offerStepDown(nextWeek, finished: finished)
 
         dayResult = DayResult(used: under, goal: goal, hit: true, xp: gained, streak: st, under: 20, repeated: false)
-        goTo(.daysummary)
+        goToSoon(.daysummary)
     }
 
     // MARK: time travel (demo)
