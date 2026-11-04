@@ -42,6 +42,17 @@ extension HomeView {
             .tourTarget("home-talk")
             .padding(.leading, 16 + 1.5)
             .padding(.bottom, 24 + 1.5)
+
+            /* the nightly check-in: one small button, bottom right (moved here
+               from the plan tab). Gone once today's check-in is done. */
+            if !state.checkedInToday {
+                CheckInPill(due: state.checkInDue, pro: state.hasPro) {
+                    state.go(state.hasPro ? .nightcheckin : .upgrade)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                .padding(.trailing, 14 + 1.5)
+                .padding(.bottom, 14 + 1.5)
+            }
         }
         .frame(height: 210 + 3)   // content-box height + the border
         .clipShape(shape)
@@ -106,5 +117,36 @@ private struct ChatBadge: View {
                     .padding(-spread)
             }
         }
+    }
+}
+
+/// Home's small "check in" button in Rilo's box. Turns night-blue with a
+/// yellow dot once it's check-in time, like the old plan-tab card did.
+private struct CheckInPill: View {
+    let due: Bool
+    let pro: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Text("🌙").font(.system(size: 13))
+                    .accessibilityHidden(true)
+                Text("check in")
+                    .font(.fredoka(14, 600))
+                if due {
+                    Circle().fill(Color(hex: "#FFD43B")).frame(width: 7, height: 7)
+                        .accessibilityHidden(true)
+                }
+            }
+            .foregroundStyle(due ? Color.white : RC.ink)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 11)
+            .background(Capsule().fill(due ? Color(hex: "#2B3A6B") : RC.card))
+            .overlay(Capsule().strokeBorder(HomeView.cardLine, lineWidth: 1.5))
+        }
+        .buttonStyle(.tap(0.94))
+        .accessibilityLabel("check in with rilo")
+        .accessibilityHint(pro ? "how today went, then tomorrow gets planned" : "rilo pro")
     }
 }

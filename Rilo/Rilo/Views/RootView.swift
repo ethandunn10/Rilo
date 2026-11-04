@@ -4,9 +4,15 @@ import SwiftUI
 /// it draws on top, under the same conditions.
 struct RootView: View {
     @Environment(AppState.self) private var state
+    @Environment(\.riloTheme) private var theme
 
     var body: some View {
         ZStack {
+            /* always something behind the screens: while one slides out and
+               the next pops in (both shrunk a little), the edges used to show
+               the window's black for a moment */
+            theme.skyGradient.ignoresSafeArea()
+
             screenView(state.screen)
                 .id(state.screen)
                 /* the incoming screen runs on goTo's curve (pop-in 0.36s /
