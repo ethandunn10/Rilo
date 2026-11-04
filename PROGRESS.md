@@ -53,3 +53,17 @@ Couldn't match exactly:
 - The banner slides to the same spot as the web, which on iPhone overlaps the clock.
 
 **Question for you:** nothing on the web ever opens the `needit` screen ("i need it for something"). It's ported but unreachable, same as the web. Should it be wired up somewhere (e.g. from intercept), or removed?
+
+## Phase 5: Progress, XP, levels, skins, themes, You ✅
+- `progress` (level card + XP bar, where your time goes, stats, time-back tiles, the week card with theme decorations), `pickrilo` (23 skins in a grid, locked by level / Pro), `levelup` (confetti, wear it / later), `sharecard`, `buddies` (invite code only; friends see mood + streak, never numbers).
+- `you` (level card, theme grid, about you chips, when you scroll the most, apps + add-app sheet, Creator Mode, schedule, nightly check-in time, calendar, buddies, strict card, limits + goal, replay tour, plan, start over, demo buttons), `nighttime`, `calendar` (fake connect with the fake iOS permission alert).
+- `talkchat` (chat with Rilo, quick chips, scripted replies) and `nightcheckin` (today → tomorrow → first-week question → tasks pulled into tomorrow's plan).
+- Talk/check-in voice goes through a `SpeechInput` protocol (Models/SpeechInput.swift). Right now it's the demo version (off by default, so it's typing only, exactly like the web; `-voice` shows the old mic UI with a canned line). Phase 7 plugs in Apple Speech.
+- Tour targets on progress, pickrilo and you are all attached, so the whole Meet Rilo tour now points at real elements.
+- Screenshots: `screenshots/phase-5/`. Debug flags: see the header comment in `Models/DemoSeed.swift` (`-youscroll id`, `-picksel skin`, `-pickscroll`, `-buddycode`, `-buddyfriends n`, `-talksay "a|b"`, `-checkstep N`, `-voice`, `-listening`, …). Any `-screen` launch starts from clean saved state.
+
+Couldn't match exactly:
+- The web removed talk-to-text on Nov 1 (Safari's speech API didn't work on iPhone), so the web is typing only. iOS matches that until Phase 7 adds real speech.
+- The share card on the web has an invalid CSS fill, so it's see-through. iOS copies that look. **Question:** should the card have a solid background?
+- The web opens the add-app sheet inside the apps card (a side effect of an animation). iOS opens it full screen like onboarding.
+- Check-in's text field doesn't auto-open the keyboard (the web's autofocus doesn't on iPhone either).
