@@ -12,12 +12,31 @@ import Foundation
 ///   -appsheet [-appquery <text>]   pickapps with the add-app sheet open
 ///   -permsheet / -permdenied   permission with the iOS alert / the deny branch
 ///   -hold            crunching stays put (no 1.5s auto-advance)
+///   -handoff         home with Rilo's hand-off running (then the tour)
+///   -tourstep <n>    start the Meet Rilo tour on step n (with -tour)
+///   -creatoractive [-creatoralert nudge|kicked|time-up]   creator with a
+///                    10-min posting session running (and that pop-up up)
+///   -askday <n>      first-week question of day n is waiting (the demo
+///                    panel's "day n" button), e.g. plan with -askday 2
+///   -planask / -planedit / -planbottom   plan with Rilo's questions open /
+///                    editing / scrolled to the end (PlanView)
+///   -demopanel       the demo panel starts open
+///   -stepdown        this week's step-down offered (home)
 ///   -tour            keep the Meet Rilo tour on the tab screens (off by
 ///                    default so screenshots show the screen itself)
 /// The seed runs the same AppState actions onboarding does, so the numbers
 /// are the real ones. Taps made while seeding aren't tracked.
 enum DemoSeed {
     static var arguments: [String] { ProcessInfo.processInfo.arguments }
+
+    /// a DEBUG-only on/off launch argument (always false in release)
+    static func flag(_ key: String) -> Bool {
+        #if DEBUG
+        return arguments.contains(key)
+        #else
+        return false
+        #endif
+    }
 
     static func arg(_ key: String) -> String? {
         guard let i = arguments.firstIndex(of: key), i + 1 < arguments.count else { return nil }
@@ -100,6 +119,8 @@ enum DemoSeed {
             let goal = Double(state.goalMins)
             state.dayResult = DayResult(used: goal - 25, goal: goal, hit: true, xp: 80, streak: 3,
                                         under: 25, repeated: false)
+        case .creator where arguments.contains("-creatoractive"):
+            state.creator.active = CreatorActive(task: "post", duration: 10, startedAt: JS.nowMs - 3 * 60000)
         case .levelup:
             state.level = 3
             state.pendingSkin = "bamboo"
@@ -112,6 +133,16 @@ enum DemoSeed {
         default:
             break
         }
+        if arguments.contains("-handoff") {
+            state.introTourDone = false
+            state.handoff = true
+        }
+        /* -stepdown: this week's step-down is on offer (Home's StepDown card) */
+        if arguments.contains("-stepdown") {
+            state.step = StepState(week: state.program.week, app: "", status: "offered")
+        }
+        /* -askday N: what the demo panel's "day N · ..." button does */
+        if let d = arg("-askday"), let n = Int(d) { state.demoAskDay(n) }
         state.jump(to: screen)
         #if DEBUG
         /* -beat N: Your number on that beat, settled (YourNumberView) */

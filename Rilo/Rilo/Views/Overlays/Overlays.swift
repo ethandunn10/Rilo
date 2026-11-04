@@ -17,22 +17,3 @@ struct BannerOverlay: View {
 struct BypassGuiltOverlay: View {
     var body: some View { EmptyView() }
 }
-
-/// components/RiloHandoff.jsx — Rilo hops across after the paywall.
-/// Done: state.handoffDone()
-struct RiloHandoffOverlay: View {
-    var body: some View { EmptyView() }
-}
-
-/// components/MeetRiloTour.jsx — runs once over the tab screens.
-/// state.tourCreatorAnswer(_:), state.tourDone()
-struct MeetRiloTourOverlay: View {
-    let screen: Screen
-    var body: some View { EmptyView() }
-}
-
-/// components/DemoPanel.jsx — DEMO ONLY, the tester's remote control.
-/// Callbacks: AppState+Demo.swift (demoSetClock, demoUsage, demoSimulate ...)
-struct DemoPanelOverlay: View {
-    var body: some View { EmptyView() }
-}

@@ -25,3 +25,18 @@ Couldn't match exactly:
 - iOS text wrapping avoids leaving one word alone on the last line, so a few lines break slightly differently.
 - iPhone 17 is 402pt wide vs the web's 390, so things are a touch wider.
 - The ✓ mark uses the system font; there's no browser focus ring; blur is a plain blur instead of the web's backdrop blur.
+
+## Phase 3: Home + tab bar ✅
+- `home`: greeting, Rilo big in his mood with the chat badge and his line, today vs goal, "do this instead", the apps with opens circles, the notes (over your promise, closed early), the weekly step-down sheet, the strict-mode ask.
+- `plan` (plan check, calendar week, today's question, check-in, editable day rows, add/done bar), `daysummary`, `creator` (+ session and nudge pop-ups).
+- Overlays: Rilo's hand-off hop after the paywall, the Meet Rilo tour (green box around the real element, everything else dimmed), the demo panel (every button).
+- New components: Opens, ProBadge, ProLock, ChatIcon, TourTarget (`.tourTarget("id")`), StepDownCard, ScheduleCard, ScheduleAsk, AskCard.
+- Screenshots: `screenshots/phase-3/`. Debug flags: `-handoff`, `-tour`, `-tourstep N`, `-handoffat s`, `-creatoractive`, `-creatoralert nudge|kicked|time-up`, `-scrollbottom`, `-askday N`, `-stepdown`, `-planask`, `-planedit`, `-planbottom`, `-demopanel`.
+
+Couldn't match exactly:
+- Tapping Rilo on home opens the chat, like the web does (no bubble on home). The squish + line reaction is on the other Rilos.
+- iOS demo data has some usage already, so numbers and Rilo's line differ from a fresh web run. The layout matches.
+- A few lines use regular-weight Inter on the web. Only Medium and up are bundled, so they're a touch bolder. (Could add Inter Regular later.)
+- Some titles wrap one word differently (iOS avoids a lone last word). Time cells in plan editing show "3:…" where the web cuts the text.
+- The web's step-down never shows after "skip a week" in a fresh demo, so that one has only an iOS shot.
+- If a tour step's target isn't on screen, the tour dims everything and centres its card (the web would leave the box in the wrong place).
