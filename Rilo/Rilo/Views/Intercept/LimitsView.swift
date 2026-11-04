@@ -66,13 +66,16 @@ struct LimitsView: View {
                             }
                             .buttonStyle(.tap(0.92))
                             .padding(.top, 6)
-                            .id("bottom")
                         }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, WebLayout.top(52))
                     /* --tail: 124px (plus the flex gap) clears the tab bar */
                     .padding(.bottom, WebLayout.bottom(124 + 12))
+                    #if DEBUG
+                    /* -limitsscroll bottom: the very end, tab or onboarding */
+                    .overlay(alignment: .bottom) { Color.clear.frame(height: 1).id("bottom") }
+                    #endif
                 }
                 .onAppear {
                     #if DEBUG

@@ -26,7 +26,19 @@ enum FlowCheck {
         }
         func at(_ name: String, _ want: Screen) { ok(name, state.screen == want) }
         /* navigation waits for each slide to settle, like a real tap */
-        func settle() async { try? await Task.sleep(for: .seconds(NavMotion.settleAfter + 0.15)) }
+        /* the slide's own timer starts only when the main actor gets to it,
+           so on a slow frame a fixed wait can end first and the next step is
+           dropped as a double tap. Wait for the slide (and any queued
+           goToSoon/goSoon move it was holding back) to really finish. */
+        func settle() async {
+            try? await Task.sleep(for: .seconds(NavMotion.settleAfter + 0.15))
+            for _ in 0..<3 {
+                var n = 0
+                while state.isSliding && n < 100 { try? await Task.sleep(for: .milliseconds(50)); n += 1 }
+                try? await Task.sleep(for: .milliseconds(100))
+                if !state.isSliding { break }
+            }
+        }
 
         /* no tracking, no system prompts (notifications) while it runs */
         Track.muted = true
