@@ -67,3 +67,14 @@ Couldn't match exactly:
 - The share card on the web has an invalid CSS fill, so it's see-through. iOS copies that look. **Question:** should the card have a solid background?
 - The web opens the add-app sheet inside the apps card (a side effect of an animation). iOS opens it full screen like onboarding.
 - Check-in's text field doesn't auto-open the keyboard (the web's autofocus doesn't on iPhone either).
+
+## Phase 6: Paywall + settings ✅
+- `paywall` / `upgrade`: the same copy and layout; yearly is picked by default, then monthly and free. One button does whatever row is picked. From onboarding it goes on to the hand-off → home → tour. From settings it goes back where it came from. The "buy" step is in one place (`Models/PurchaseService.swift`; the demo version always says yes) so StoreKit can drop in (Phase 7).
+- `results`: the hidden tester stats screen (taps per group, last tap, saved state, reset). The web reaches it only at the `/results` address, so on iOS it's `-screen results`. Nothing visible was added.
+- Settings sweep: a DEBUG check (`-screen you -settingscheck`, `Models/SettingsCheck.swift`) runs every You-tab action (theme, goal, bedtime, school, focus, night check-in time, Creator Mode, strict on/24h/keep/off, upgrade → back, free → back, locked theme → paywall, trial → Pro, replay tour, start over). All pass.
+- Screenshots: `screenshots/phase-6/`.
+
+Couldn't match exactly:
+- Results' "back to the app" goes to Welcome (on the web, reloading starts there).
+
+**Question for you:** the paywall (web and iOS) says "free watches 5" apps, but AGENTS.md says Free is 2 apps. Which is right? I kept the web's 5.

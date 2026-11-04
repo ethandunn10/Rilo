@@ -54,6 +54,9 @@ import Foundation
 ///   -buddycode <CODE> / -buddyfriends <n> / -nudged / -buddysaid <text>
 ///                    buddies with a code, n demo friends, the first nudged,
 ///                    and that line under the invite card
+///   -plan year|month|free   paywall / upgrade with that row selected
+///   -resultstaps     results with a tester's onboarding taps counted
+///   -settingscheck   (with -screen you) run SettingsCheck, see that file
 ///   -tour            keep the Meet Rilo tour on the tab screens (off by
 ///                    default so screenshots show the screen itself)
 /// The seed runs the same AppState actions onboarding does, so the numbers
@@ -100,6 +103,12 @@ enum DemoSeed {
         if let raw = arg("-screen"), let screen = Screen(rawValue: raw) {
             seed(state, for: screen)
         }
+        #if DEBUG
+        /* -settingscheck: tap through every You-tab setting in code */
+        if arguments.contains("-settingscheck") {
+            Task { @MainActor in await SettingsCheck.run(state) }
+        }
+        #endif
         return state
     }
 
@@ -200,6 +209,18 @@ enum DemoSeed {
         case .upgrade:
             state.isPro = false
             state.planChoice = "free"
+            /* opened from the You tab's "see rilo pro", so back goes there */
+            state.cameFrom = .you
+        case .results where arguments.contains("-resultstaps"):
+            /* -resultstaps: the taps a tester makes walking onboarding as
+               Ethan, then opening the demo panel (what the web shot shows) */
+            Track.muted = false
+            Track.resetCounts()
+            track("screentime", "allowed")
+            track("limits", "built from onboarding · allows 120m")
+            track("paywall", "start free trial")
+            track("demo", "usage under")
+            Track.muted = true
         default:
             break
         }
@@ -207,6 +228,8 @@ enum DemoSeed {
             state.introTourDone = false
             state.handoff = true
         }
+        /* -plan year|month|free: the paywall with that row selected */
+        if let p = arg("-plan") { state.plan = p }
         /* -goalhours <h>: the daily goal moved (You's goal stepper) */
         if let g = arg("-goalhours"), let h = Double(g) { state.time.goal = h }
         /* -calendaron [-calsources Notes,Reminders]: the demo calendar connected */

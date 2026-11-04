@@ -187,7 +187,8 @@ extension AppState {
     /// Rilo knocking only makes sense while the shield is up
     var showBanner: Bool { banner && screen == .shield }
     var showTour: Bool { !introTourDone && !handoff && Screen.tourScreens.contains(screen) }
-    var showDemoPanel: Bool { screen != .appopen }
+    /// the web renders Results on its own, with no demo panel
+    var showDemoPanel: Bool { screen != .appopen && screen != .results }
     /// paywall vs upgrade: where "next" goes
     var paywallNext: Screen { screen == .paywall ? .home : (cameFrom ?? .home) }
 }
