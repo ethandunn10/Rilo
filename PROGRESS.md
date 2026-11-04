@@ -141,3 +141,66 @@ Not checked / needs you:
 - **Bugs fixed:** tapping "close app" (or "nice" on the day summary) very fast could leave you stuck on a screen with nothing to tap. A possible crash dividing by zero in the breakdown is fixed too.
 - **Automatic checks:** `-flowcheck` (new) walks every flow: onboarding with back from every step, the tour, opening apps (quick/full/leave early/run out/pass/borrow/strict), plan, check-in, talk, levels, settings, paywall, start over, relaunch, new day. `-selfcheck` and `-settingscheck` too.
 - Screenshots: `screenshots/phase-9/` (JPEG to keep the repo small): `se-*`, `promax-*`, `xxxl-*`, `axm-*`, `axl-*`, plus `before/`.
+
+## Phase 10: Launch prep ✅
+- `Rilo/Rilo/PrivacyInfo.xcprivacy`: privacy manifest. No tracking, no data collected; UserDefaults is the only "required reason" API (saving the app's own state).
+- `APP_STORE.md`: name "Rilo: Screen Time Buddy", subtitle, description, keywords, a line for parents, category, age-rating answers (pick 13+), the "Data Not Collected" privacy label, and a draft privacy policy (everything stays on the phone; the mic is only on while you hold the talk button).
+- `screenshots/app-store/6.9-inch/`: 9 App Store screenshots at 1320×2868 (the one size Apple requires; it scales them for smaller iPhones). The order is in its README.
+- `TESTFLIGHT_NOTES.md`: "What to Test" for testers, plus your checklist before each build.
+
+---
+
+# 🌙 Where things stand (end of the overnight run)
+
+**Reached: all 10 phases done.** Branch `ios-port`, 18 commits, **nothing pushed**, nothing in `app/` changed.
+
+## How to run it
+1. Open `Rilo/Rilo.xcodeproj` in Xcode.
+2. At the top, pick the **Rilo** scheme and the **iPhone 17** simulator (or your iPhone; see below).
+3. Press **Run** (▶). It opens on Welcome; go through onboarding like a new user.
+- Close and reopen it: it comes back where you were. To start fresh, use "start over" at the bottom of the You tab.
+- The "demo" button (bottom left) is the tester remote, the same as the web demo.
+- Shortcuts for checking one screen: Product ▸ Scheme ▸ Edit Scheme ▸ Run ▸ Arguments ▸ add e.g. `-screen home` (any screen name; all the options are listed at the top of `Rilo/Rilo/Models/DemoSeed.swift`).
+- Automatic checks (debug builds): `-flowcheck` (134 flow steps), `-screen you -settingscheck` (30), `-selfcheck`. All pass.
+
+## What's done
+- **The one-to-one port (phases 1–6):** every web screen, with the same art, moods, skins, themes, fonts, copy, rules and flow. There are side-by-side iOS/web screenshots for every screen in `screenshots/phase-1..6/`.
+- **A real app (phase 7):** everything saves, local notifications, real on-device voice for Talk (hold to talk), haptics, a launch screen, and a StoreKit 2 paywall with a local test file. The tester switch is ON (everything unlocked).
+- **Screen Time, ready to switch on (phase 8):** one ScreenTimeService. The demo version runs now; the real Family Controls code, the 3 extensions and the widget are written and switched off.
+- **Polish (phase 9):** fixes for SE and Pro Max, bigger-text support, VoiceOver labels, no dead buttons, flow bugs fixed.
+- **Launch prep (phase 10):** the privacy manifest, the App Store listing + privacy policy, App Store screenshots, TestFlight notes.
+
+## What needs the $99 account
+Everything is listed step by step in **`SETUP_AFTER_PAID_ACCOUNT.md`**:
+- **Real app blocking** (the Family Controls permission from Apple, plus the 3 extensions)
+- **The home-screen widget** (needs an App Group)
+- **Selling Rilo Pro** (the subscriptions in App Store Connect, the Paid Apps agreement)
+- **TestFlight** and the App Store
+
+## What's left / not checked
+- **Real blocking** hasn't run on a phone yet (it can't without the paid account). The code typechecks against the real iOS SDK, but expect some fixing on the first real test.
+- **Voice** and **purchases** couldn't be tried here: voice needs a real iPhone, and purchases need a run from Xcode. The steps are below.
+- The **StoreKit test file** link in the scheme couldn't be verified from the command line. Check it once: Product ▸ Scheme ▸ Edit Scheme ▸ Run ▸ Options ▸ StoreKit Configuration should say `Rilo.storekit` (pick it if it's blank).
+- The notification banner itself wasn't screenshotted (the tools can't tap iOS's "Allow").
+- Before the real release: set `TESTERS_UNLOCK_ALL = false` and `SHOW_DEMO_PANEL_SETTING = false` in `Rilo/Rilo/Models/FeatureFlags.swift`.
+
+## 📱 First 3 things to test on your phone tomorrow
+(Plug in your iPhone, pick it at the top of Xcode, press Run. The free account works; if your phone asks, turn on Settings ▸ Privacy & Security ▸ Developer Mode, and trust your developer profile in Settings ▸ General ▸ VPN & Device Management.)
+1. **Onboarding + saving:** go through setup start to finish (try a few back buttons), let the tour run, then swipe the app away and reopen it. Everything should still be there, and you land on home.
+2. **Talk to Rilo with your voice:** tap Rilo (or "chat") on home, press the mic once to allow the mic + speech, then **hold** the mic, say "i like soccer", and let go. Your words should appear while you talk, and Rilo answers. Then try the nightly check-in (Plan tab) by holding Rilo.
+3. **Notifications + the blocked-app flow:**
+   - Allow notifications when asked (right after Screen Time in setup), then set the nightly check-in time in the You tab to 2 minutes from now and lock the phone. Rilo's reminder should show, and tapping it opens the check-in.
+   - Then use the "demo" button ▸ open a blocked app, and try a quick (½) and a full open.
+   - Bonus, in Xcode: open the paywall and buy the test subscription (it's fake money from the local StoreKit file).
+
+## Questions for you (none of these block anything)
+1. **App icon:** the web had none, so I made one (the original Rilo, with arms and the RILO headband, on the grass sky). Is it OK? It's the first thing to look at: `Rilo/Rilo/Assets.xcassets/AppIcon.appiconset/AppIcon.png`.
+2. **Free plan apps:** the paywall says "free watches 5", but AGENTS.md says Free is 2 apps. Which is right? (I kept 5, as on the web.)
+3. **The `needit` screen** ("i need it for something") is ported, but nothing opens it, the same as the web. Wire it up somewhere, or remove it?
+4. **The tour's "do you post?"** gives Pro for free (web demo behavior). With real purchases, that free Pro disappears on the next launch. Should it only turn Creator Mode on?
+5. **Share card:** on the web its background is see-through because of a CSS bug. iOS copies that. Should it be solid?
+6. **Rilo's reply quirk (web too):** "i want to read more" → "added reading and read more." (it counts as both a hobby and a goal). Fix the wording in both?
+7. **Reminder times** for Rilo's first-week questions: I picked 8:00 (the school one) and 16:00 (the rest). OK?
+8. **Web bug found:** on "your number", the back/skip buttons on the first two beats are hidden behind the sky on the web (they're missing `position: relative`). iOS shows them. Worth fixing on the web.
+9. **Privacy policy:** it needs a support email and somewhere to host it (`APP_STORE.md`, bottom).
+10. The nested git folder that came with the new Xcode project was moved to `/Users/ethandunn/Projects/rilo-xcode-initial-git-backup` (it would have hidden the iOS files from this repo). You can delete it if you don't need it.
