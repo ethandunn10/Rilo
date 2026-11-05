@@ -3,8 +3,10 @@ import Foundation
 import Speech
 
 /// Real speech-to-text for Talk and the night check-in: Apple's Speech
-/// framework, on the phone (`requiresOnDeviceRecognition` whenever the
-/// phone supports it), US English. Only Rilo's replies stay scripted.
+/// framework, ALWAYS on the phone (`requiresOnDeviceRecognition`), US
+/// English. A phone that can't recognise speech on-device gets no mic at all
+/// (typing only), never Apple's server recogniser: the privacy policy at
+/// rilo.one/privacy promises speech is turned into text on the iPhone.
 ///
 /// Privacy, as the permission text promises: the mic is on ONLY while the
 /// talk button is held. `start` opens it, `stop` (the finger lifting)
@@ -35,7 +37,8 @@ final class AppleSpeechInput: SpeechInput {
     init?() {
         guard let r = SFSpeechRecognizer(locale: Locale(identifier: "en-US")) else { return nil }
         recognizer = r
-        isAvailable = r.isAvailable && !Self.refused
+        /* on-device only: no on-device recogniser → no mic, typing instead */
+        isAvailable = r.isAvailable && r.supportsOnDeviceRecognition && !Self.refused
     }
 
     /// either permission already said no (or is blocked by Screen Time /
@@ -106,7 +109,9 @@ final class AppleSpeechInput: SpeechInput {
         let req = SFSpeechAudioBufferRecognitionRequest()
         req.shouldReportPartialResults = true
         req.taskHint = .dictation
-        if recognizer.supportsOnDeviceRecognition { req.requiresOnDeviceRecognition = true }
+        /* never Apple's servers (the privacy policy promises on-phone) */
+        guard recognizer.supportsOnDeviceRecognition else { throw CocoaError(.featureUnsupported) }
+        req.requiresOnDeviceRecognition = true
 
         let input = engine.inputNode
         let format = input.outputFormat(forBus: 0)
