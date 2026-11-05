@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// You.jsx, the end of the list: "your limits" (strict mode, the limits
-/// card, the daily goal), "account" (replay the tour, the plan, start over)
+/// card, the daily goal), "account" (replay the tour, the plan + restore
+/// purchases, start over, delete account)
 /// and the demo buttons.
 extension YouView {
     @ViewBuilder var limitsPart: some View {
@@ -14,6 +15,7 @@ extension YouView {
         replayCard
         planCard
         startOverButton
+        deleteAccountButton
 
         YouSection(title: "demo")
         /* prototype only — lets a tester see level-ups without waiting weeks */
@@ -174,9 +176,65 @@ extension YouView {
                     .overlay(Capsule().strokeBorder(RC.line, lineWidth: 2))
             }
             .buttonStyle(.tap)
+            /* Apple's rule: restore in Settings too, not only on the paywall */
+            Button(action: restorePurchases) {
+                Text(restoring ? "checking\u{2026}" : "restore purchases")
+                    .font(.inter(13, 600))
+                    .underline()
+                    .foregroundStyle(RC.ink2)
+                    .padding(.vertical, 4)
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plainTap)
+            .disabled(restoring)
+            if let restoreNote {
+                Text(restoreNote)
+                    .font(.inter(12.5, 600))
+                    .foregroundStyle(RC.ink2)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
         }
         .youCard(0.32)
         .tourTarget("you-plan", radius: 26)
+    }
+
+    /// same answers as the paywall's restore, but stays on this screen
+    private func restorePurchases() {
+        restoring = true
+        restoreNote = nil
+        Task {
+            let result = await Purchases.shared.restore()
+            restoring = false
+            switch result {
+            case .success:
+                await ProStore.shared.refresh()
+                track("settings", "restored")
+                state.applyEntitlement(true)
+                restoreNote = "found it. rilo pro is back on."
+            case .cancelled:
+                break
+            case .failed(StoreKitPurchaseService.NOTHING_TO_RESTORE), .pending:
+                restoreNote = "i couldn't find rilo pro on this apple account."
+            case .failed:
+                restoreNote = "the app store isn't answering right now. try again in a bit."
+            }
+        }
+    }
+
+    /// Settings ▸ delete account: asks first, then AppState.deleteAccount()
+    private var deleteAccountButton: some View {
+        Button { confirmDelete = true } label: {
+            Text("delete account")
+                .font(.fredoka(18, 600))
+                .foregroundStyle(RC.ink)
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .background(Capsule().fill(Color.white.opacity(0.5)))
+                .overlay(Capsule().strokeBorder(RC.ink, lineWidth: 2))
+        }
+        .buttonStyle(.tap)
+        .rise(0.38, distance: 14, duration: 0.4)
     }
 
     /// start over, for the next tester

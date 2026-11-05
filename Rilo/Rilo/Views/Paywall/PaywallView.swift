@@ -112,7 +112,39 @@ struct PaywallView: View {
             }
             .buttonStyle(.plainTap)
             .disabled(buying)
+
+            /* Apple's rules for subscriptions: the price, the length, that it
+               auto-renews and how to cancel, plus Terms + Privacy links */
+            if !free {
+                Text("\(trial ? "7 days free, then " : "")\(billing). rilo pro renews automatically unless you cancel at least 24 hours before the period ends. cancel any time in iPhone Settings \u{2192} your name \u{2192} Subscriptions.")
+                    .font(.inter(11.5, 600))
+                    .foregroundStyle(.white)
+                    .opacity(0.8)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
+            }
+            HStack(spacing: 6) {
+                Link("terms of use", destination: Self.TERMS)
+                Text("\u{00B7}").accessibilityHidden(true)
+                Link("privacy policy", destination: Self.PRIVACY)
+            }
+            .font(.inter(12, 600))
+            .underline()
+            .foregroundStyle(.white)
+            .opacity(0.7)
+            .frame(maxWidth: .infinity)
         }
+    }
+
+    static let TERMS = URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!
+    static let PRIVACY = URL(string: "https://rilo.one/privacy")!
+
+    /// the selected plan's price and period, the store's own price once loaded
+    private var billing: String {
+        plan == "month"
+            ? "\(store.prices?.month ?? "$4.99") a month"
+            : "\(store.prices?.year ?? "$39.99") a year"
     }
 
     /// redpanda, gold and pinkpanda, all coaching

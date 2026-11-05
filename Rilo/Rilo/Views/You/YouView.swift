@@ -24,6 +24,10 @@ struct YouView: View {
     @State var appSheet = DemoSeed.flag("-appsheet")
     @State var refused = ""
     @State var confirmStartOver = false
+    @State var confirmDelete = false
+    /// restore purchases in the account section: busy, and Rilo's answer
+    @State var restoring = false
+    @State var restoreNote: String?
     /// You ▸ what rilo knows (MemoryView)
     @State var showMemory = DemoSeed.flag("-memory")
 
@@ -101,6 +105,12 @@ struct YouView: View {
                isPresented: $confirmStartOver) {
             Button("Cancel", role: .cancel) {}
             Button("OK") { state.startOver() }
+        }
+        .alert("Delete your account?", isPresented: $confirmDelete) {
+            Button("Cancel", role: .cancel) {}
+            Button("Delete", role: .destructive) { state.deleteAccount() }
+        } message: {
+            Text("This erases everything Rilo has saved on this phone: your name, apps, limits, progress, check-ins and what he remembers. It can\u{2019}t be undone.\n\nA Rilo Pro subscription is billed by Apple and keeps going until you cancel it in iPhone Settings \u{2192} your name \u{2192} Subscriptions.")
         }
     }
 }

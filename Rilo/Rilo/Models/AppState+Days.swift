@@ -180,6 +180,22 @@ extension AppState {
         if row.slot == "checkin" { go(.nightcheckin) } else { go(.plan) }
     }
 
+    // MARK: delete account
+
+    /// You ▸ account ▸ delete account (App Store rule 5.1.1(v)). Rilo has no
+    /// server account: everything lives on this phone, in UserDefaults. So
+    /// this wipes the app's whole UserDefaults (saved state, what he
+    /// remembers, check-ins, the tester counts, the mic flag, any key added
+    /// later), then startOver() resets what's in memory, cancels his
+    /// reminders and goes back to Welcome. An Apple subscription isn't
+    /// touched: Apple bills it, so only the user can cancel it.
+    func deleteAccount() {
+        if let id = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: id)
+        }
+        startOver()
+    }
+
     // MARK: start over
 
     /// Everything back to a brand-new account: every saved field, the
