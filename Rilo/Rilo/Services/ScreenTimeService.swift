@@ -169,19 +169,20 @@ final class DemoScreenTimeService: ScreenTimeService {
 // MARK: - THE switch
 
 enum ScreenTime {
-    /// Demo → real: define RILO_FAMILY_CONTROLS (Build Settings ▸ Swift
-    /// Compiler ▸ Active Compilation Conditions) and add the files in
-    /// Rilo/ScreenTimeReal/ to their targets. See that folder's README.md.
+    /// Demo → real: `FeatureFlags.REAL_SCREEN_TIME`, one line. The real code
+    /// (Rilo/Rilo/ScreenTimeReal/) is always compiled, so it can't rot while
+    /// it's off. See SETUP_AFTER_PAID_ACCOUNT.md for the one-time setup.
     @MainActor
     static func make() -> any ScreenTimeService {
         #if DEBUG
         /* the screenshot seeds and checks always run on the demo */
         if DemoSeed.screenArg != nil || DemoSeed.flag("-selfcheck") || DemoSeed.flag("-flowcheck") { return DemoScreenTimeService() }
         #endif
-        #if RILO_FAMILY_CONTROLS
-        return FamilyControlsScreenTimeService()
-        #else
-        return DemoScreenTimeService()
-        #endif
+        return FeatureFlags.REAL_SCREEN_TIME ? FamilyControlsScreenTimeService() : DemoScreenTimeService()
     }
+
+    /// true when Rilo is really blocking (the switch is on and it's not a
+    /// DEBUG seed / check). Screens that differ between the two read this.
+    @MainActor
+    static func isReal(_ service: any ScreenTimeService) -> Bool { service.usesSystemPicker }
 }

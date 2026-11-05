@@ -1,4 +1,3 @@
-#if RILO_FAMILY_CONTROLS
 import Foundation
 import ManagedSettings
 import UserNotifications
@@ -64,4 +63,3 @@ nonisolated final class ShieldActionExtension: ShieldActionDelegate {
         UNUserNotificationCenter.current().add(request) { _ in done() }
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if RILO_FAMILY_CONTROLS
 import Foundation
 import FamilyControls
 import ManagedSettings
@@ -197,4 +196,3 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
         WidgetCenter.shared.reloadAllTimelines()
     }
 }
-#endif

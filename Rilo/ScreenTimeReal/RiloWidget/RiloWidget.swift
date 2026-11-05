@@ -1,4 +1,3 @@
-#if RILO_FAMILY_CONTROLS
 import WidgetKit
 import SwiftUI
 
@@ -123,4 +122,3 @@ struct RiloWidget: Widget {
 struct RiloWidgetBundle: WidgetBundle {
     var body: some Widget { RiloWidget() }
 }
-#endif

@@ -25,11 +25,17 @@ struct PickAppsView: View {
                     VStack(spacing: 14) {
                         header.rise(0, duration: 0.5)
 
-                        AppPicker(apps: $s.apps, sheet: $sheet, refused: $refused)
-                            .padding(.vertical, 4 + 2)   // + the 2px css border
-                            .padding(.horizontal, 16 + 2)
-                            .sticker(fill: RC.card, radius: 26, drop: 4)
-                            .rise(0.1, duration: 0.5)
+                        /* real Screen Time (FeatureFlags.REAL_SCREEN_TIME): Apple's picker */
+                        if ScreenTime.isReal(state.screenTimeService) {
+                            AppPickerView()
+                                .rise(0.1, duration: 0.5)
+                        } else {
+                            AppPicker(apps: $s.apps, sheet: $sheet, refused: $refused)
+                                .padding(.vertical, 4 + 2)   // + the 2px css border
+                                .padding(.horizontal, 16 + 2)
+                                .sticker(fill: RC.card, radius: 26, drop: 4)
+                                .rise(0.1, duration: 0.5)
+                        }
 
                         AppPicker.refusedNote(refused)
 

@@ -1,4 +1,3 @@
-#if RILO_FAMILY_CONTROLS
 import SwiftUI
 import FamilyControls
 import ManagedSettings
@@ -85,4 +84,3 @@ struct RiloAppLabel: View {
         }
     }
 }
-#endif

@@ -1,4 +1,3 @@
-#if RILO_FAMILY_CONTROLS
 import Foundation
 
 /// The App Group every Rilo process shares: the app, the three Screen Time
@@ -11,4 +10,3 @@ nonisolated enum AppGroup {
     /// missing, so nothing crashes; it just won't be shared)
     static var defaults: UserDefaults { UserDefaults(suiteName: id) ?? .standard }
 }
-#endif

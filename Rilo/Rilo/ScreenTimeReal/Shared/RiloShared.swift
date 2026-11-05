@@ -1,4 +1,3 @@
-#if RILO_FAMILY_CONTROLS
 import Foundation
 
 /// What the app, the Screen Time extensions and the widget share through the
@@ -166,4 +165,3 @@ nonisolated enum RiloShared {
         set { write(WIDGET, newValue) }
     }
 }
-#endif

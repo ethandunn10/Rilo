@@ -1,4 +1,3 @@
-#if RILO_FAMILY_CONTROLS
 import UIKit
 import ManagedSettings
 import ManagedSettingsUI
@@ -100,4 +99,3 @@ nonisolated final class ShieldConfigurationExtension: ShieldConfigurationDataSou
         return "\(h12):\(String(format: "%02d", t % 60))\(h >= 12 ? "pm" : "am")"
     }
 }
-#endif

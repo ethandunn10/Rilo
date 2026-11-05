@@ -69,9 +69,14 @@ extension YouView {
         return VStack(alignment: .leading, spacing: 10) {
             Text("apps rilo watches").font(.fredoka(19, 600))
                 .accessibilityAddTraits(.isHeader)
-            AppPicker(apps: $s.apps, sheet: $appSheet, refused: $refused,
-                      maxApps: state.hasPro ? .max : Plan.FREE_MAX_APPS,
-                      onMaxed: { state.go(.upgrade) })
+            /* real Screen Time (FeatureFlags.REAL_SCREEN_TIME): Apple's picker */
+            if ScreenTime.isReal(state.screenTimeService) {
+                AppPickerView(maxApps: state.hasPro ? .max : Plan.FREE_MAX_APPS)
+            } else {
+                AppPicker(apps: $s.apps, sheet: $appSheet, refused: $refused,
+                          maxApps: state.hasPro ? .max : Plan.FREE_MAX_APPS,
+                          onMaxed: { state.go(.upgrade) })
+            }
             AppPicker.refusedNote(refused)
             if !state.hasPro {
                 Text("free blocks \(Plan.FREE_MAX_APPS) apps. pro blocks as many as you like.")

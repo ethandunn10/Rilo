@@ -1,4 +1,3 @@
-#if RILO_FAMILY_CONTROLS
 import Foundation
 import DeviceActivity
 import ManagedSettings
@@ -69,4 +68,3 @@ nonisolated final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         RiloTokens.applyShields(rules: RiloShared.rules, session: RiloShared.session, store: store)
     }
 }
-#endif

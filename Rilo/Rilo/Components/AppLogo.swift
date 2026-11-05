@@ -9,10 +9,26 @@ struct AppLogo: View {
     var radius: CGFloat = 12
 
     var body: some View {
+        /* real Screen Time: a picked app's key ("app-…" / "cat-…") only iOS
+           can draw, so show Apple's own icon for it */
+        /* (only while the switch is on, so a typed demo app like "app-store"
+           is never mistaken for one) */
+        if FeatureFlags.REAL_SCREEN_TIME && RiloTokens.looksLikeTokenKey(label) {
+            RiloAppLabel(key: label)
+                .labelStyle(.iconOnly)
+                .frame(width: size, height: size)
+                .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+                .accessibilityHidden(true)
+        } else {
+            demoLogo
+        }
+    }
+
+    private var demoLogo: some View {
         let info = Apps.appInfo(label)
         let color = Color(hex: Apps.glyphColor(info.hex))
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        ZStack {
+        return ZStack {
             if let logo = info.logo {
                 let s = (size * 0.55).rounded()
                 SVGPath(logo.path)

@@ -1,42 +1,55 @@
-# ScreenTimeReal: real app blocking, ready to switch on
+# Real app blocking (Family Controls)
 
-Everything in this folder is written but **not compiled**. It sits outside the
-synced `Rilo/Rilo/` folder, so Xcode ignores it, and every file is also wrapped in
-`#if RILO_FAMILY_CONTROLS`. Real blocking needs Apple's Family Controls
-entitlement and an App Group, and both need the paid Apple Developer account.
+The real Screen Time code is split in two:
 
-Until then the app uses `DemoScreenTimeService`, which behaves exactly like the web demo.
+- **The app's half is built into the app every time**, in `Rilo/Rilo/ScreenTimeReal/`
+  (`FamilyControlsScreenTimeService`, `AppPickerView` + `RiloAppLabel`, and
+  `Shared/`). So it's always compiled and can't silently break while it's off.
+- **The extensions' half is here**, waiting for their targets
+  (`Extensions/…` and `RiloWidget/`). They need the paid account, so they get
+  added in Xcode (SETUP_AFTER_PAID_ACCOUNT.md, Part 2).
+
+No file needs a compiler flag any more.
 
 ## The one switch
 
-`Rilo/Rilo/Services/ScreenTimeService.swift`, in `ScreenTime.make()`:
+`Rilo/Rilo/Models/FeatureFlags.swift`:
 
 ```swift
-#if RILO_FAMILY_CONTROLS
-return FamilyControlsScreenTimeService()
-#else
-return DemoScreenTimeService()
-#endif
+static let REAL_SCREEN_TIME = false   // true = real blocking
 ```
 
-Defining `RILO_FAMILY_CONTROLS` (Build Settings ▸ Swift Compiler ▸ Active
-Compilation Conditions) flips it. DEBUG `-screen …` seeds and `-selfcheck` always
-use the demo, so screenshots and checks keep working.
+`ScreenTime.make()` (`Rilo/Rilo/Services/ScreenTimeService.swift`) reads it. When
+it's true:
+- the service is `FamilyControlsScreenTimeService` (real shields, real timers)
+- onboarding and the You tab show Apple's picker (`AppPickerView`) instead of
+  Rilo's own list (they check `ScreenTime.isReal`)
+- `AppLogo` draws Apple's real icon for a picked app's key (`app-…` / `cat-…`)
+
+DEBUG `-screen …` seeds and the `-selfcheck` / `-flowcheck` checks always use the
+demo service, so screenshots and checks keep working either way.
 
 ## Files and their targets
 
 | File | Target(s) |
 |---|---|
-| `FamilyControlsScreenTimeService.swift` | Rilo (app) |
-| `AppPickerView.swift` (`AppPickerView`, `RiloAppLabel`) | Rilo (app) |
-| `Shared/AppGroup.swift` | Rilo, RiloShieldConfiguration, RiloShieldAction, RiloActivityMonitor, RiloWidget |
-| `Shared/RiloShared.swift` | Rilo, RiloShieldConfiguration, RiloShieldAction, RiloActivityMonitor, RiloWidget |
-| `Shared/RiloTokens.swift` | Rilo, RiloShieldConfiguration, RiloShieldAction, RiloActivityMonitor (**not** the widget) |
-| `Extensions/ShieldConfiguration/ShieldConfigurationExtension.swift` | RiloShieldConfiguration (Shield Configuration Extension) |
-| `Extensions/ShieldAction/ShieldActionExtension.swift` | RiloShieldAction (Shield Action Extension) |
-| `Extensions/DeviceActivityMonitor/DeviceActivityMonitorExtension.swift` | RiloActivityMonitor (Device Activity Monitor Extension) |
-| `RiloWidget/RiloWidget.swift` | RiloWidget (Widget Extension) |
-| `Rilo/Rilo/Assets.xcassets` (existing) | add RiloShieldConfiguration + RiloWidget to its target membership (Rilo images `rilo-<skin>-<mood>`) |
+| `Rilo/Rilo/ScreenTimeReal/FamilyControlsScreenTimeService.swift` | Rilo (automatic) |
+| `Rilo/Rilo/ScreenTimeReal/AppPickerView.swift` | Rilo (automatic) |
+| `Rilo/Rilo/ScreenTimeReal/Shared/AppGroup.swift` | Rilo (automatic) + RiloShieldConfiguration, RiloShieldAction, RiloActivityMonitor, RiloWidget |
+| `Rilo/Rilo/ScreenTimeReal/Shared/RiloShared.swift` | Rilo (automatic) + RiloShieldConfiguration, RiloShieldAction, RiloActivityMonitor, RiloWidget |
+| `Rilo/Rilo/ScreenTimeReal/Shared/RiloTokens.swift` | Rilo (automatic) + RiloShieldConfiguration, RiloShieldAction, RiloActivityMonitor (**not** the widget) |
+| `Extensions/ShieldConfiguration/ShieldConfigurationExtension.swift` | RiloShieldConfiguration |
+| `Extensions/ShieldAction/ShieldActionExtension.swift` | RiloShieldAction |
+| `Extensions/DeviceActivityMonitor/DeviceActivityMonitorExtension.swift` | RiloActivityMonitor |
+| `RiloWidget/RiloWidget.swift` | RiloWidget |
+| `Rilo/Rilo/Assets.xcassets` (existing) | also RiloShieldConfiguration + RiloWidget (Rilo images `rilo-<skin>-<mood>`) |
+
+The shared files must not use anything that only exists in the app (like
+`FeatureFlags`), or the extensions won't build.
+
+Checked on Nov 5, 2026 (Xcode 27.2): the app builds in Debug and Release with the
+real code in it, and each extension's file type-checks against the iOS SDK with
+its shared files.
 
 ## How the demo flow maps onto the phone
 
@@ -53,10 +66,10 @@ Blocked, Limited and Free apps are all shielded until Rilo asks "what for?" (sam
 as the demo's `openApp`). Always-allowed apps never are. To leave Free apps
 unshielded, change `ScreenTimeRules.shields(_:)`.
 
-## Known limits of the real APIs (written into the code)
+## Known limits of the real APIs
 - Apple never tells the app which app a token is. Each pick gets a stable key
-  ("app-1a2b3c4d") and the UI must show `RiloAppLabel(key:)` (`Label(token)`)
-  wherever it shows an app's name or logo today.
+  ("app-1a2b3c4d"). Icons are handled (`AppLogo`), but text that writes an app's
+  name in a sentence will show the key until those spots use `RiloAppLabel`.
 - DeviceActivity windows must be at least 15 minutes long, so the "reopen within
   2 minutes carries on" window is really up to 15 minutes for short opens.
 - If they leave the app early, the monitor only knows whether they passed half

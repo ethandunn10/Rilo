@@ -1,4 +1,3 @@
-#if RILO_FAMILY_CONTROLS
 import Foundation
 import CryptoKit
 import FamilyControls
@@ -38,6 +37,14 @@ nonisolated enum RiloTokens {
         let data = (try? JSONEncoder().encode(token)) ?? Data()
         let hex = SHA256.hash(data: data).prefix(4).map { String(format: "%02x", $0) }.joined()
         return "\(prefix)-\(hex)"
+    }
+
+    /// true for a key made by `key(for:)`: "app-" or "cat-" + 8 lowercase hex
+    static func looksLikeTokenKey(_ s: String) -> Bool {
+        guard s.count == 12 else { return false }
+        let parts = s.split(separator: "-", maxSplits: 1)
+        return parts.count == 2 && (parts[0] == "app" || parts[0] == "cat")
+            && parts[1].allSatisfy { $0.isHexDigit && !$0.isUppercase }
     }
 
     static func key(for token: ApplicationToken) -> String { hashKey("app", token) }
@@ -107,4 +114,3 @@ extension DeviceActivityEvent.Name {
     /// all of the session's minutes used: shield again
     nonisolated static var riloTimeUp: Self { Self("rilo.timeup") }
 }
-#endif
