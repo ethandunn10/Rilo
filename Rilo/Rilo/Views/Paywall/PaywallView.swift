@@ -164,9 +164,9 @@ struct PaywallView: View {
 
     /// free: straight on. trial: the purchase service says yes first (the
     /// demo one always does), then AppState makes them Pro and moves on.
-    /// No products / an error: in the tester build (TESTERS_UNLOCK_ALL) they
-    /// go straight in, like the web demo; otherwise Rilo says so in the
-    /// small line and nothing is unlocked.
+    /// No products / an error: in a DEBUG tester build (TESTERS_UNLOCK_ALL)
+    /// they go straight in, like the web demo; otherwise (and always in
+    /// Release) Rilo says so in the small line and nothing is unlocked.
     private func choose() {
         if free {
             state.paywallDone("continue with free")
@@ -186,13 +186,14 @@ struct PaywallView: View {
                 break
             case .pending:
                 note = "waiting on a yes. pro turns on as soon as it goes through."
+            #if DEBUG
             case .failed where FeatureFlags.TESTERS_UNLOCK_ALL:
-                /* tester build: Rilo Pro isn't on sale yet (no paid account /
-                   App Store Connect), so the trial button just lets them in,
-                   like the web demo. Turning the tester switch off brings the
-                   real "store isn't answering" line back. */
+                /* DEBUG tester build only: Rilo Pro may not be on sale yet
+                   (no App Store Connect products), so the trial button just
+                   lets them in, like the web demo. Release builds never do. */
                 track("paywall", "tester trial")
                 state.paywallDone("start free trial")
+            #endif
             case .failed:
                 track("paywall", "store error")
                 note = "the app store isn't answering right now. try again in a bit."

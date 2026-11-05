@@ -77,7 +77,7 @@ Couldn't match exactly:
 Couldn't match exactly:
 - Results' "back to the app" goes to Welcome (on the web, reloading starts there).
 
-**Question for you:** the paywall (web and iOS) says "free watches 5" apps, but AGENTS.md says Free is 2 apps. Which is right? I kept the web's 5.
+**Answered:** free watches **3** apps (`FREE_MAX_APPS = 3`), on the web, iOS, the paywall and AGENTS.md.
 
 ## Phase 7: Make it a real app ✅
 - **Saving:** everything is saved on the phone (UserDefaults JSON) and comes back after closing the app. Mid-onboarding it reopens on the same step with your answers. After onboarding it reopens on home. On a new day it runs the day roll-over (history, streak, XP) and shows the day summary. It saves when the app goes to the background. A broken save starts fresh instead of crashing. "Start over" wipes it all. (`Models/Storage.swift`, `AppState+Saving.swift`)
@@ -90,7 +90,7 @@ Couldn't match exactly:
 - **Haptics:** a light tap on every button, a soft one when you tap Rilo, success on level up / Pro / goal hit, warning on the shield / out of opens. The pop-in and screen-change animations were retimed to match the web (0.3s).
 - **App icon + launch screen:** the Rilo icon from phase 1 (the web has none; Xcode makes every size from the 1024 image). The launch screen is the original Rilo on the grass-sky blue. The iPhone app is portrait only.
 - **Paywall with real StoreKit 2:** `Models/PurchaseService.swift` (`StoreKitPurchaseService`): products `com.ethandunn.rilo.pro.monthly` ($4.99/mo) and `com.ethandunn.rilo.pro.yearly` ($39.99/yr), both with a 7-day free trial. Real prices show when the store answers. There's a small "restore purchases" link (Apple requires one). Pro turns on when bought and off when it ends. Local test file: `Rilo/Config/Rilo.storekit`, wired into the shared Rilo scheme.
-- **Tester switch:** `Models/FeatureFlags.swift` → `TESTERS_UNLOCK_ALL = true` unlocks every Pro feature, skin and theme. **Set it to false before the real release.** (DEBUG `-gated` turns the locks back on for one launch.)
+- **Tester switch:** `Models/FeatureFlags.swift` → `TESTERS_UNLOCK_ALL = true` unlocks every Pro feature, skin and theme, **in Debug builds only** (Nov 5: Release / TestFlight / App Store builds always have real gating and no demo panel or demo buttons). (DEBUG `-gated` turns the locks back on for one launch.)
 - Screenshots: `screenshots/phase-7/`.
 
 Not checked / needs you:
@@ -101,7 +101,7 @@ Not checked / needs you:
 
 ## Phase 8: Screen Time blocking, ready to switch on ✅
 - All blocking goes through one `ScreenTimeService` (`Rilo/Rilo/Services/ScreenTimeService.swift`). The app uses `DemoScreenTimeService` now, so everything works exactly as before (checked with -selfcheck, -settingscheck and before/after pixel diffs in `screenshots/phase-8/`).
-- The real version is written and switched off, in `Rilo/ScreenTimeReal/` (outside the build). It covers:
+- The real version is written and switched off by one line, `FeatureFlags.REAL_SCREEN_TIME` (Nov 5: the app half is now built into the app every time, in `Rilo/Rilo/ScreenTimeReal/`; the extensions wait in `Rilo/ScreenTimeReal/`). It covers:
   - Family Controls permission
   - Apple's app picker
   - ManagedSettings shields
@@ -182,7 +182,7 @@ Everything is listed step by step in **`SETUP_AFTER_PAID_ACCOUNT.md`**:
 - **Voice** and **purchases** couldn't be tried here: voice needs a real iPhone, and purchases need a run from Xcode. The steps are below.
 - The **StoreKit test file** link in the scheme couldn't be verified from the command line. Check it once: Product ▸ Scheme ▸ Edit Scheme ▸ Run ▸ Options ▸ StoreKit Configuration should say `Rilo.storekit` (pick it if it's blank).
 - The notification banner itself wasn't screenshotted (the tools can't tap iOS's "Allow").
-- Before the real release: set `TESTERS_UNLOCK_ALL = false` and `SHOW_DEMO_PANEL_SETTING = false` in `Rilo/Rilo/Models/FeatureFlags.swift`.
+- Before the real release: nothing to flip (Nov 5). The tester unlock and demo panel only exist in Debug builds.
 
 ## Before launch: accounts + Supabase (decided Nov 4, not started)
 Right now each person's Rilo lives only on their own phone (no account, no server). Before the App Store launch, add Supabase for:
@@ -203,7 +203,7 @@ When that happens, update the privacy policy in APP_STORE.md, the App Store priv
 
 ## Questions for you (none of these block anything)
 1. **App icon:** the web had none, so I made one (the original Rilo, with arms and the RILO headband, on the grass sky). Is it OK? It's the first thing to look at: `Rilo/Rilo/Assets.xcassets/AppIcon.appiconset/AppIcon.png`.
-2. **Free plan apps:** the paywall says "free watches 5", but AGENTS.md says Free is 2 apps. Which is right? (I kept 5, as on the web.)
+2. **Free plan apps:** answered: 3 apps everywhere (web, iOS, paywall, AGENTS.md).
 3. **The `needit` screen** ("i need it for something") is ported, but nothing opens it, the same as the web. Wire it up somewhere, or remove it?
 4. **The tour's "do you post?"** gives Pro for free (web demo behavior). With real purchases, that free Pro disappears on the next launch. Should it only turn Creator Mode on?
 5. **Share card:** on the web its background is see-through because of a CSS bug. iOS copies that. Should it be solid?

@@ -17,13 +17,16 @@ extension YouView {
         startOverButton
         deleteAccountButton
 
+        #if DEBUG
+        /* DEBUG only (not in TestFlight / App Store builds): lets a tester
+           see level-ups without waiting weeks */
         YouSection(title: "demo")
-        /* prototype only — lets a tester see level-ups without waiting weeks */
         YouDemoButton(title: "demo: +500 xp") { state.demoXp(500) }
         YouDemoButton(title: "demo: +5,000 xp") { state.demoXp(5000) }
         YouDemoButton(title: "demo: next day") { state.endDay(forceOver: false) }
         YouDemoButton(title: "demo: next day (went over)") { state.endDay(forceOver: true) }
         YouDemoButton(title: "demo: next week") { state.runWeek() }
+        #endif
     }
 
     // MARK: strict mode (rilo pro)
@@ -253,7 +256,8 @@ extension YouView {
     }
 }
 
-/// the grey demo-only buttons at the bottom
+#if DEBUG
+/// the grey demo-only buttons at the bottom (DEBUG only)
 struct YouDemoButton: View {
     let title: String
     let action: () -> Void
@@ -271,3 +275,4 @@ struct YouDemoButton: View {
         .buttonStyle(.tap)
     }
 }
+#endif

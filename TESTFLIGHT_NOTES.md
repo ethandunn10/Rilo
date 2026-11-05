@@ -6,7 +6,7 @@ Paste the "What to Test" part into TestFlight (App Store Connect ▸ TestFlight 
 
 Hey! Thanks for trying Rilo, a screen-time buddy who helps you scroll less and do more of what you actually want.
 
-Everything is unlocked for testers, so you can try all of Rilo Pro for free. Nothing you do is charged.
+To try Rilo Pro, start the 7-day free trial on the paywall. In TestFlight it uses Apple's test money, so nothing you do is ever charged.
 
 Please try these, in order:
 1. Go through setup from the start: name, pick your apps, turn on Screen Time, see your number, pick what you'd rather do, and look at your plan. Is anything confusing, too long, or does a back button take you somewhere weird?
@@ -28,12 +28,11 @@ Tell us:
 To send feedback: take a screenshot in the app and choose "Share Beta Feedback", or open the TestFlight app ▸ Rilo ▸ Send Beta Feedback.
 
 ## Before each TestFlight build (for you)
-- `TESTERS_UNLOCK_ALL` in `Rilo/Rilo/Models/FeatureFlags.swift`: keep it `true` for testers. **Set it to `false` for the real App Store release.**
+- Nothing to switch off: the tester unlock, the "demo" panel and the "demo: +500 xp" buttons only exist in Debug builds, so every TestFlight / App Store build (Product ▸ Archive) leaves them out. Testers get Rilo Pro through the free trial (TestFlight purchases are free test money). The Rilo Pro subscriptions must exist in App Store Connect first (`SETUP_AFTER_PAID_ACCOUNT.md`, Part 4), or the trial button says the store isn't answering.
 - Bump the build number (Xcode ▸ Rilo target ▸ General ▸ Build).
-- Real blocking only works after the Family Controls steps in `SETUP_AFTER_PAID_ACCOUNT.md`. Until then, blocking is the demo version (the "demo" button in the corner opens a fake blocked app).
-- The "demo" button (the tester's remote control) shows in every build, like the web demo. Handy for testers. Before release set `SHOW_DEMO_PANEL_SETTING = false` in the same FeatureFlags.swift file.
+- Real blocking only works after the Family Controls steps in `SETUP_AFTER_PAID_ACCOUNT.md` and `REAL_SCREEN_TIME = true` in `Rilo/Rilo/Models/FeatureFlags.swift`. With it `false`, TestFlight testers can't open a pretend blocked app any more (the demo panel is Debug only), so send TestFlight builds with real blocking on.
 
 ## Known limits right now
 - Calendar connect, buddies, and Rilo's replies are demo versions (no real calendar, no real friends, scripted replies).
-- Until Family Controls is switched on, apps aren't really blocked; use the demo button to try the flow.
+- Until Family Controls is switched on, apps aren't really blocked (the demo button that fakes it is only in Debug builds from Xcode).
 - Voice needs an iPhone (it doesn't work in the simulator).

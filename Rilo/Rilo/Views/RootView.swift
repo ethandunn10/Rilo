@@ -26,7 +26,9 @@ struct RootView: View {
             if state.showBanner { BannerOverlay().zIndex(40) }
             if state.loosenAsk != nil { BypassGuiltOverlay().zIndex(50) }
             if state.showTour { MeetRiloTourOverlay(screen: state.screen).zIndex(60) }
+            #if DEBUG
             if state.showDemoPanel { DemoPanelOverlay().zIndex(61) }
+            #endif
             if state.handoff { RiloHandoffOverlay().zIndex(70) }
         }
     }

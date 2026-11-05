@@ -1,3 +1,5 @@
+#if DEBUG
+// DEBUG ONLY: the demo panel is not in Release (TestFlight / App Store) builds.
 import SwiftUI
 
 /// DEMO ONLY: port of app/src/components/DemoPanel.jsx, the tester's remote
@@ -129,3 +131,4 @@ extension DemoButton where Label == Text {
         self.init(on: on, dim: dim, action: action) { Text(title) }
     }
 }
+#endif

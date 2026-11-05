@@ -1,3 +1,5 @@
+#if DEBUG
+// DEBUG ONLY: the demo panel is not in Release (TestFlight / App Store) builds.
 import SwiftUI
 
 /// DemoPanel.jsx, the open panel's sections, top to bottom.
@@ -209,3 +211,4 @@ extension DemoPanelOverlay {
         }
     }
 }
+#endif
