@@ -39,8 +39,8 @@ nonisolated enum Plan {
         return min(MAX_BLOCKED_SHARE, sum / (sum + OTHER_WEIGHT))
     }
 
-    /// free blocks five apps; pro blocks as many as they like
-    static let FREE_MAX_APPS = 5
+    /// free blocks three apps; pro blocks as many as they like
+    static let FREE_MAX_APPS = 3
 
     static func watchedFor(_ appList: [String], _ isPro: Bool) -> [String] {
         isPro ? appList : Array(appList.prefix(FREE_MAX_APPS))

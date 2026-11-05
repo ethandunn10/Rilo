@@ -78,7 +78,7 @@ struct AppPicker: View {
             sheet = false
             return
         }
-        /* free blocks two; a third means the trial */
+        /* free blocks FREE_MAX_APPS (3); one more means the trial */
         let full = apps.on.values.filter { $0 }.count >= maxApps
         if full && apps.on[t] != true {
             sheet = false

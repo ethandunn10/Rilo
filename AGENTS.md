@@ -40,7 +40,7 @@ After onboarding, Rilo asks one thing a day: goals (night 1), calendar (day 2), 
 Meet Rilo tour (one green box, everything else dimmed, runs once), nightly check-in (talk or type, Rilo pulls out tasks and events), fake calendar connect, Rilo-made daily schedule with focus blocks, "do this instead" suggestions, buddy mode (invite code only — friends see mood and streak, never numbers), bedtime and school mode, weekly share card, tap Rilo and he reacts.
 
 ## Pricing
-$4.99/month or $39.99/year, 7-day free trial. Free: 2 apps, basics. Pro: unlimited apps, per-app breakdown, Rilo-built limits, step-down, nightly check-in, strict mode, Creator Mode, all skins and themes.
+$4.99/month or $39.99/year, 7-day free trial. Free: 3 apps, basics. Pro: unlimited apps, per-app breakdown, Rilo-built limits, step-down, nightly check-in, strict mode, Creator Mode, all skins and themes.
 
 ## Recent tester feedback
 Fixed: onboarding was too long with too many confirms; no way back out of a step; tapping Rilo did nothing. Still open: option pickers look cramped on small phones.

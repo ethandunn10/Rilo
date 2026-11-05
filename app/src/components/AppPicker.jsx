@@ -97,7 +97,7 @@ export default function AppPicker({ apps, setApps, style, maxApps = Infinity, on
       setSheet(false);
       return;
     }
-    /* free blocks two; a third means the trial */
+    /* free blocks FREE_MAX_APPS (3); one more means the trial */
     if (full && !on[t]) {
       setSheet(false);
       onMaxed?.();

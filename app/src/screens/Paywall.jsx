@@ -6,7 +6,7 @@ import Sky from '../components/Sky';
 import Rilo from '../components/Rilo';
 
 const PERKS = [
-  { title: 'unlimited apps', sub: 'free watches 5' },
+  { title: 'unlimited apps', sub: 'free watches 3' },
   { title: 'strict mode', sub: 'no half opens, 24 hours to loosen anything' },
   { title: 'where your time goes', sub: 'the per-app breakdown and your trends' },
   { title: 'the weekly step-down', sub: 'one thing tightens each week' },
@@ -22,7 +22,7 @@ const PERKS = [
    the paywall — the opens, the check-in, rilo's plan and the guilt prompts
    are how the app works, for everyone. Pro is more apps and more depth. */
 const FREE_BITS = [
-  'watches up to 5 apps',
+  'watches up to 3 apps',
   'opens in halves, with the wait and the "what are you opening this for?"',
   "rilo's plan, and something to do instead",
   'your daily goal, your streak and your screen-time number',
@@ -42,7 +42,7 @@ const PLANS = [
   {
     id: 'free',
     name: 'free',
-    sub: '5 apps, your limits and your plan',
+    sub: '3 apps, your limits and your plan',
     price: '$0',
   },
 ];
