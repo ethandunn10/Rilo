@@ -184,8 +184,10 @@ Everything is listed step by step in **`SETUP_AFTER_PAID_ACCOUNT.md`**:
 - The notification banner itself wasn't screenshotted (the tools can't tap iOS's "Allow").
 - Before the real release: nothing to flip (Nov 5). The tester unlock and demo panel only exist in Debug builds.
 
-## Before launch: accounts + Supabase (decided Nov 4, not started)
-Right now each person's Rilo lives only on their own phone (no account, no server). Before the App Store launch, add Supabase for:
+## After launch: accounts + Supabase (moved Nov 5, not started)
+**Decision Nov 5: v1 launches with everything on the phone (no accounts, no server), matching rilo.one/privacy and "Data Not Collected". Supabase comes in an update after launch, once real users ask for it.**
+
+Right now each person's Rilo lives only on their own phone (no account, no server). In a post-launch update, add Supabase for:
 - **Sign in** (Sign in with Apple, so no passwords), so a person's Rilo follows them to a new phone or iPad and survives deleting the app.
 - **Backup/sync** of what Rilo knows: profile, goals, plan, XP and level, streak, settings, what Rilo remembers.
 - **Real buddy mode:** invite codes, and friends see mood and streak only, never numbers.
