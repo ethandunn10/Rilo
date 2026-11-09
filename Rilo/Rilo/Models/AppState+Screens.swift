@@ -264,10 +264,11 @@ extension AppState {
 
     func handoffDone() { handoff = false }
 
-    /// MeetRiloTour's "do you post?" — DEMO Pro unlock, no purchase
+    /// MeetRiloTour's "do you post?" — turns Creator Mode on. It never grants Pro:
+    /// Pro only comes from a purchase (PurchaseService), so Creator Mode stays
+    /// locked behind the paywall for free users.
     func tourCreatorAnswer(_ postsFrequently: Bool) {
         if postsFrequently {
-            isPro = true
             creatorModeOn = true
         } else if !isPro {
             creatorModeOn = false

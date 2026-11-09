@@ -102,7 +102,9 @@ final class ScriptedBrain: RiloBrain {
         if RiloSafety.isCrisis(message) { return ChatTurn(reply: RiloSafety.REPLY, mood: "coach") }
         let hobbies = Listen.hobbiesIn(message)
         let goals = Listen.goalsIn(message)
-        let added = hobbies + goals
+        /* "i want to read more" is both the hobby "reading" and the goal "read more":
+           both are still saved, but the reply names it once ("added read more.") */
+        let added = hobbies.filter { hobby in !goals.contains { Listen.GOAL_COVERS[$0] == hobby } } + goals
         let reply = added.isEmpty
             ? "got it. i'll keep that in mind."
             : "added \(Listen.joinNice(added)). i'll use that when you're bored."

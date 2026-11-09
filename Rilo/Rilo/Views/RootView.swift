@@ -61,7 +61,6 @@ struct RootView: View {
         case .suggestion: SuggestionView()
         case .tired: TiredView()
         case .break: BreakView()
-        case .needit: NeedItView()
         /* progress */
         case .progress: ProgressScreenView()
         case .pickrilo: PickRiloView()

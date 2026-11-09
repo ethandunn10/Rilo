@@ -10,7 +10,7 @@ nonisolated enum Screen: String, CaseIterable, Codable, Sendable {
     case limits, nighttime, home, talkchat, daysummary, whyopen, nightcheckin, calendar
     case sharecard, buddies, shield, appopen, intercept, suggestion, tired
     case `break`
-    case needit, plan, creator, progress, pickrilo, you, levelup, results
+    case plan, creator, progress, pickrilo, you, levelup, results
 
     /// App.jsx ONBOARDING — loosening a limit here never asks "are you sure"
     static let onboarding: [Screen] = [

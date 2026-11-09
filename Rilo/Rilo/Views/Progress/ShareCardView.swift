@@ -12,8 +12,8 @@ import UIKit
 ///
 /// The web gives the card `linear-gradient(180deg, ${theme.sky}, ...)`, but
 /// theme.sky is itself a gradient, so that CSS is invalid and the card is
-/// see-through: it shows the page's sky with a border and a soft shadow
-/// around it. Same here.
+/// see-through on the web. iOS draws what it meant: a solid card, the theme's
+/// sky into its middle hill colour, the same as the saved image.
 struct ShareCardView: View {
     @Environment(AppState.self) private var state
     @Environment(\.riloTheme) private var theme
@@ -69,7 +69,7 @@ struct ShareCardView: View {
                    on short phones like the SE so the buttons stay on screen) */
                 .aspectRatio(9 / 16, contentMode: .fit)
                 .frame(maxWidth: 300, maxHeight: 300 * 16 / 9)
-                .background(ShadowOnly(radius: 26))
+                .background(CardFill(theme: theme, radius: 26))
                 .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(RC.line, lineWidth: 2))
                 .layoutPriority(1)
 
@@ -193,17 +193,18 @@ enum ShareSheet {
     }
 }
 
-/// `box-shadow: 0 16px 40px rgba(10,40,20,0.25)` on a see-through box: the
-/// shadow only shows outside the shape, like CSS.
-private struct ShadowOnly: View {
+/// The card's solid background: the theme's sky into its middle hill colour
+/// (what the web's `linear-gradient(180deg, sky, hills[1])` meant, and what the
+/// saved image draws), with `box-shadow: 0 16px 40px rgba(10,40,20,0.25)`.
+private struct CardFill: View {
+    let theme: ThemeInfo
     let radius: CGFloat
 
     var body: some View {
-        let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        shape
-            .fill(.white)
+        let top = theme.sky.first.map { Color(hex: $0.0) } ?? RC.stage
+        RoundedRectangle(cornerRadius: radius, style: .continuous)
+            .fill(LinearGradient(colors: [top, theme.hills.count > 1 ? theme.hills[1] : top],
+                                 startPoint: .top, endPoint: .bottom))
             .cssShadow(Color.rgba(10, 40, 20, 0.25), y: 16, blur: 40)
-            .overlay(shape.fill(.white).blendMode(.destinationOut))
-            .compositingGroup()
     }
 }

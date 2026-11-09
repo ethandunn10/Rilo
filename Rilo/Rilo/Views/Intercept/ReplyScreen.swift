@@ -1,6 +1,6 @@
 import SwiftUI
 
-/* What Suggestion, Tired, Break and NeedIt share: Rilo's reply to a reason
+/* What Suggestion, Tired and Break share: Rilo's reply to a reason
    picked on the pop-up. Each is a `.scroll-y` column (padding 56px 22px 0,
    gap 14, --tail 28px) over the mid-hills sky, with a flex-grow spacer
    pushing the buttons to the bottom when it all fits. */

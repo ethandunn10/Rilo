@@ -111,7 +111,8 @@ extension YouView {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Button {
-                    if state.hasPro { state.creatorModeOn = !on } else { state.go(.upgrade) }
+                    /* anyone can switch it off (the tour can turn it on for free users) */
+                    if state.hasPro || on { state.creatorModeOn = !on } else { state.go(.upgrade) }
                 } label: {
                     Circle()
                         .fill(.white)

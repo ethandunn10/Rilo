@@ -29,8 +29,7 @@ import Foundation
 ///   -pending         limits: a loosening change waiting its 24h (with -strict)
 ///   -limitsscroll <app|bottom>   limits scrolled to that card / the end
 ///   -limitsmode <app>=<blocked|limited|free>   set one app's mode first
-///   -breakmins <5|10|15> / -needpick <text|post|school|other>   break / needit
-///                    with that length / reason picked; -suggestnth <n>: suggestion
+///   -breakmins <5|10|15>   break with that length; -suggestnth <n>: suggestion
 ///                    after n taps of "suggest something else"
 ///   -outofopens / -passused / -strict   shield, intercept, whyopen with
 ///                    tiktok out of opens / the pass used / strict mode on
@@ -153,7 +152,7 @@ enum DemoSeed {
         }
 
         let tabs = Screen.tourScreens + [.limits, .creator, .daysummary, .shield, .appopen, .intercept,
-                                         .whyopen, .suggestion, .tired, .break, .needit, .levelup,
+                                         .whyopen, .suggestion, .tired, .break, .levelup,
                                          .sharecard, .buddies, .nightcheckin, .nighttime, .calendar,
                                          .talkchat, .upgrade, .results]
         if tabs.contains(screen) {
@@ -173,7 +172,7 @@ enum DemoSeed {
         }
 
         switch screen {
-        case .shield, .intercept, .whyopen, .suggestion, .tired, .break, .needit:
+        case .shield, .intercept, .whyopen, .suggestion, .tired, .break:
             state.session.app = "tiktok"
             state.opens = OpenCounts(date: state.dateKey, counts: ["tiktok": 4])
             /* sub-states of the pop-up (Intercept): */

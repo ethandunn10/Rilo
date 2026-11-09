@@ -86,6 +86,13 @@ nonisolated enum Listen {
         ("spend time with family", "family|parents|siblings|brother|sister"),
     ]
 
+    /// a goal that already says the hobby, so Rilo's reply doesn't name both
+    /// ("i want to read more" → reading + read more → "added read more.")
+    static let GOAL_COVERS: [String: String] = [
+        "read more": "reading",
+        "learn to code": "coding",
+    ]
+
     static func tokens(_ text: String) -> [String] {
         text.lowercased().components(separatedBy: CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz'").inverted)
             .filter { !$0.isEmpty }

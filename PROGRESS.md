@@ -52,7 +52,7 @@ Couldn't match exactly:
 - The "making it easier?" overlay's blur is a frosted layer, a bit softer than the web's 3px backdrop blur.
 - The banner slides to the same spot as the web, which on iPhone overlaps the clock.
 
-**Question for you:** nothing on the web ever opens the `needit` screen ("i need it for something"). It's ported but unreachable, same as the web. Should it be wired up somewhere (e.g. from intercept), or removed?
+**Answered (Nov 9):** the unreachable `needit` screen was removed from iOS.
 
 ## Phase 5: Progress, XP, levels, skins, themes, You ✅
 - `progress` (level card + XP bar, where your time goes, stats, time-back tiles, the week card with theme decorations), `pickrilo` (23 skins in a grid, locked by level / Pro), `levelup` (confetti, wear it / later), `sharecard`, `buddies` (invite code only; friends see mood + streak, never numbers).
@@ -64,7 +64,7 @@ Couldn't match exactly:
 
 Couldn't match exactly:
 - The web removed talk-to-text on Nov 1 (Safari's speech API didn't work on iPhone), so the web is typing only. iOS matches that until Phase 7 adds real speech.
-- The share card on the web has an invalid CSS fill, so it's see-through. iOS copies that look. **Question:** should the card have a solid background?
+- The share card on the web has an invalid CSS fill, so it's see-through. **Answered (Nov 9):** iOS now draws it solid.
 - The web opens the add-app sheet inside the apps card (a side effect of an animation). iOS opens it full screen like onboarding.
 - Check-in's text field doesn't auto-open the keyboard (the web's autofocus doesn't on iPhone either).
 
@@ -97,7 +97,7 @@ Not checked / needs you:
 - **Purchases can only be tested by running from Xcode** (not from the command line). In Xcode: Product ▸ Scheme ▸ Edit Scheme ▸ Run ▸ Options ▸ StoreKit Configuration should say `Rilo.storekit` (pick it if it's blank). Then run → paywall → "start 7-day free trial" → Pro turns on. Debug ▸ StoreKit ▸ Manage Transactions lets you refund/expire it.
 - **The voice can only really be tested on your iPhone** (the simulator has no real mic input).
 - The notification banner itself isn't screenshotted: iOS's "Allow" button can't be tapped by the tools here.
-- **Question:** the tour's "do you post?" answer gives Pro for free (the web demo does this). With real StoreKit, that free Pro goes away on the next launch. Should that answer just turn Creator Mode on instead? (With the tester switch on, nobody notices yet.)
+- **Answered (Nov 9):** the tour's "do you post?" answer now only turns Creator Mode on, no free Pro.
 
 ## Phase 8: Screen Time blocking, ready to switch on ✅
 - All blocking goes through one `ScreenTimeService` (`Rilo/Rilo/Services/ScreenTimeService.swift`). The app uses `DemoScreenTimeService` now, so everything works exactly as before (checked with -selfcheck, -settingscheck and before/after pixel diffs in `screenshots/phase-8/`).
@@ -206,10 +206,10 @@ When that happens, update the privacy policy in APP_STORE.md, the App Store priv
 ## Questions for you (none of these block anything)
 1. **App icon:** the web had none, so I made one (the original Rilo, with arms and the RILO headband, on the grass sky). Is it OK? It's the first thing to look at: `Rilo/Rilo/Assets.xcassets/AppIcon.appiconset/AppIcon.png`.
 2. **Free plan apps:** answered: 3 apps everywhere (web, iOS, paywall, AGENTS.md).
-3. **The `needit` screen** ("i need it for something") is ported, but nothing opens it, the same as the web. Wire it up somewhere, or remove it?
-4. **The tour's "do you post?"** gives Pro for free (web demo behavior). With real purchases, that free Pro disappears on the next launch. Should it only turn Creator Mode on?
-5. **Share card:** on the web its background is see-through because of a CSS bug. iOS copies that. Should it be solid?
-6. **Rilo's reply quirk (web too):** "i want to read more" → "added reading and read more." (it counts as both a hobby and a goal). Fix the wording in both?
+3. ✅ **Done (Nov 9):** the unused `needit` screen ("i need it for something") was removed from the iOS app.
+4. ✅ **Done (Nov 9):** the tour's "do you post?" now only turns Creator Mode on. It never gives Pro. Creator Mode stays a Pro feature, and anyone can switch it off on the You tab.
+5. ✅ **Done (Nov 9):** the share card on iOS now has a solid background (the theme's sky into its middle hill colour, the same as the saved image). The web still has the CSS bug.
+6. ✅ **Done (Nov 9, iOS only):** "i want to read more" → "added read more." Both the hobby and the goal are still saved; the reply just names it once (same for "learn to code"). The web still says it twice.
 7. **Reminder times** for Rilo's first-week questions: I picked 8:00 (the school one) and 16:00 (the rest). OK?
 8. **Web bug found:** on "your number", the back/skip buttons on the first two beats are hidden behind the sky on the web (they're missing `position: relative`). iOS shows them. Worth fixing on the web.
 9. **Privacy policy:** it needs a support email and somewhere to host it (`APP_STORE.md`, bottom).
