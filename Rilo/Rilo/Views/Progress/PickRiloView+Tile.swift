@@ -38,14 +38,14 @@ struct PickRiloTile: View {
         }
         .buttonStyle(.tap(0.96))
         .accessibilityLabel("\(item.name) rilo, " + (status.unlocked
-            ? (status.tier == "pro" ? "available now, rilo pro later" : "free")
+            ? (status.tier == "pro" && FeatureFlags.PAYMENTS ? "available now, rilo pro later" : "unlocked")
             : (status.reason == "pro" ? "rilo pro" : "unlocks at level \(item.level)")))
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     @ViewBuilder
     private var badge: some View {
-        if !status.unlocked || (Levels.UNLOCK_ALL && status.tier == "pro") {
+        if !status.unlocked || (Levels.UNLOCK_ALL && FeatureFlags.PAYMENTS && status.tier == "pro") {
             let level = status.reason == "level"
             HStack(spacing: 2) {
                 if status.unlocked {

@@ -270,7 +270,7 @@ extension AppState {
     func tourCreatorAnswer(_ postsFrequently: Bool) {
         if postsFrequently {
             creatorModeOn = true
-        } else if !isPro {
+        } else if !hasPro {
             creatorModeOn = false
         }
     }

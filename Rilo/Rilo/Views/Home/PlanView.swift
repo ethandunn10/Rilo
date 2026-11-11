@@ -116,13 +116,15 @@ struct PlanView: View {
                     Text("today's plan")
                         .accessibilityAddTraits(.isHeader)
                         .font(.fredoka(30, 700))
-                    Text("pro")
-                        .font(.fredoka(12, 600))
-                        .foregroundStyle(.white)
-                        .padding(.vertical, 3)
-                        .padding(.horizontal, 9)
-                        .background(Capsule().fill(RC.ink))
-                        .accessibilityLabel("rilo pro")
+                    if FeatureFlags.PAYMENTS {
+                        Text("pro")
+                            .font(.fredoka(12, 600))
+                            .foregroundStyle(.white)
+                            .padding(.vertical, 3)
+                            .padding(.horizontal, 9)
+                            .background(Capsule().fill(RC.ink))
+                            .accessibilityLabel("rilo pro")
+                    }
                 }
                 Text("made by rilo from your goals")
                     .font(.inter(14, 600))

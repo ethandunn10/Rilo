@@ -152,6 +152,12 @@ final class ProStore {
     @ObservationIgnored private var listener: Task<Void, Never>?
 
     init() {
+        /* payments off (FeatureFlags.PAYMENTS): StoreKit isn't used at all.
+           The demo service never loads products or checks purchases. */
+        if !FeatureFlags.PAYMENTS {
+            service = DemoPurchaseService()
+            return
+        }
         #if DEBUG
         /* the screenshot seeds and `-demopurchase` keep the web's fake yes */
         if DemoSeed.flag("-demopurchase") || DemoSeed.screenArg != nil {
@@ -163,7 +169,8 @@ final class ProStore {
     }
 
     func start() {
-        guard listener == nil else { return }
+        /* payments off: don't listen to Transaction.updates, ask for nothing */
+        guard FeatureFlags.PAYMENTS, listener == nil else { return }
         let service = service
         listener = Task { [weak self] in
             let updates = service.proUpdates()
@@ -175,6 +182,7 @@ final class ProStore {
     /// prices + entitlement again (launch, and whenever the app comes back,
     /// so an expired or refunded subscription turns Pro off)
     func refresh() async {
+        guard FeatureFlags.PAYMENTS else { return }
         if prices == nil { prices = await service.loadPrices() }
         if let pro = await service.currentPro() { entitled = pro }
     }

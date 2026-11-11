@@ -13,7 +13,8 @@ extension YouView {
 
         YouSection(title: "account").id("account")
         replayCard
-        planCard
+        /* "your plan" (Pro, change plan, restore purchases): payments only */
+        if FeatureFlags.PAYMENTS { planCard }
         startOverButton
         deleteAccountButton
 

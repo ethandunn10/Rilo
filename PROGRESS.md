@@ -2,6 +2,13 @@
 
 Plan: see PORT_PLAN.md. Branch: `ios-port` (nothing pushed).
 
+## v1 is free, Rilo Pro later (Nov 10, 2026)
+- **Decision:** v1 launches free with no payments. Everyone, TestFlight included, gets every feature (unlimited apps, breakdown, Rilo-built limits, step-down, nightly check-in, strict mode, Creator Mode, every theme; skins still unlock by level).
+- **How:** `FeatureFlags.PAYMENTS = false`, for every build (Debug and Release/TestFlight). `AppState.hasPro` is always true, the paywall never opens (onboarding's last button is now "let's do it" and goes straight home), there are no Pro badges, locks or prices, and StoreKit is never asked for products or purchases. The paywall, `PurchaseService.swift` and `Rilo.storekit` stay in the project, switched off. Turning payments on later = flip the flag.
+- **Rilo Pro comes in a later update.**
+- **Remember: early users keep everything free when Pro launches.** Whoever used Rilo before Pro must never lose a feature. Build that in before flipping `PAYMENTS` back on.
+- The debug checks that walk through the paywall (`-flowcheck`, `-settingscheck`) assume payments are on; their paywall steps will fail while `PAYMENTS` is false.
+
 ## Phase 1: Foundation ✅
 - Colors (`Theme/RiloColors.swift`), fonts (Fredoka/Inter/Nunito bundled, `Theme/RiloFonts.swift`), 5 themes (`Theme/Themes.swift`).
 - `SkyView` / `ThemeDecor` / `HillsView`: the grass sky plus all theme decorations (sun glow, butterflies, falling leaves/petals/snow, bamboo, sakura branch, birds, flowers, swaying grass).
@@ -174,7 +181,7 @@ Not checked / needs you:
 Everything is listed step by step in **`SETUP_AFTER_PAID_ACCOUNT.md`**:
 - **Real app blocking** (the Family Controls permission from Apple, plus the 3 extensions)
 - **The home-screen widget** (needs an App Group)
-- **Selling Rilo Pro** (the subscriptions in App Store Connect, the Paid Apps agreement)
+- **Selling Rilo Pro** (later, not v1: the subscriptions in App Store Connect, the Paid Apps agreement)
 - **TestFlight** and the App Store
 
 ## What's left / not checked

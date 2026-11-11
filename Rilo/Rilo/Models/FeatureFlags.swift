@@ -20,6 +20,18 @@ nonisolated enum FeatureFlags {
     ///         (SETUP_AFTER_PAID_ACCOUNT.md), and only works on a real iPhone.
     static let REAL_SCREEN_TIME = false
 
+    /// THE payments switch, for every build (Debug, TestFlight, App Store).
+    ///
+    /// false → v1: Rilo is free with no payments at all. Everyone counts as
+    ///         Pro everywhere (`AppState.hasPro`), the paywall never shows,
+    ///         no Pro badges, locks or prices, and StoreKit is never asked
+    ///         for products or purchases. Skins still unlock by level.
+    /// true  → Rilo Pro is on sale: the paywall, the Pro gates and StoreKit
+    ///         all come back exactly as they were. Nothing else to change.
+    ///
+    /// When Pro launches, early users keep everything free (APP_STORE.md).
+    static let PAYMENTS = false
+
     #if DEBUG
     /// DEBUG only. true → every Pro feature, skin and theme is open for
     /// everyone, and the trial button lets you in even with no App Store

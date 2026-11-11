@@ -249,6 +249,11 @@ final class AppState {
     /// App.jsx go(): heading home with an unlock waiting shows the
     /// celebration first, and the paywall remembers where it was opened from.
     func go(_ next: Screen, dir: NavDirection = .forward) {
+        /* payments off: the paywall never appears, from anywhere */
+        if !FeatureFlags.PAYMENTS {
+            if next == .upgrade { return }
+            if next == .paywall { finishOnboardingFree(); return }
+        }
         if next == .upgrade { cameFrom = screen }
         goTo(next == .home && pendingSkin != nil ? .levelup : next, dir: dir)
     }
@@ -290,7 +295,7 @@ final class AppState {
     /// pickedKey, time.now, screenTime, isPro — the breakdown is rebuilt
     /// when any of these change, once Screen Time has been answered
     private var breakdownKey: String {
-        "\(Plan.watchedFor(screenTimeService.pickedAppKeys ?? Apps.pickedApps(apps), isPro).joined(separator: ","))|\(time.now)|\(String(describing: screenTime))|\(isPro)"
+        "\(Plan.watchedFor(screenTimeService.pickedAppKeys ?? Apps.pickedApps(apps), hasPro).joined(separator: ","))|\(time.now)|\(String(describing: screenTime))|\(hasPro)"
     }
 
     private func breakdownDepsChanged() {

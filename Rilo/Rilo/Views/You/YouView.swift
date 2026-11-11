@@ -110,7 +110,10 @@ struct YouView: View {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) { state.deleteAccount() }
         } message: {
-            Text("This erases everything Rilo has saved on this phone: your name, apps, limits, progress, check-ins and what he remembers. It can\u{2019}t be undone.\n\nA Rilo Pro subscription is billed by Apple and keeps going until you cancel it in iPhone Settings \u{2192} your name \u{2192} Subscriptions.")
+            Text("This erases everything Rilo has saved on this phone: your name, apps, limits, progress, check-ins and what he remembers. It can\u{2019}t be undone." +
+                 (FeatureFlags.PAYMENTS
+                  ? "\n\nA Rilo Pro subscription is billed by Apple and keeps going until you cancel it in iPhone Settings \u{2192} your name \u{2192} Subscriptions."
+                  : ""))
         }
     }
 }

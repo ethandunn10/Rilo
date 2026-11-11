@@ -103,7 +103,8 @@ extension YouView {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("creator mode").font(.fredoka(19, 600))
                         .accessibilityAddTraits(.isHeader)
-                    Text("Turn it on to add a Home button for focused Instagram posting or research. Pro feature.")
+                    Text("Turn it on to add a Home button for focused Instagram posting or research." +
+                         (FeatureFlags.PAYMENTS ? " Pro feature." : ""))
                         .font(.inter(12, 600))
                         .webLineHeight(12, 1.35)
                         .foregroundStyle(RC.ink3)

@@ -2,6 +2,14 @@
 
 Everything below is ready to paste into App Store Connect once you have the paid account. Character limits are Apple's. Anything in [brackets] is for you to fill in.
 
+# v1 is free (decided Nov 10, 2026)
+
+- **v1 launches FREE, with no payments at all.** No subscriptions, no in-app purchases, no paywall. Every user (TestFlight testers too) gets every feature.
+- In the app it's one switch: `FeatureFlags.PAYMENTS = false` (`Rilo/Rilo/Models/FeatureFlags.swift`). The paywall and StoreKit code are still in the project, switched off.
+- **Rilo Pro comes later**, in an update. When it does: flip `PAYMENTS` to true, set up the subscriptions in App Store Connect, and put the Rilo Pro section, the price ($4.99/month or $39.99/year, 7-day free trial, not final) and the auto-renew wording back into the description and the privacy policy below.
+- **Promise to early users: anyone who used Rilo before Pro launched keeps everything free when Pro launches.** Pro has to be built so that it never locks anything for them (for example: remember on the phone that they joined during the free v1, and treat them as Pro).
+- App Store Connect for v1: Price = Free, no in-app purchases attached to the version.
+
 ## Name (max 30)
 **Rilo: Screen Time Buddy** (23)
 
@@ -43,9 +51,8 @@ FOR WHEN YOU MEAN IT
 PRIVATE BY DESIGN
 Everything Rilo knows stays on your phone. No accounts, no ads, no tracking. The mic is only on while you hold the talk button, and your words are turned into text on your phone.
 
-RILO PRO
-Free covers the basics. Rilo Pro adds unlimited apps, the per-app breakdown, Rilo-built limits, the weekly step-down, the nightly check-in, strict mode, Creator Mode, and every Rilo and theme.
-Rilo Pro is $4.99/month or $39.99/year, with a 7-day free trial. Payment is charged to your Apple ID when the trial ends. The subscription renews automatically unless it's turned off at least 24 hours before the end of the period. Manage or cancel it any time in your App Store account settings.
+FREE, EVERYTHING INCLUDED
+Rilo is free. Every feature is unlocked for everyone: unlimited apps, the per-app breakdown, Rilo-built limits, the weekly step-down, the nightly check-in, strict mode, Creator Mode, and every theme. New Rilos unlock as you level up.
 
 Terms of Use: https://www.apple.com/legal/internet-services/itunes/dev/stdeula/
 Privacy Policy: [link to the privacy policy below, once it's hosted]
@@ -100,7 +107,7 @@ Talking to Rilo is optional. The microphone is only on **while you hold the talk
 Rilo's reminders (like the nightly check-in) are scheduled on your phone. No notification server is involved.
 
 **Purchases**
-Rilo Pro is bought through Apple. Apple handles the payment; Rilo never sees your payment details. Rilo only learns whether you have Rilo Pro.
+Rilo has no purchases. It's free.
 
 **Buddies**
 If you use buddy mode, a friend you invite with a code sees only Rilo's mood and your streak, never your screen time numbers.

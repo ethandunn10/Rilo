@@ -136,7 +136,7 @@ struct PickRiloView: View {
 
     @ViewBuilder
     private func footer(_ cur: SkinStatus) -> some View {
-        if Levels.UNLOCK_ALL {
+        if Levels.UNLOCK_ALL && FeatureFlags.PAYMENTS {
             Text("every rilo is unlocked while we're testing · \"pro\" shows what the paid plan will cover later")
                 .font(.inter(12, 600))
                 .foregroundStyle(RC.ink2)

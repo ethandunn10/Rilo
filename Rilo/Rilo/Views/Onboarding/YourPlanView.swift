@@ -87,7 +87,8 @@ struct YourPlanView: View {
             goalCard
             limitsCard
             insteadCard
-            proCard
+            /* payments off: nothing is locked, so no "with rilo pro" card */
+            if FeatureFlags.PAYMENTS { proCard }
         }
     }
 
@@ -246,8 +247,10 @@ struct YourPlanView: View {
     }
 
     private var pinned: some View {
-        Button { state.go(.paywall) } label: {
-            Text("unlock my full plan")
+        Button {
+            if FeatureFlags.PAYMENTS { state.go(.paywall) } else { state.finishOnboardingFree() }
+        } label: {
+            Text(FeatureFlags.PAYMENTS ? "unlock my full plan" : "let's do it")
                 .font(.fredoka(20, 600))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)

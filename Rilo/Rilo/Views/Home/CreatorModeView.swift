@@ -42,10 +42,12 @@ struct CreatorModeView: View {
                     HStack(spacing: 10) {
                         RiloView(skin: state.chosenRilo, mood: "curious", size: 68, talks: true)
                         VStack(alignment: .leading, spacing: 0) {
-                            Text("RILO PRO")
-                                .font(.inter(11, 700))
-                                .tracking(11 * 0.08)
-                                .foregroundStyle(RC.ink2)
+                            if FeatureFlags.PAYMENTS {
+                                Text("RILO PRO")
+                                    .font(.inter(11, 700))
+                                    .tracking(11 * 0.08)
+                                    .foregroundStyle(RC.ink2)
+                            }
                             Text("creator mode")
                                 .accessibilityAddTraits(.isHeader)
                                 .font(.fredoka(28, 700))

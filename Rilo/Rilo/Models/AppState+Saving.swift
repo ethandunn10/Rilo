@@ -132,7 +132,7 @@ extension AppState {
 
     var notificationPlan: [RiloNotifications.Planned] {
         guard onboarded else { return [] }
-        return RiloNotifications.plan(isPro: isPro, night: night, checkedInToday: checkedInToday,
+        return RiloNotifications.plan(isPro: hasPro, night: night, checkedInToday: checkedInToday,
                                       bedtime: bedtime, drip: drip)
     }
 

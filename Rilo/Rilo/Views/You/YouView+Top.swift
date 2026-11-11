@@ -68,7 +68,9 @@ extension YouView {
                 Text("app theme").font(.fredoka(19, 600))
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 0)
-                Text("rilo pro").font(.inter(12, 700)).foregroundStyle(RC.ink3)
+                if FeatureFlags.PAYMENTS {
+                    Text("rilo pro").font(.inter(12, 700)).foregroundStyle(RC.ink3)
+                }
             }
             /* three across, not five */
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10, alignment: .top), count: 3),
@@ -171,7 +173,7 @@ private struct ThemeSwatch: View {
                     .foregroundStyle(RC.ink)
             }
             .overlay(alignment: .topTrailing) {
-                if t.tier == "pro" {
+                if t.tier == "pro" && FeatureFlags.PAYMENTS {
                     Text("pro")
                         .font(.fredoka(9, 600))
                         .foregroundStyle(.white)
@@ -183,7 +185,7 @@ private struct ThemeSwatch: View {
             }
         }
         .buttonStyle(.tap)
-        .accessibilityLabel("\(t.name) theme\(t.tier == "pro" ? ", rilo pro" : "")")
+        .accessibilityLabel("\(t.name) theme\(t.tier == "pro" && FeatureFlags.PAYMENTS ? ", rilo pro" : "")")
         .accessibilityAddTraits(on ? .isSelected : [])
     }
 
