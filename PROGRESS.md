@@ -7,7 +7,13 @@ Plan: see PORT_PLAN.md. Branch: `ios-port` (nothing pushed).
 - **How:** `FeatureFlags.PAYMENTS = false`, for every build (Debug and Release/TestFlight). `AppState.hasPro` is always true, the paywall never opens (onboarding's last button is now "let's do it" and goes straight home), there are no Pro badges, locks or prices, and StoreKit is never asked for products or purchases. The paywall, `PurchaseService.swift` and `Rilo.storekit` stay in the project, switched off. Turning payments on later = flip the flag.
 - **Rilo Pro comes in a later update.**
 - **Remember: early users keep everything free when Pro launches.** Whoever used Rilo before Pro must never lose a feature. Build that in before flipping `PAYMENTS` back on.
-- The debug checks that walk through the paywall (`-flowcheck`, `-settingscheck`) assume payments are on; their paywall steps will fail while `PAYMENTS` is false.
+- `-flowcheck` follows the flags (free v1: 5 apps, no paywall, no buddies). `-settingscheck` still walks the old paywall steps, so those few checks fail while `PAYMENTS` is false.
+
+## Launch prep (Nov 10, 2026)
+- **Buddy mode is out of v1:** `FeatureFlags.BUDDIES = false` hides the You-tab row, the screen, the tour step and the paywall perk. The code stays.
+- **No accounts in v1:** the welcome screen's "i already have an account" is gone; the You tab's "account" section is now "your data", and "delete account" is "delete all my data" (same action: erases what's on the phone).
+- **Nothing fake in Release:** the drawn copy of Apple's Screen Time alert, the "demo: connect a fake calendar" button, the pretend notes/reminders/tasks/notion sources, "demo: fill it in for me" and "demo: burn 5 min" only exist in Debug builds. Calendar connect is real EventKit and stays on.
+- **Still simulated in Release (needs Ethan):** with `REAL_SCREEN_TIME = false`, blocking, the app-open timer and Creator Mode's Instagram are Rilo's own pretend versions (Creator Mode says "demo" honestly). That's fine for TestFlight; for the App Store, real Screen Time has to be on (see MORNING_REPORT.md).
 
 ## Phase 1: Foundation ✅
 - Colors (`Theme/RiloColors.swift`), fonts (Fredoka/Inter/Nunito bundled, `Theme/RiloFonts.swift`), 5 themes (`Theme/Themes.swift`).

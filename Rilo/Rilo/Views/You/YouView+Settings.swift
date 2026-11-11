@@ -26,8 +26,10 @@ extension YouView {
         nightCard.id("night")
         calendarCard.id("calendar")
 
-        YouSection(title: "friends")
-        if FeatureFlags.BUDDIES { buddiesCard }
+        if FeatureFlags.BUDDIES {
+            YouSection(title: "friends")
+            buddiesCard
+        }
     }
 
     // MARK: when they scroll (the day-4 question's own options)

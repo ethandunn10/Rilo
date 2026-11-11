@@ -9,6 +9,7 @@ Everything below is ready to paste into App Store Connect once you have the paid
 - **Rilo Pro comes later**, in an update. When it does: flip `PAYMENTS` to true, set up the subscriptions in App Store Connect, and put the Rilo Pro section, the price ($4.99/month or $39.99/year, 7-day free trial, not final) and the auto-renew wording back into the description and the privacy policy below.
 - **Promise to early users: anyone who used Rilo before Pro launched keeps everything free when Pro launches.** Pro has to be built so that it never locks anything for them (for example: remember on the phone that they joined during the free v1, and treat them as Pro).
 - App Store Connect for v1: Price = Free, no in-app purchases attached to the version.
+- **Buddy mode is out of v1** (`FeatureFlags.BUDDIES = false`): it needs a server, and v1 has none. It's removed from the description and the privacy policy below. Put it back when buddies are real.
 
 ## Name (max 30)
 **Rilo: Screen Time Buddy** (23)
@@ -42,7 +43,6 @@ A BUDDY, NOT A BOSS
 • Earn XP for every day under your goal, level up, and unlock 23 Rilos and 5 themes.
 • Weekly step-down: Rilo tightens one small thing a week, so it never feels like a cliff.
 • Nightly check-in: tell Rilo how the day went (talk or type) and he plans tomorrow around it.
-• Buddy mode: friends see Rilo's mood and your streak, never your numbers.
 
 FOR WHEN YOU MEAN IT
 • Strict mode: no half opens, no borrowing, and a 24-hour wait before you can loosen anything. Getting stricter is always instant.
@@ -73,7 +73,7 @@ Answer "None" / "No" to everything:
 - Alcohol, tobacco, drugs; simulated gambling; contests: **None**
 - Medical or treatment information: **None**
 - Unrestricted web access: **No**
-- User-generated content / messaging with other people: **No.** Rilo's chat is scripted, and buddy mode only shares mood + streak through an invite code, with no free text.
+- User-generated content / messaging with other people: **No.** Rilo's chat is scripted, and there's no way to message other people (buddy mode isn't in v1).
 - Gambling with real money / loot boxes: **No**
 - Parental controls: **No**
 - Age assurance: **No**
@@ -81,7 +81,7 @@ Answer "None" / "No" to everything:
 That questionnaire gives a low rating (likely 4+). Because Rilo is meant for **13+**, choose **13+** with the option to set a higher age rating than calculated, so the store page says 13+. If you ever add real chat between buddies, come back here and change the user-generated content answer.
 
 ## App Privacy ("nutrition label")
-Choose **Data Not Collected**. Rilo collects nothing: no accounts, no analytics, no ads, nothing sent to a server. Purchases are handled by Apple.
+Choose **Data Not Collected**. Rilo collects nothing: no accounts, no analytics, no ads, no purchases, nothing sent to a server.
 
 ---
 
@@ -108,9 +108,6 @@ Rilo's reminders (like the nightly check-in) are scheduled on your phone. No not
 
 **Purchases**
 Rilo has no purchases. It's free.
-
-**Buddies**
-If you use buddy mode, a friend you invite with a code sees only Rilo's mood and your streak, never your screen time numbers.
 
 **Children**
 Rilo is meant for people aged 13 and up. It doesn't knowingly collect personal information from anyone, of any age, because nothing leaves the phone.

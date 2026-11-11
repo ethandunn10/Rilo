@@ -62,8 +62,16 @@ enum FlowCheck {
         state.goTo(.name, dir: .back); await settle()
         ok("pick apps back → name, name kept", state.screen == .name && state.name == "Tester")
         state.go(.pickapps); await settle()
-        state.apps = PickedApps(on: ["tiktok": true, "instagram": true, "youtube": true], extra: [])
-        ok("three apps picked", state.tracked.count == 3, "\(state.tracked)")
+        if FeatureFlags.PAYMENTS {
+            state.apps = PickedApps(on: ["tiktok": true, "instagram": true, "youtube": true], extra: [])
+            ok("three apps picked", state.tracked.count == 3, "\(state.tracked)")
+        } else {
+            /* free v1: no 3-app cap, all five are watched */
+            state.apps = PickedApps(on: ["tiktok": true, "instagram": true, "youtube": true,
+                                         "snapchat": true, "x": true], extra: [])
+            ok("five apps picked (free v1, no cap)", state.tracked.count == 5, "\(state.tracked)")
+            ok("all five watched (free v1)", state.watched.count == 5, "\(state.watched)")
+        }
         state.go(.permission); await settle()
         at("pick apps → permission", .permission)
         state.goTo(.pickapps, dir: .back); await settle()
@@ -79,7 +87,8 @@ enum FlowCheck {
         at("crunching → rather", .rather)
         ok("crunching built the baseline", state.breakdown != nil && state.time.now > 0 && state.time.goal >= 1)
         state.goTo(.pickapps, dir: .back); await settle()
-        ok("rather back → pick apps, apps kept", state.screen == .pickapps && state.tracked.count == 3)
+        ok("rather back → pick apps, apps kept", state.screen == .pickapps
+           && state.tracked.count == (FeatureFlags.PAYMENTS ? 3 : 5))
         state.goTo(.rather); await settle()
         state.rather = ["gym", "studying"]
         state.ratherContinue(); await settle()
@@ -115,16 +124,28 @@ enum FlowCheck {
         }
         state.goTo(.yourplan, dir: .back); await settle()
         at("limits back → your plan", .yourplan)
-        state.go(.paywall); await settle()
-        at("your plan → paywall", .paywall)
-        state.paywallBack(); await settle()
-        at("paywall back → your plan", .yourplan)
-        state.go(.paywall); await settle()
-        state.plan = "year"
-        /* the purchase service said yes (PaywallView), then: */
-        state.paywallDone("start free trial"); await settle()
-        ok("trial → home with the hand-off", state.screen == .home && state.handoff && state.planChoice == "trial")
-        ok("pro after the trial", state.hasPro)
+        if FeatureFlags.PAYMENTS {
+            state.go(.paywall); await settle()
+            at("your plan → paywall", .paywall)
+            state.paywallBack(); await settle()
+            at("paywall back → your plan", .yourplan)
+            state.go(.paywall); await settle()
+            state.plan = "year"
+            /* the purchase service said yes (PaywallView), then: */
+            state.paywallDone("start free trial"); await settle()
+            ok("trial → home with the hand-off", state.screen == .home && state.handoff && state.planChoice == "trial")
+            ok("pro after the trial", state.hasPro)
+        } else {
+            /* free v1: "let's do it" skips the paywall, straight home */
+            ok("free v1: everyone has pro", state.hasPro && !state.isPro)
+            state.finishOnboardingFree(); await settle()
+            ok("let's do it → home with the hand-off, no paywall",
+               state.screen == .home && state.handoff && state.planChoice == "free")
+            state.go(.upgrade); await settle()
+            ok("free v1: upgrade never opens", state.screen == .home)
+            state.go(.buddies); await settle()
+            ok("v1: buddies never opens", state.screen == .home || FeatureFlags.BUDDIES)
+        }
         ok("no tour during the hand-off", !state.showTour)
         ok("onboarded (reminders can start)", state.onboarded)
 
@@ -379,19 +400,30 @@ enum FlowCheck {
         at("progress → share card", .sharecard)
         state.go(.progress, dir: .back); await settle()
         at("share card back → progress", .progress)
-        state.go(.buddies); await settle()
-        at("buddies opens", .buddies)
+        if FeatureFlags.BUDDIES {
+            state.go(.buddies); await settle()
+            at("buddies opens", .buddies)
+        }
 
         // MARK: you tab, upgrade
         lines.append("— you, upgrade")
         state.go(.you); await settle()
         at("you tab", .you)
-        state.go(.upgrade); await settle()
-        ok("upgrade remembers where it came from", state.screen == .upgrade && state.cameFrom == .you)
-        state.paywallBack(); await settle()
-        at("upgrade back → you", .you)
+        if FeatureFlags.PAYMENTS {
+            state.go(.upgrade); await settle()
+            ok("upgrade remembers where it came from", state.screen == .upgrade && state.cameFrom == .you)
+            state.paywallBack(); await settle()
+            at("upgrade back → you", .you)
+        } else {
+            state.go(.upgrade); await settle()
+            ok("free v1: no upgrade from you", state.screen == .you)
+            state.strictOn(days: 7, when: "all")
+            ok("free v1: strict mode turns on", state.strict.on)
+            state.strictAskOff(); state.strictOffNow()
+        }
         state.go(.creator); await settle()
         at("creator mode opens", .creator)
+        ok("creator mode is open to everyone (free v1)", state.hasPro || FeatureFlags.PAYMENTS)
         state.go(.you, dir: .back); await settle()
         state.go(.nighttime); await settle()
         var n = state.night; n.at = "20:30"
