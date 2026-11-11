@@ -32,6 +32,11 @@ nonisolated enum FeatureFlags {
     /// When Pro launches, early users keep everything free (APP_STORE.md).
     static let PAYMENTS = false
 
+    /// Buddy mode (invite codes, friends see mood + streak). Not in v1: it
+    /// has no server yet, so the friends would be fake. false → the You-tab
+    /// row, the buddies screen, its tour step and the paywall perk are gone.
+    static let BUDDIES = false
+
     #if DEBUG
     /// DEBUG only. true → every Pro feature, skin and theme is open for
     /// everyone, and the trial button lets you in even with no App Store

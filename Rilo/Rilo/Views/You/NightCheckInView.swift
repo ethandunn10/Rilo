@@ -107,7 +107,9 @@ struct NightCheckInView: View {
                 .disabled(thinking)
                 .opacity(thinking ? 0.5 : 1)
             } else {
+                #if DEBUG
                 demoFill
+                #endif
             }
         }
         .task(id: done) { await think() }

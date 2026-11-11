@@ -41,7 +41,7 @@ struct MeetRiloTourOverlay: View {
         Step(screen: .you, target: "you-strict", title: "Strict mode: 24 hours before anything loosens.", mood: "coach"),
         Step(screen: .you, target: "you-schedule", title: "Bedtime, school and focus times go here.", mood: "coach"),
         Step(screen: .you, target: "you-buddies", title: "Add a friend \u{2014} they see your streak, not your numbers.", mood: "wave"),
-    ]
+    ].filter { FeatureFlags.BUDDIES || $0.target != "you-buddies" }
 
     /// DEBUG -tourstep n: start on that step (screenshots)
     static var debugStep: Int {

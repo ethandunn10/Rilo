@@ -57,6 +57,7 @@ struct AppOpenView: View {
 
                 Spacer(minLength: 0)
 
+                #if DEBUG
                 Button { left = max(0, shownLeft - 5 * 60) } label: {
                     Text("demo: burn 5 min")
                         .font(.fredoka(17, 600))
@@ -66,6 +67,7 @@ struct AppOpenView: View {
                         .overlay(Capsule().strokeBorder(Color.white.opacity(0.3), lineWidth: 2))
                 }
                 .buttonStyle(.tap)
+                #endif
 
                 Button { finish(spent) } label: {
                     Text("close app")

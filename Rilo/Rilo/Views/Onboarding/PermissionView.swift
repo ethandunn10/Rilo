@@ -1,8 +1,14 @@
 import SwiftUI
 
-/// Port of app/src/screens/Permission.jsx. The real iOS Screen Time flow,
-/// faked: Rilo asks, "Apple's" alert appears, and the answer decides how
-/// honest the numbers downstream can be.
+/// Port of app/src/screens/Permission.jsx. Rilo asks, then "allow" asks iOS.
+///
+/// RELEASE: there is no look-alike alert (App Review rejects apps that imitate
+/// system alerts). "allow" calls `permissionAllow()`, which asks the Screen
+/// Time service: with FeatureFlags.REAL_SCREEN_TIME on that is Apple's real
+/// FamilyControls AuthorizationCenter prompt; with it off, the demo service
+/// just says yes and nothing pops up.
+/// DEBUG (demo Screen Time only): the old drawn copy of Apple's alert, for
+/// the web-demo look and screenshots.
 struct PermissionView: View {
     @Environment(AppState.self) private var state
     @State private var sheet = false
@@ -44,6 +50,7 @@ struct PermissionView: View {
             .blur(radius: sheet ? 3 : 0)
             .animation(.easeOut(duration: 0.25), value: sheet)
 
+            #if DEBUG
             if sheet {
                 SystemSheet(
                     onAllow: {
@@ -58,6 +65,7 @@ struct PermissionView: View {
                 )
                 .zIndex(30)
             }
+            #endif
         }
         .onAppear {
             #if DEBUG
@@ -73,17 +81,26 @@ struct PermissionView: View {
                 bigButton("try again") {
                     state.permissionTriedAgain()
                     denied = false
-                    sheet = true
+                    ask()
                 }
                 outlineButton("keep going without it") { state.permissionSkip() }
             } else {
-                bigButton("allow") { sheet = true }
+                bigButton("allow") { ask() }
                 outlineButton("don't allow") {
                     denied = true
                     state.permissionDeny()
                 }
             }
         }
+    }
+
+    /// "allow" / "try again": the drawn alert only in DEBUG with demo Screen
+    /// Time; everywhere else straight to the real request (permissionAllow)
+    private func ask() {
+        #if DEBUG
+        if !FeatureFlags.REAL_SCREEN_TIME { sheet = true; return }
+        #endif
+        state.permissionAllow()
     }
 
     private func bigButton(_ title: String, action: @escaping () -> Void) -> some View {
@@ -113,7 +130,8 @@ struct PermissionView: View {
     }
 }
 
-/// Apple's own alert, near enough: centred, blurred behind, two buttons
+#if DEBUG
+/// DEBUG ONLY. Apple's own alert, near enough: centred, blurred behind, two buttons
 /// split by a hairline. Not in Rilo's voice. Rilo points at "Continue".
 private struct SystemSheet: View {
     let onAllow: () -> Void
@@ -220,3 +238,4 @@ private struct SystemSheet: View {
         .accessibilityHidden(true)
     }
 }
+#endif

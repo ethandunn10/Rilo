@@ -168,7 +168,11 @@ struct CalendarConnectView: View {
                 .modifier(CalendarPanel())
             }
 
+            #if DEBUG
+            /* notes / reminders / google tasks / notion are pretend (nothing
+               is read), so they only exist in Debug builds */
             sourcesCard
+            #endif
 
             Spacer(minLength: 8)
 
@@ -220,7 +224,8 @@ struct CalendarConnectView: View {
                             .multilineTextAlignment(.center)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    /* DEMO ONLY: skip the system sheet entirely */
+                    #if DEBUG
+                    /* DEMO ONLY (Debug builds): skip the system sheet entirely */
                     Button { setCalendar(CalendarLink(on: true, which: AppState.DEMO_CALENDAR_NAME)) } label: {
                         Text("demo: connect a fake calendar")
                             .font(.fredoka(13, 600))
@@ -229,6 +234,7 @@ struct CalendarConnectView: View {
                             .padding(8)
                     }
                     .buttonStyle(.tap)
+                    #endif
                     Button { if let onSkip { onSkip() } else { state.go(.you, dir: .back) } } label: {
                         Text("not now")
                             .font(.fredoka(16, 600))

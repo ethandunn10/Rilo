@@ -254,6 +254,8 @@ final class AppState {
             if next == .upgrade { return }
             if next == .paywall { finishOnboardingFree(); return }
         }
+        /* buddy mode isn't in v1 */
+        if next == .buddies && !FeatureFlags.BUDDIES { return }
         if next == .upgrade { cameFrom = screen }
         goTo(next == .home && pendingSkin != nil ? .levelup : next, dir: dir)
     }

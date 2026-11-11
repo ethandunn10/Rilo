@@ -438,9 +438,8 @@ enum FlowCheck {
         state.startOver(); await settle()
         ok("start over → welcome, blank", state.screen == .welcome && state.name.isEmpty && state.planChoice == nil
            && Storage.loadState().name.isEmpty)
-        /* "i already have an account" with nothing set up: nothing may crash */
-        state.go(.home); await settle()
-        at("i already have an account → home", .home)
+        /* home with nothing set up: nothing may crash */
+        state.goTo(.home); await settle()
         _ = (state.riloMood, state.riloNote, state.back, state.check, state.goalLeft, state.currentApp,
              state.weekAhead, state.stepApp, state.suggestStrict)
         state.makeBreakdown(true)

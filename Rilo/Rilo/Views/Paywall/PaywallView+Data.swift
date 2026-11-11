@@ -13,7 +13,7 @@ extension PaywallView {
         Perk(title: "rilo checks in every night", sub: "thirty seconds before bed, and tomorrow is planned"),
         Perk(title: "all 23 rilos and every theme", sub: "a new one every level"),
         Perk(title: "buddy mode", sub: "a friend sees your mood and streak, never your numbers"),
-    ]
+    ].filter { FeatureFlags.BUDDIES || $0.title != "buddy mode" }
 
     /* Exactly what the free tier does. The limit system itself is not behind
        the paywall. Pro is more apps and more depth. */

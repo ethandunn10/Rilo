@@ -11,7 +11,8 @@ extension YouView {
         limitsCard.id("limits")
         goalCard.id("goal")
 
-        YouSection(title: "account").id("account")
+        /* v1 has no accounts: everything lives on the phone */
+        YouSection(title: "your data").id("account")
         replayCard
         /* "your plan" (Pro, change plan, restore purchases): payments only */
         if FeatureFlags.PAYMENTS { planCard }
@@ -229,7 +230,7 @@ extension YouView {
     /// Settings ▸ delete account: asks first, then AppState.deleteAccount()
     private var deleteAccountButton: some View {
         Button { confirmDelete = true } label: {
-            Text("delete account")
+            Text("delete all my data")
                 .font(.fredoka(18, 600))
                 .foregroundStyle(RC.ink)
                 .frame(maxWidth: .infinity)

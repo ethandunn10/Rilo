@@ -101,12 +101,12 @@ struct YouView: View {
             }
         }
         .sheet(isPresented: $showMemory) { MemoryView() }
-        .alert("Start over? This clears this tester\u{2019}s name, picks, xp and progress.",
+        .alert("Start over? This clears your name, picks, xp and progress.",
                isPresented: $confirmStartOver) {
             Button("Cancel", role: .cancel) {}
             Button("OK") { state.startOver() }
         }
-        .alert("Delete your account?", isPresented: $confirmDelete) {
+        .alert("Delete all your data?", isPresented: $confirmDelete) {
             Button("Cancel", role: .cancel) {}
             Button("Delete", role: .destructive) { state.deleteAccount() }
         } message: {

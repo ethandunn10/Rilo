@@ -66,14 +66,8 @@ struct WelcomeView: View {
     /* pinned: always reachable */
     private var pinned: some View {
         VStack(spacing: 8) {
+            /* v1 has no accounts, so there's no "i already have an account" */
             PillButton(title: "let's go") { state.go(.name) }
-            Button { state.go(.home) } label: {
-                Text("i already have an account")
-                    .font(.inter(15, 600))
-                    .foregroundStyle(.white)
-                    .padding(10)
-            }
-            .buttonStyle(.plainTap)
         }
         .padding(.top, 8)
         .padding(.horizontal, 24)
