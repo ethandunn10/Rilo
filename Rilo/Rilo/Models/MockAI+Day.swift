@@ -95,7 +95,7 @@ extension MockAI {
                 : hobby != nil ? "bored? you said you never get time for \(hobby!)."
                 : "bored is the one i can actually help with."
         } else if reason == "messages" {
-            lead = "messages, sure. that's thirty seconds, not \(app)."
+            lead = "messages, sure. that's thirty seconds, not \(Apps.name(app))."
         } else if reason == "something" {
             lead = "one thing, then out. you know how that usually goes."
         } else {

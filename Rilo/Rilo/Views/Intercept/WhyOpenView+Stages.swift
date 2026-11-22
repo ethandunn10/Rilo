@@ -110,7 +110,7 @@ struct WhyOpenPush: View {
 
             /* he argues once, then gets out of the way — readably */
             Button(action: onAnyway) {
-                Text("no, open \(app) anyway")
+                Text("no, open \(Apps.name(app)) anyway")
                     .font(.fredoka(16, 600))
                     .foregroundStyle(RC.ink)
                     .frame(maxWidth: .infinity, minHeight: 50)

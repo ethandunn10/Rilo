@@ -106,7 +106,7 @@ extension HomeView {
             HStack(alignment: .center, spacing: 12) {
                 AppLogo(label: label, size: 38, radius: 11)
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(label)
+                    AppName(app: label)
                         .font(.fredoka(17, 600))
                         .foregroundStyle(RC.ink)
                     if setting.mode == .limited {

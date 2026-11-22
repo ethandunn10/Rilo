@@ -137,7 +137,7 @@ struct YourPlanView: View {
                 let s = state.settingOf(app)
                 HStack(spacing: 10) {
                     AppLogo(label: app, size: 32, radius: 10)
-                    Text(app)
+                    AppName(app: app)
                         .font(.fredoka(16, 600))
                         .foregroundStyle(RC.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -151,7 +151,7 @@ struct YourPlanView: View {
                         .layoutPriority(1)
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("\(app): " + (s.mode == .limited
+                .accessibilityLabel("\(Apps.name(app)): " + (s.mode == .limited
                     ? A11ySpeak.text("\(Limits.fmtOpens(s.opens)) opens") + ", \(s.minutes) minutes each"
                     : s.mode == .blocked ? "blocked" : "no limit"))
             }

@@ -25,7 +25,7 @@ struct LimitCard: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 10) {
                 AppLogo(label: app, size: 38, radius: 12)
-                Text(app)
+                AppName(app: app)
                     .font(.fredoka(19, 600))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityAddTraits(.isHeader)

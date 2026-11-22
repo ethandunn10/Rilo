@@ -74,10 +74,10 @@ struct InterceptTop: View {
             default: return "you’re in a focus block"
             }
         }
-        if f.blocked { return "\(f.app) is blocked" }
+        if f.blocked { return "\(Apps.name(f.app)) is blocked" }
         if f.stuck { return "that’s it for today" }
         if !f.canSpend { return "out of opens for today" }
-        return "opening \(f.app)?"
+        return "opening \(Apps.name(f.app))?"
     }
 
     private var subline: String {
@@ -117,7 +117,7 @@ struct InterceptWays: View {
             if f.unlimited && f.openCount >= 3 {
                 Button { state.interceptLimitIt() } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("that's \(f.openCount) times today, and \(f.app) has no limit.")
+                        Text("that's \(f.openCount) times today, and \(Apps.name(f.app)) has no limit.")
                             .font(.fredoka(17, 600))
                             .foregroundStyle(RC.ink)
                         Text("want me to put one on it?")
@@ -155,7 +155,7 @@ struct InterceptWays: View {
             /* 3. borrow half an open off tomorrow (§6, normal mode only) */
             if f.canBorrow {
                 wide("borrow ½ open from tomorrow",
-                     sub: "tomorrow \(f.app) starts \(Limits.fmtOpens(Limits.BORROW_OPENS)) lower. once a day.",
+                     sub: "tomorrow \(Apps.name(f.app)) starts \(Limits.fmtOpens(Limits.BORROW_OPENS)) lower. once a day.",
                      dark: false) {
                     bypass = "borrow"
                 }

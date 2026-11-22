@@ -51,6 +51,21 @@ nonisolated enum Apps {
 
     static let FALLBACK_HEX = "#2E8B3E"
 
+    /// true when `key` is a real Screen Time pick ("app-1a2b3c4d"). Apple
+    /// hides the name behind it from Rilo, so never print the key itself.
+    /// (Only while the switch is on, so a demo app like "app-store" never counts.)
+    static func isHiddenName(_ key: String) -> Bool {
+        FeatureFlags.REAL_SCREEN_TIME && RiloTokens.looksLikeTokenKey(key)
+    }
+
+    /// An app's name for use inside a sentence. A real Screen Time pick
+    /// becomes "this app" / "those apps" instead of its code. For a name
+    /// on its own line, use `AppName` (it shows the real name).
+    static func name(_ key: String) -> String {
+        guard isHiddenName(key) else { return key }
+        return key.hasPrefix("cat-") ? "those apps" : "this app"
+    }
+
     static func appInfo(_ label: String) -> CatalogApp {
         if let found = APP_CATALOG.first(where: { $0.label == label }) {
             return CatalogApp(label: label, logo: found.logo, hex: found.logo?.hex ?? found.hex)

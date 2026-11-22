@@ -29,7 +29,7 @@ struct ShieldView: View {
                         /* kind, not mean, when the day is simply over (§7) */
                         RiloView(skin: state.chosenRilo, mood: locked ? "letdown" : "coach", size: 180, talks: true)
 
-                        Text(locked ? "rilo locked \(app)" : "\(app)?")
+                        Text(locked ? "rilo locked \(Apps.name(app))" : "\(Apps.name(app))?")
                             .accessibilityAddTraits(.isHeader)
                             .font(.fredoka(30, 700))
                             .webLineHeight(30, 1.15)
@@ -113,7 +113,7 @@ struct InterceptAppChip: View {
         HStack(spacing: 8) {
             AppLogo(label: app, size: 24, radius: 8)
                 .background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(.white))
-            Text(app)
+            AppName(app: app)
                 .font(.fredoka(14, 600))
                 .foregroundStyle(RC.ink)
         }

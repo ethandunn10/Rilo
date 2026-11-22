@@ -80,7 +80,8 @@ struct RiloAppLabel: View {
         } else if let token = RiloTokens.categoryToken(key, in: selection) {
             Label(token)
         } else {
-            Text(key)
+            /* no longer in the picked set: never show the raw "app-1a2b…" code */
+            Text(RiloTokens.looksLikeTokenKey(key) ? "an app you picked" : key)
         }
     }
 }

@@ -283,8 +283,8 @@ nonisolated enum Limits {
             return "your limits allow \(fmt(Double(check.allows))) a day. that fits under your \(fmt(Double(check.goal))) goal."
         }
         var fixes: [String] = []
-        if let b = check.biggestLimited { fixes.append("tighten \(b.app)") }
-        if let b = check.biggestFree { fixes.append("limit \(b.app) too") }
+        if let b = check.biggestLimited { fixes.append("tighten \(Apps.name(b.app))") }
+        if let b = check.biggestFree { fixes.append("limit \(Apps.name(b.app)) too") }
         let how = fixes.isEmpty ? "" : " \(fixes.joined(separator: ", or "))."
         return "your limits allow \(fmt(Double(check.allows))) a day, but your goal is \(fmt(Double(check.goal))).\(how)"
     }
@@ -323,7 +323,8 @@ nonisolated enum Limits {
     }
 
     /// "next week: tiktok goes to 12 min per open."
-    static func stepDownLine(_ app: String, _ step: StepDown?) -> String {
+    static func stepDownLine(_ key: String, _ step: StepDown?) -> String {
+        let app = Apps.name(key)
         guard let step else { return "" }
         return "next week: \(app) \(step.say)."
     }
@@ -349,7 +350,8 @@ nonisolated enum Limits {
         return false
     }
 
-    static func describeChange(_ app: String, _ prev: AppSetting?, _ next: AppSetting) -> String {
+    static func describeChange(_ key: String, _ prev: AppSetting?, _ next: AppSetting) -> String {
+        let app = Apps.name(key)
         if prev == nil || prev!.mode != next.mode {
             if next.mode == .limited { return "\(app) → limited · \(fmtOpens(next.opens)) × \(next.minutes) min" }
             return "\(app) → \(MODE_LABEL[next.mode]!)"
@@ -377,7 +379,8 @@ nonisolated enum Limits {
     }
 
     // MARK: 11. percentages: insight only
-    static func insightLine(_ app: String, _ pct: Int?) -> String {
+    static func insightLine(_ key: String, _ pct: Int?) -> String {
+        let app = Apps.name(key)
         guard let pct else { return "" }
         return "\(app) is \(pct)% of your screen time"
     }

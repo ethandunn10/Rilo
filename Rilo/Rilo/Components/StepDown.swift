@@ -116,7 +116,7 @@ struct StepDownCard: View {
                             Button { onSwap(other) } label: {
                                 HStack(spacing: 7) {
                                     AppLogo(label: other, size: 30, radius: 9)
-                                    Text(other).font(.fredoka(15, 600)).foregroundStyle(RC.ink)
+                                    AppName(app: other).font(.fredoka(15, 600)).foregroundStyle(RC.ink)
                                 }
                                 .padding(.leading, 5 + 2)
                                 .padding(.trailing, 13 + 2)

@@ -60,7 +60,7 @@ struct BreakdownBars: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             if !compact, let most = rows.first, breakdown.allowed {
-                Text("\(most.app)'s eating the most. we'll start there.")
+                Text("\(Apps.name(most.app))'s eating the most. we'll start there.")
                     .font(.fredoka(19, 600))
                     .webLineHeight(19, 1.3)
                     .foregroundStyle(RC.ink)
@@ -77,7 +77,7 @@ struct BreakdownBars: View {
                 } else {
                     Color.clear.frame(width: compact ? 24 : 28, height: 1)
                 }
-                Text(label)
+                Group { if logo { AppName(app: key) } else { Text(label) } }
                     .font(.fredoka(compact ? 15 : 17, 600))
                     .foregroundStyle(RC.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)

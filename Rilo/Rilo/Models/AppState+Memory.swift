@@ -99,8 +99,10 @@ extension AppState {
         if bedtime.on { out.append("bedtime: \(Addons.fmtClock(bedtime.from)), up at \(Addons.fmtClock(bedtime.to)).") }
 
         out.append("daily screen time goal: \(goalMins) min. used so far today: \(Int(usedTotalToday.rounded())) min.")
-        let apps = tracked.prefix(8).map { app -> String in
-            let s = settingOf(app)
+        let apps = tracked.prefix(8).enumerated().map { i, key -> String in
+            let s = settingOf(key)
+            /* a real Screen Time pick hides its name: number it, never print the code */
+            let app = Apps.isHiddenName(key) ? "app \(i + 1)" : key
             switch s.mode {
             case .limited: return "\(app) (\(JS.num(s.opens)) opens × \(s.minutes) min)"
             default: return "\(app) (\(s.mode.rawValue))"

@@ -30,9 +30,9 @@ struct AppOpenView: View {
                 AppLogo(label: app, size: 64, radius: 16)
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white))
 
-                Text("\(app) · \(clock) left")
+                Text("\(Apps.name(app)) · \(clock) left")
                     .accessibilityAddTraits(.isHeader)
-                    .accessibilityLabel("\(app), \(Int(shownLeft / 60)) minutes \(Int(shownLeft.truncatingRemainder(dividingBy: 60))) seconds left")
+                    .accessibilityLabel("\(Apps.name(app)), \(Int(shownLeft / 60)) minutes \(Int(shownLeft.truncatingRemainder(dividingBy: 60))) seconds left")
                     .font(.fredoka(30, 600))
                     .monospacedDigit()
 

@@ -29,7 +29,7 @@ extension HomeView {
             HomeToast(fill: Color.white.opacity(0.9), action: { state.savedNote = nil }) {
                 RiloView(skin: state.chosenRilo, mood: "proud", size: 58)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("you shut \(saved.app) \(saved.mins) min early.")
+                    Text("you shut \(Apps.name(saved.app)) \(saved.mins) min early.")
                         .font(.fredoka(17, 600))
                         .webLineHeight(17, 1.2)
                     Text("that's still yours today.")
