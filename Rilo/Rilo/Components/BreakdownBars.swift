@@ -92,7 +92,7 @@ struct BreakdownBars: View {
         }
         /* one line per bar: "TikTok, 1 hour 20 minutes, 42 percent" */
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(label)
+        .accessibilityLabel(Apps.name(label))
         .accessibilityValue(A11ySpeak.mins(mins) + (pct.map { ", \($0) percent" } ?? ""))
     }
 }

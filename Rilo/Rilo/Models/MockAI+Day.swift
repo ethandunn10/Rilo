@@ -200,7 +200,9 @@ extension MockAI {
     /// The night before a test the apps go away; practices and shifts become blocks.
     static func calendarPlan(_ events: [CalendarEvent], apps: [String] = ["tiktok"]) -> [CalendarPlanItem] {
         var out: [CalendarPlanItem] = []
-        let first = apps.first ?? "undefined"
+        let firstKey = apps.first ?? "undefined"
+        /* a real Screen Time pick hides its name: say "your top app" instead */
+        let first = Apps.isHiddenName(firstKey) ? "your top app" : firstKey
         for e in events {
             if e.kind == "test" {
                 let i = DAY_ORDER.firstIndex(of: e.day) ?? -1

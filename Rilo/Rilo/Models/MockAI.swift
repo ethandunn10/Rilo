@@ -209,7 +209,9 @@ nonisolated enum MockAI {
 
         var lead: [String] = []
         if let biggest = ordered.first(where: { !Limits.DEFAULT_ALWAYS.contains($0) }) {
-            lead.append("\(biggest) is where most of it goes, so that's where i started.")
+            /* a real Screen Time pick hides its name: say "your top app" instead */
+            let who = Apps.isHiddenName(biggest) ? "your top app" : biggest
+            lead.append("\(who) is where most of it goes, so that's where i started.")
         }
         if let h = hobbies.first { lead.append("when you want to scroll, i'll point you at \(h).") }
         if let g = goals.first { lead.append("you said \(g). this is the part you control.") }

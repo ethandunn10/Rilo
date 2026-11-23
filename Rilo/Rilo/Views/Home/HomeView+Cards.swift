@@ -124,7 +124,7 @@ extension HomeView {
         }
         .buttonStyle(.tap)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("open \(label)")
+        .accessibilityLabel("open \(Apps.name(label))")
         .accessibilityValue(setting.mode == .limited
             ? (locked ? "no opens left" : Opens.spoken(max(0, total - used), setting.minutes))
             : setting.mode == .blocked ? "blocked" : "free, counts toward your day")
