@@ -80,6 +80,9 @@ final class AppleSpeechInput: SpeechInput {
         do {
             try begin()
         } catch {
+            /* on-device recognition went away: hide the mic, typing only
+               (never fall back to Apple's servers) */
+            if !recognizer.supportsOnDeviceRecognition { isAvailable = false }
             deliver()
         }
     }
