@@ -6,7 +6,7 @@ extension PaywallView {
     struct PlanRow { let id: String; let name: String; let sub: String; let price: String }
 
     static let PERKS: [Perk] = [
-        Perk(title: "unlimited apps", sub: "free watches 3"),
+        Perk(title: "unlimited apps", sub: "free covers 3"),
         Perk(title: "strict mode", sub: "no half opens, 24 hours to loosen anything"),
         Perk(title: "where your time goes", sub: "the per-app breakdown and your trends"),
         Perk(title: "the weekly step-down", sub: "one thing tightens each week"),
@@ -18,7 +18,7 @@ extension PaywallView {
     /* Exactly what the free tier does. The limit system itself is not behind
        the paywall. Pro is more apps and more depth. */
     static let FREE_BITS: [String] = [
-        "watches up to 3 apps",
+        "helps with up to 3 apps",
         "opens in halves, with the wait and the \"what are you opening this for?\"",
         "rilo's plan, and something to do instead",
         "your daily goal, your streak and your screen-time number",

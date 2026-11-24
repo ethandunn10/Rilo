@@ -103,7 +103,7 @@ extension DemoPanelOverlay {
                 note("\(app) is \(setting?.mode.rawValue ?? ""). only a limited app spends opens — set one on the limits screen to test halves.")
             }
         } else {
-            note("no apps tracked yet. pick some on the you tab.")
+            note("no apps picked yet. pick some on the you tab.")
         }
     }
 

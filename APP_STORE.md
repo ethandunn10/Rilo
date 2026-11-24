@@ -46,7 +46,7 @@ A BUDDY, NOT A BOSS
 
 FOR WHEN YOU MEAN IT
 • Strict mode: no half opens, no borrowing, and a 24-hour wait before you can loosen anything. Getting stricter is always instant.
-• Creator Mode: posting isn't scrolling. Say what you're there to post and for how long, and Rilo tracks it separately.
+• Creator Mode: posting isn't scrolling. Say what you're there to post and for how long, and Rilo counts it separately.
 
 PRIVATE BY DESIGN
 Everything Rilo knows stays on your phone. No accounts, no ads, no tracking. The mic is only on while you hold the talk button, and your words are turned into text on your phone.

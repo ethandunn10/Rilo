@@ -14,7 +14,7 @@ extension YouView {
         scrollWhenCard.id("scroll")
         memoryCard.id("memory")
 
-        YouSection(title: "what rilo watches")
+        YouSection(title: "your apps with rilo")
         appsCard
 
         YouSection(title: "when rilo steps in")
@@ -69,7 +69,7 @@ extension YouView {
     private var appsCard: some View {
         @Bindable var s = state
         return VStack(alignment: .leading, spacing: 10) {
-            Text("apps rilo watches").font(.fredoka(19, 600))
+            Text("apps you picked").font(.fredoka(19, 600))
                 .accessibilityAddTraits(.isHeader)
             /* real Screen Time (FeatureFlags.REAL_SCREEN_TIME): Apple's picker */
             if ScreenTime.isReal(state.screenTimeService) {

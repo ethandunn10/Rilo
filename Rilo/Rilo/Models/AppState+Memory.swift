@@ -108,7 +108,7 @@ extension AppState {
             default: return "\(app) (\(s.mode.rawValue))"
             }
         }
-        if !apps.isEmpty { out.append("apps rilo watches: \(apps.joined(separator: ", ")).") }
+        if !apps.isEmpty { out.append("apps the user picked: \(apps.joined(separator: ", ")).") }
 
         let week = calendarWeek.prefix(12).map { "\($0.day) \(Addons.fmtClock($0.at)) \($0.title)" }
         if !week.isEmpty { out.append("calendar, next 7 days: \(week.joined(separator: "; ")).") }

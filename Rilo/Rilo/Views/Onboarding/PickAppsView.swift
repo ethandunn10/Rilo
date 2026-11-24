@@ -41,7 +41,7 @@ struct PickAppsView: View {
 
                         Text(picked
                              ? "rilo uses apple's screen time to see when you open these."
-                             : "pick at least one for rilo to watch.")
+                             : "pick at least one app to get help with.")
                             .font(.inter(13, 600))
                             .webLineHeight(13, 1.45)
                             .foregroundStyle(RC.ink2)

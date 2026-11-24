@@ -156,7 +156,7 @@ struct ShareCardImage: View {
             line("\(streak) day streak", 1400, 76)
             line("level \(level)", 1500, 64, 600, RC.ink2)
             line("\(Plan.fmtMins(total)) back in total", 1620, 56, 600, RC.ink2)
-            line("tryrilo.vercel.app", 1800, 44, 600, Color(hex: "#3D5A46"))
+            line("rilo.one", 1800, 44, 600, Color(hex: "#3D5A46"))
         }
         .frame(width: Self.W, height: Self.H)
     }

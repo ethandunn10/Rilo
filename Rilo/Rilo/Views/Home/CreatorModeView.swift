@@ -110,7 +110,7 @@ struct CreatorModeView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text("today: \(JS.num(state.creatorTodayMinutes)) Creator minutes")
                     .font(.fredoka(18, 600))
-                Text("tracked separately from your daily goal")
+                Text("counted separately from your daily goal")
                     .font(.inter(12, 500))
                     .foregroundStyle(RC.ink3)
             }
