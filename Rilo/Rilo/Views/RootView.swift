@@ -56,7 +56,8 @@ struct RootView: View {
         case .limits: LimitsView()
         /* the blocked-app pop-up and its reasons */
         case .shield: ShieldView()
-        case .appopen: AppOpenView()
+        /* real Screen Time: the real app is open, not Rilo's pretend one */
+        case .appopen: if state.realScreenTime { RealSessionView() } else { AppOpenView() }
         case .intercept: InterceptView()
         case .whyopen: WhyOpenView()
         case .suggestion: SuggestionView()

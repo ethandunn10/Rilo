@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 
 /// Phase 8: where AppState talks to the phone's Screen Time, through the one
 /// seam `ScreenTimeService` (Services/ScreenTimeService.swift). With the demo
@@ -44,12 +45,17 @@ extension AppState {
     /// Start a session: the shield comes down for its length, then the
     /// timer screen. (Every `session = …; goTo(.appopen)` goes through here.)
     func beginAppSession(_ s: Session) {
+        var s = s
+        s.startedAt = JS.nowMs
         session = s
         if let app = s.app {
-            screenTimeService.startSession(ScreenTimeSession(app: app, minutes: s.cap, kind: s.kind, startedAt: JS.nowMs))
+            screenTimeService.startSession(ScreenTimeSession(app: app, minutes: s.cap, kind: s.kind, startedAt: s.startedAt))
         }
         goToSoon(.appopen)
     }
+
+    /// true when Rilo is really blocking (not the DEBUG demo)
+    var realScreenTime: Bool { ScreenTime.isReal(screenTimeService) }
 
     // MARK: things that happened while Rilo wasn't on screen
 
@@ -87,5 +93,26 @@ extension AppState {
             let answer = await service.requestAuthorization()
             if answer == .denied { self?.screenTime = false; track("screentime", "denied by ios") }
         }
+    }
+}
+
+// MARK: - back into the real app
+
+extension AppState {
+    /// is there a URL to send them straight back into this app?
+    func canReopen(_ app: String) -> Bool { !AppMatch.urls(for: AppMatch.name(for: app)).isEmpty }
+
+    /// Open the real app (its URL scheme). Tries each known scheme in turn;
+    /// apps with none just stay on Rilo's session screen, which says to
+    /// open it from the home screen.
+    func reopenApp(_ app: String) {
+        let urls = AppMatch.urls(for: AppMatch.name(for: app))
+        func attempt(_ i: Int) {
+            guard i < urls.count else { track("session", "no url worked for \(Apps.name(app))"); return }
+            UIApplication.shared.open(urls[i]) { ok in
+                if !ok { Task { @MainActor in attempt(i + 1) } }
+            }
+        }
+        attempt(0)
     }
 }

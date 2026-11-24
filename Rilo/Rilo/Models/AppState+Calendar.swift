@@ -10,7 +10,12 @@ extension AppState {
     /// the events every calendar reader plans around
     var calendarWeek: [CalendarEvent] {
         guard calendar.on else { return [] }
-        if calendarService.isDemo || calendar.which == Self.DEMO_CALENDAR_NAME { return MockAI.DEMO_CALENDAR }
+        if calendarService.isDemo { return MockAI.DEMO_CALENDAR }
+        if calendar.which == Self.DEMO_CALENDAR_NAME {
+            /* a fake calendar saved during DEBUG demo testing never shows
+               fake events with real Screen Time */
+            return realScreenTime ? [] : MockAI.DEMO_CALENDAR
+        }
         return calendarEvents
     }
 

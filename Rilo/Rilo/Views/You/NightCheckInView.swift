@@ -108,7 +108,7 @@ struct NightCheckInView: View {
                 .opacity(thinking ? 0.5 : 1)
             } else {
                 #if DEBUG
-                demoFill
+                if !state.realScreenTime { demoFill }
                 #endif
             }
         }

@@ -18,7 +18,8 @@ extension YouView {
         appsCard
 
         YouSection(title: "when rilo steps in")
-        creatorCard
+        /* Creator Mode is a pretend Instagram: demo Screen Time only */
+        if !state.realScreenTime { creatorCard }
         /* bedtime + school (rilo-addons-test) */
         ScheduleCard(bedtime: $s.bedtime, school: $s.school, focus: $s.focus)
             .youCard(0.22)

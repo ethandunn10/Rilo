@@ -20,13 +20,16 @@ extension DemoPanelOverlay {
                 .padding(.top, 4)
 
             DemoScreenTimeToggle()
-            simulate
-            waysThrough
-            strictSection
-            skipAhead
-            usage
-            timeOfDay
-            firstWeek
+            /* real Screen Time: nothing here may fake opens, usage or time */
+            if !state.realScreenTime {
+                simulate
+                waysThrough
+                strictSection
+                skipAhead
+                usage
+                timeOfDay
+                firstWeek
+            }
             jumpTo
 
             label("start clean")

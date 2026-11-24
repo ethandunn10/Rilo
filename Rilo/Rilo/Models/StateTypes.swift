@@ -222,6 +222,9 @@ nonisolated struct Session: Equatable, Sendable {
     var kind = "open"
     /// the app's per-open length
     var minutes = 15
+    /// ms since 1970 when the shield came down (real Screen Time's
+    /// "go ahead" screen counts the wall clock from here)
+    var startedAt: Double = 0
 }
 
 /// "you closed 7 min early" — shown on Home once

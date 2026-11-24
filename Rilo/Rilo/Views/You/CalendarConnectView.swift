@@ -225,7 +225,8 @@ struct CalendarConnectView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     #if DEBUG
-                    /* DEMO ONLY (Debug builds): skip the system sheet entirely */
+                    /* DEMO ONLY (Debug builds, demo Screen Time): skip the system sheet entirely */
+                    if !state.realScreenTime {
                     Button { setCalendar(CalendarLink(on: true, which: AppState.DEMO_CALENDAR_NAME)) } label: {
                         Text("demo: connect a fake calendar")
                             .font(.fredoka(13, 600))
@@ -234,6 +235,7 @@ struct CalendarConnectView: View {
                             .padding(8)
                     }
                     .buttonStyle(.tap)
+                    }
                     #endif
                     Button { if let onSkip { onSkip() } else { state.go(.you, dir: .back) } } label: {
                         Text("not now")

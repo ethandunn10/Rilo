@@ -63,6 +63,8 @@ nonisolated enum Apps {
     /// on its own line, use `AppName` (it shows the real name).
     static func name(_ key: String) -> String {
         guard isHiddenName(key) else { return key }
+        /* what the user told Rilo this app is (AppMatch), if they did */
+        if let said = AppMatch.name(for: key) { return said }
         return key.hasPrefix("cat-") ? "those apps" : "this app"
     }
 

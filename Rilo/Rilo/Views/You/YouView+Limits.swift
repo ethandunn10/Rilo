@@ -20,14 +20,16 @@ extension YouView {
         deleteAccountButton
 
         #if DEBUG
-        /* DEBUG only (not in TestFlight / App Store builds): lets a tester
-           see level-ups without waiting weeks */
+        /* DEBUG only (not in TestFlight / App Store builds), and only with
+           demo Screen Time: lets a tester see level-ups without waiting weeks */
+        if !state.realScreenTime {
         YouSection(title: "demo")
         YouDemoButton(title: "demo: +500 xp") { state.demoXp(500) }
         YouDemoButton(title: "demo: +5,000 xp") { state.demoXp(5000) }
         YouDemoButton(title: "demo: next day") { state.endDay(forceOver: false) }
         YouDemoButton(title: "demo: next day (went over)") { state.endDay(forceOver: true) }
         YouDemoButton(title: "demo: next week") { state.runWeek() }
+        }
         #endif
     }
 
