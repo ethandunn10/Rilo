@@ -45,32 +45,70 @@ nonisolated final class ShieldConfigurationExtension: ShieldConfigurationDataSou
     /// Apple lets a shield set: the background colour and blur, one icon,
     /// the title and subtitle (text + colour), and two buttons' labels and
     /// colours. Nothing else: no fonts, no layout, no icon size, no extra
-    /// buttons, and the buttons can't open Rilo (ShieldActionExtension
-    /// sends a notification instead).
+    /// buttons, and it can't tick by itself. Every colour is set here (a
+    /// default one turns white in dark mode).
+    ///
+    /// Can open: "hey. instagram again?" / "2 opens left today · 10 min each"
+    ///   / "open instagram (5s)" / "never mind". After the first tap the
+    ///   shield is redrawn with the seconds left ("hold on. 5 seconds."),
+    ///   then "open instagram" once the wait is over (ShieldActionExtension).
+    /// Locked (no opens, blocked, bedtime / school / focus): "talk to rilo",
+    ///   which opens Rilo's check-in.
     private func make(name: String, key: String?) -> ShieldConfiguration {
         let app = name.lowercased()
         let rules = RiloShared.rules
         let rule = key.flatMap { rules.apps[$0] }
         let kicked = key.map { RiloShared.kicked.contains($0) } ?? false
         let lockKind = rules.scheduleKind ?? rule?.lockKind
-        let locked = lockKind != nil
+        let canOpen = Self.canOpen(rules, rule)
+        let wait = RiloShared.waitSeconds(rule, strict: rules.strict)
+        let left = canOpen ? key.flatMap { RiloShared.waitLeft($0, rule, strict: rules.strict) } : nil
 
         let skin = RiloShared.widget?.skin ?? "original"
-        let mood = locked || kicked ? "letdown" : "coach"
+        let mood = !canOpen || kicked ? "letdown" : "coach"
         /* the square, trimmed panda (Assets rilo-shield-*): as big as the
            shield's fixed icon box allows */
         let icon = UIImage(named: "rilo-shield-\(skin)-\(mood)") ?? UIImage(named: "rilo-shield-original-\(mood)")
             ?? UIImage(named: "rilo-original-\(mood)")
 
+        let title: String
+        let subtitle: String
+        let primary: String
+        if !canOpen {
+            let why = lockKind ?? (rule?.mode == "blocked" ? "blocked" : "noopens")
+            title = Self.title(app: app, lockKind: why, kicked: kicked)
+            subtitle = Self.subtitle(rules: rules, rule: rule, lockKind: why, kicked: kicked)
+            primary = "talk to rilo"
+        } else if let left, left > 0 {
+            title = "hold on. \(left) \(left == 1 ? "second" : "seconds")."
+            subtitle = "take a breath. tap open when it's up.\n\(Self.opensText(rule?.opensLeft ?? 0, rule?.minutesPerOpen ?? 0))"
+            primary = "open \(app) (\(left)s)"
+        } else if left == 0 {
+            title = "okay. \(app) is yours."
+            subtitle = Self.opensText(rule?.opensLeft ?? 0, rule?.minutesPerOpen ?? 0)
+            primary = "open \(app)"
+        } else {
+            title = Self.title(app: app, lockKind: nil, kicked: kicked)
+            subtitle = Self.opensText(rule?.opensLeft ?? 0, rule?.minutesPerOpen ?? 0)
+            primary = "open \(app) (\(wait)s)"
+        }
+
         return ShieldConfiguration(
             backgroundBlurStyle: nil,
             backgroundColor: Self.cream,
             icon: icon,
-            title: .init(text: Self.title(app: app, lockKind: lockKind, kicked: kicked), color: Self.ink),
-            subtitle: .init(text: Self.subtitle(rules: rules, rule: rule, lockKind: lockKind, kicked: kicked), color: Self.ink2),
-            primaryButtonLabel: .init(text: "talk to rilo", color: .white),
+            title: .init(text: title, color: Self.ink),
+            subtitle: .init(text: subtitle, color: Self.ink2),
+            primaryButtonLabel: .init(text: primary, color: .white),
             primaryButtonBackgroundColor: Self.green,
             secondaryButtonLabel: .init(text: "never mind", color: Self.ink))
+    }
+
+    /// same rule as ShieldActionExtension.canOpen: a Limited app with an
+    /// open left and no lock or schedule
+    static func canOpen(_ rules: SharedRules, _ rule: SharedApp?) -> Bool {
+        guard let rule, rules.scheduleKind == nil, rule.lockKind == nil else { return false }
+        return rule.mode == "limited" && rule.opensLeft > 0
     }
 
     static func title(app: String, lockKind: String?, kicked: Bool) -> String {
@@ -89,15 +127,12 @@ nonisolated final class ShieldConfigurationExtension: ShieldConfigurationDataSou
         switch lockKind {
         case "blocked": return "talk to rilo if it's an emergency."
         case "noopens", "halfstranded": return "fresh opens at midnight.\ntalk to rilo about your emergency pass."
-        default: break
+        default: return "talk to rilo first."
         }
-        guard let rule, rule.mode == "limited" else { return "talk to rilo first." }
-        let left = opensText(rule.opensLeft, rule.minutesPerOpen)
-        return kicked ? "\(left)\ntalk to rilo to go again." : "\(left)\ntalk to rilo first."
     }
 
     /// Limits.opensText ("2½ opens left today · 15 min each")
-    private static func opensText(_ left: Double, _ minutes: Int) -> String {
+    static func opensText(_ left: Double, _ minutes: Int) -> String {
         if left <= 0 { return "no opens left today" }
         if left == 0.5 { return "½ an open left today · \(minutes) min" }
         let whole = Int(left)

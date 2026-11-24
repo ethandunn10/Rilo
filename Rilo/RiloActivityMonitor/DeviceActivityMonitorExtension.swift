@@ -87,6 +87,9 @@ nonisolated final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         else { minutes = min(1, s.minutes / 2) }
 
         RiloShared.session = nil
+        /* the Live Activity's timer goes stale on its own at the end time;
+           also try to take it down now (iOS may not let an extension) */
+        RiloLiveActivity.endAll()
         /* shield it now even if the automation does its check-ins: that's
            the only way to get them out of the app (the app lifts it again
            when they check in) */

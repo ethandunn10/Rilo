@@ -112,37 +112,11 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
                                    startedAt: session.startedAt)
         RiloShared.session = shared
         shieldNow()
-        activity.stopMonitoring([.riloSession])
-        if session.kind == "always" { return }
-
-        let sel = RiloTokens.selection
-        let apps: Set<ApplicationToken> = RiloTokens.appToken(session.app, in: sel).map { [$0] } ?? []
-        let cats: Set<ActivityCategoryToken> = RiloTokens.categoryToken(session.app, in: sel).map { [$0] } ?? []
-        guard !apps.isEmpty || !cats.isEmpty else { return }
-
-        func usage(_ minutes: Double) -> DateComponents {
-            let secs = max(60, Int((minutes * 60).rounded()))
-            return DateComponents(minute: secs / 60, second: secs % 60)
-        }
-        var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [
-            .riloTimeUp: DeviceActivityEvent(applications: apps, categories: cats, webDomains: [],
-                                            threshold: usage(session.minutes)),
-        ]
-        /* strict mode has no halves, so no half-way marker */
-        if !RiloShared.rules.strict && session.kind == "open" {
-            events[.riloHalf] = DeviceActivityEvent(applications: apps, categories: cats, webDomains: [],
-                                                    threshold: usage(session.minutes / 2))
-        }
-
-        let cal = Calendar.current
-        let start = Date()
-        let end = start.addingTimeInterval(RiloShared.windowMinutes(for: session.minutes) * 60)
-        let parts: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
-        let schedule = DeviceActivitySchedule(intervalStart: cal.dateComponents(parts, from: start),
-                                              intervalEnd: cal.dateComponents(parts, from: end),
-                                              repeats: false)
+        if session.kind == "always" { activity.stopMonitoring([.riloSession]); return }
         do {
-            try activity.startMonitoring(.riloSession, during: schedule, events: events)
+            try RiloTokens.startSessionMonitoring(shared, center: activity)
+            /* Rilo is on screen, so iOS lets it start the Live Activity */
+            RiloLiveActivity.start(shared, from: "app")
         } catch {
             /* can't watch it: shield it again straight away rather than leave it open */
             track("screentime", "session monitor failed: \(error.localizedDescription)")
@@ -158,6 +132,7 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
             if minutesUsed > 0 { RiloShared.addUsage(app: app, minutes: minutesUsed) }
         }
         activity.stopMonitoring([.riloSession])
+        RiloLiveActivity.endAll()
         shieldNow()
     }
 
@@ -207,6 +182,7 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
             case "sessionEnded": return .sessionEnded(app: e.app, minutes: e.minutes)
             case "shieldNeverMind": return .shieldNeverMind(app: e.app)
             case "automationMissing": return .automationMissing(app: e.app)
+            case "shieldUnlocked": return .shieldUnlocked(app: e.app, minutes: e.minutes, at: e.at)
             default: return nil
             }
         }

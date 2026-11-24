@@ -141,6 +141,10 @@ nonisolated enum ScreenTimeEvent: Equatable, Sendable {
     /// an app whose check-in was the Shortcuts automation got used with no
     /// check-in: the automation is gone, so it's back on the shield
     case automationMissing(app: String)
+    /// the shield's own "open <app>" after its countdown: the shield is
+    /// already down and iOS's timer is running. Rilo records the session
+    /// (`at` = when it started) and counts the open.
+    case shieldUnlocked(app: String, minutes: Double, at: Double)
 }
 
 // MARK: - the demo (DEBUG only: never in TestFlight / App Store builds)

@@ -15,9 +15,8 @@ extension AppState {
             /* a save from before Phase 7 has no screen */
             return saved.planChoice != nil ? .home : .welcome
         }
-        /* the app-matching and Shortcuts steps also come up from the You
-           tab, so they aren't in Screen.onboarding: mid-onboarding, resume there */
-        if saved.planChoice == nil && (s == .matchapps || s == .automation) { return s }
+        /* the old Shortcuts / matching onboarding steps: on to the hours question */
+        if saved.planChoice == nil && (s == .matchapps || s == .automation) { return .hours }
         return Screen.onboarding.contains(s) ? s : .home
     }
 
@@ -100,6 +99,8 @@ extension AppState {
         if realScreenTime { RiloShared.kicked = [] }
         syncScreenTime(force: true)
         handleScreenTimeEvents()
+        /* the Live Activity (or anything else) opened Rilo mid-open */
+        showRunningShieldSession()
         /* the calendar may have changed while away */
         reloadCalendar()
     }

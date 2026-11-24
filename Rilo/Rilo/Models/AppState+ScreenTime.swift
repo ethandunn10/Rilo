@@ -93,6 +93,16 @@ extension AppState {
                 Automation.turnOff(app)
                 track("automation", "missing for an app: back on the shield")
                 syncScreenTime(force: true)
+            case .shieldUnlocked(let app, let minutes, let at):
+                /* the shield's own "open" after its countdown: the shield is
+                   down and iOS's timer runs. Rilo records the session (so
+                   the relock screen, Home and the charge at the end all see
+                   it) and counts the open. */
+                guard onboarded, tracked.contains(app) else { break }
+                countOpen(app)
+                session = Session(app: app, cap: minutes, carried: 0, charged: 0, kind: "open",
+                                  minutes: Int(minutes.rounded()), startedAt: at)
+                track("shield", "unlocked after the wait")
             case .shieldNeverMind(let app):
                 if onboarded && tracked.contains(app) {
                     interceptReason("never mind")
@@ -100,6 +110,21 @@ extension AppState {
                 }
             }
         }
+    }
+
+    /// Real Screen Time: an open the shield unlocked is still running. Show
+    /// the relock screen ("done? relock it") and make sure its Live
+    /// Activity is up (iOS only lets Rilo start one while it's on screen,
+    /// so if the shield couldn't, it starts here).
+    func showRunningShieldSession() {
+        guard realScreenTime, onboarded, let s = RiloShared.session, s.kind == "open",
+              tracked.contains(s.app), JS.nowMs < s.startedAt + s.minutes * 60_000 else { return }
+        if session.app != s.app || session.startedAt <= 0 {
+            session = Session(app: s.app, cap: s.minutes, carried: 0, charged: 0, kind: "open",
+                              minutes: Int(s.minutes.rounded()), startedAt: s.startedAt)
+        }
+        if !RiloLiveActivity.running { RiloLiveActivity.start(s, from: "app") }
+        if screen != .appopen { jump(to: .appopen) }
     }
 
     /// The real shield's button → Rilo's notification → here. Same as the

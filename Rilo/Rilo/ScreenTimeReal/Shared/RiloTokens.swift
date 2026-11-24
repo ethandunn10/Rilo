@@ -99,6 +99,78 @@ nonisolated enum RiloTokens {
     }
 }
 
+// MARK: - sessions (the app AND the shield's button start them)
+
+extension RiloTokens {
+    /// Watch one session with iOS's own timer: thresholds at half its
+    /// minutes (opens are charged in halves) and all of them (time's up →
+    /// DeviceActivityMonitorExtension shields it again), inside a window a
+    /// little longer than the session (leaving early closes the window).
+    nonisolated static func startSessionMonitoring(_ s: SharedSession, center: DeviceActivityCenter = DeviceActivityCenter()) throws {
+        center.stopMonitoring([.riloSession])
+        if s.kind == "always" { return }
+        let sel = selection
+        let apps: Set<ApplicationToken> = appToken(s.app, in: sel).map { [$0] } ?? []
+        let cats: Set<ActivityCategoryToken> = categoryToken(s.app, in: sel).map { [$0] } ?? []
+        guard !apps.isEmpty || !cats.isEmpty else { return }
+
+        func usage(_ minutes: Double) -> DateComponents {
+            let secs = max(60, Int((minutes * 60).rounded()))
+            return DateComponents(minute: secs / 60, second: secs % 60)
+        }
+        var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [
+            .riloTimeUp: DeviceActivityEvent(applications: apps, categories: cats, webDomains: [],
+                                            threshold: usage(s.minutes)),
+        ]
+        /* strict mode has no halves, so no half-way marker */
+        if !RiloShared.rules.strict && s.kind == "open" {
+            events[.riloHalf] = DeviceActivityEvent(applications: apps, categories: cats, webDomains: [],
+                                                    threshold: usage(s.minutes / 2))
+        }
+        let cal = Calendar.current
+        let start = Date(timeIntervalSince1970: s.startedAt / 1000)
+        let end = start.addingTimeInterval(RiloShared.windowMinutes(for: s.minutes) * 60)
+        let parts: Set<Calendar.Component> = [.year, .month, .day, .hour, .minute, .second]
+        let schedule = DeviceActivitySchedule(intervalStart: cal.dateComponents(parts, from: start),
+                                              intervalEnd: cal.dateComponents(parts, from: end),
+                                              repeats: false)
+        try center.startMonitoring(.riloSession, during: schedule, events: events)
+    }
+
+    /// The shield's "open instagram" after the wait: lift the shield on this
+    /// one app for one open (or half, if that's all that's left), start
+    /// iOS's timer, count the open, and tell Rilo. nil = can't (no opens, or
+    /// iOS wouldn't start the timer, in which case the shield stays up).
+    nonisolated static func unlockFromShield(_ key: String, store: ManagedSettingsStore) -> SharedSession? {
+        var rules = RiloShared.rules
+        guard var rule = rules.apps[key], rule.opensLeft > 0 else { return nil }
+        let now = RiloShared.nowMs
+        /* another app's session was running: it ends here, charged so far */
+        if let old = RiloShared.session, old.app != key {
+            let used = min(old.minutes, max(0, (now - old.startedAt) / 60_000))
+            RiloShared.addUsage(app: old.app, minutes: used)
+            RiloShared.post(SharedEvent(kind: "sessionEnded", app: old.app, minutes: used, at: now))
+        }
+        let half = rule.opensLeft < 1
+        let minutes = Double(rule.minutesPerOpen) * (half ? 0.5 : 1)
+        let s = SharedSession(app: key, kind: "open", minutes: minutes, startedAt: now, fromShield: true)
+        do {
+            try startSessionMonitoring(s)
+        } catch {
+            return nil
+        }
+        /* the shield's copy of the count, until Rilo opens and redoes it */
+        rule.opensLeft = max(0, rule.opensLeft - (half ? 0.5 : 1))
+        rules.apps[key] = rule
+        RiloShared.rules = rules
+        RiloShared.session = s
+        RiloShared.kicked.remove(key)
+        applyShields(rules: rules, session: s, store: store)
+        RiloShared.post(SharedEvent(kind: "shieldUnlocked", app: key, minutes: minutes, at: now))
+        return s
+    }
+}
+
 extension ManagedSettingsStore.Name {
     /// Rilo's own store (so nothing else's settings get cleared)
     nonisolated static var rilo: Self { Self("rilo") }

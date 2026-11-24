@@ -120,5 +120,8 @@ struct RiloWidget: Widget {
 
 @main
 struct RiloWidgetBundle: WidgetBundle {
-    var body: some Widget { RiloWidget() }
+    var body: some Widget {
+        RiloWidget()
+        RiloSessionLiveActivity()
+    }
 }

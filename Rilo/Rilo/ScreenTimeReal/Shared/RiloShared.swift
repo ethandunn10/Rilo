@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(ActivityKit) && os(iOS)
+import ActivityKit
+#endif
 
 /// What the app, the Screen Time extensions and the widget share through the
 /// App Group. Foundation only, so the widget can use it too.
@@ -53,6 +56,11 @@ nonisolated struct SharedSession: Codable, Equatable, Sendable {
     var startedAt: Double
     /// set by the monitor when half the session's minutes have been used
     var halfReached: Bool = false
+    /// true when the shield itself unlocked it (ShieldActionExtension), so
+    /// Rilo opens on the relock screen next time it comes up
+    var fromShield: Bool? = nil
+
+    var endsAt: Date { Date(timeIntervalSince1970: (startedAt + minutes * 60_000) / 1000) }
 }
 
 nonisolated struct SharedEvent: Codable, Equatable, Sendable {
@@ -178,6 +186,57 @@ nonisolated enum RiloShared {
         (read(USAGE, as: [String: [String: Double]].self) ?? [:])[todayKey()] ?? [:]
     }
 
+    // MARK: the shield's countdown (ShieldAction writes, ShieldConfiguration reads)
+
+    private static let WAITS = "rilo.shieldWaits"
+
+    /// when "open <app> (5s)" was first tapped, per app key (ms since 1970).
+    /// The shield can't tick by itself, so the countdown is: first tap starts
+    /// it, the shield is redrawn with the seconds left, and a tap after the
+    /// wait unlocks the app.
+    static var shieldWaits: [String: Double] {
+        get { read(WAITS, as: [String: Double].self) ?? [:] }
+        set { write(WAITS, newValue.isEmpty ? nil : newValue) }
+    }
+
+    /// a started wait older than this is forgotten (they walked away)
+    static let WAIT_FORGET_MS: Double = 2 * 60 * 1000
+
+    /// The wait before an open, the same steps as the app's check-in
+    /// (AppState.checkInWait): 5s, then 10, 15, 20 as today's opens of that
+    /// app add up; strict mode adds 10.
+    static func waitSeconds(_ rule: SharedApp?, strict: Bool) -> Int {
+        let perDay = rule?.opensPerDay ?? 0
+        let used = max(0, perDay - (rule?.opensLeft ?? perDay))
+        let steps = [5, 10, 15, 20]
+        return steps[min(steps.count - 1, Int(used.rounded(.down)))] + (strict ? 10 : 0)
+    }
+
+    /// seconds still to wait for this app, or nil if no wait is running
+    static func waitLeft(_ key: String, _ rule: SharedApp?, strict: Bool, now: Double = nowMs) -> Int? {
+        guard let started = shieldWaits[key], now - started < WAIT_FORGET_MS else { return nil }
+        let left = Double(waitSeconds(rule, strict: strict)) - (now - started) / 1000
+        return max(0, Int(left.rounded(.up)))
+    }
+
+    /// the name the user gave this app in Rilo (optional, You ▸ advanced).
+    /// Apple never tells Rilo an app's name, so without one it's nil.
+    static func userName(_ key: String) -> String? {
+        (AppGroup.defaults.dictionary(forKey: "rilo.appMatches") as? [String: String])?[key]
+    }
+
+    // MARK: Live Activity diagnostics
+
+    private static let LA_LOG = "rilo.liveActivityLog"
+
+    /// what happened the last time something tried to start the Live
+    /// Activity ("shield: started" / "shield: <error>" / "app: started"),
+    /// shown in You ▸ advanced so a phone test can tell which path works
+    static var liveActivityLog: String? {
+        get { AppGroup.defaults.string(forKey: LA_LOG) }
+        set { AppGroup.defaults.set(newValue, forKey: LA_LOG) }
+    }
+
     // MARK: the widget
 
     static var widget: WidgetSnapshot? {
@@ -185,3 +244,63 @@ nonisolated enum RiloShared {
         set { write(WIDGET, newValue) }
     }
 }
+
+// MARK: - the Live Activity ("instagram · 9:42 left")
+
+#if canImport(ActivityKit) && os(iOS)
+/// One open's timer on the Lock Screen and in the Dynamic Island. Started by
+/// the shield (ShieldActionExtension) or by Rilo itself, drawn by the widget
+/// extension (RiloLiveActivity). Tapping it opens Rilo on the relock screen.
+nonisolated struct RiloSessionAttributes: ActivityAttributes {
+    nonisolated struct ContentState: Codable, Hashable, Sendable {
+        var endsAt: Date
+    }
+    /// app key (RiloTokens)
+    var app: String
+    /// the name the user gave it in Rilo, if any (Apple never gives one)
+    var name: String?
+    /// chosenRilo, for rilo-<skin>-coach
+    var skin: String
+
+    var label: String { name ?? "your app" }
+}
+
+nonisolated enum RiloLiveActivity {
+    /// Start the timer for `session`. Returns nil on success, or why not.
+    @discardableResult
+    static func start(_ session: SharedSession, from who: String) -> String? {
+        guard ActivityAuthorizationInfo().areActivitiesEnabled else {
+            RiloShared.liveActivityLog = "\(who): live activities are off for rilo"
+            return "off"
+        }
+        /* one at a time */
+        for a in Activity<RiloSessionAttributes>.activities where a.attributes.app != session.app {
+            Task { await a.end(nil, dismissalPolicy: .immediate) }
+        }
+        if Activity<RiloSessionAttributes>.activities.contains(where: {
+            $0.attributes.app == session.app && $0.content.state.endsAt == session.endsAt
+        }) { return nil }
+        let attrs = RiloSessionAttributes(app: session.app, name: RiloShared.userName(session.app),
+                                          skin: RiloShared.widget?.skin ?? "original")
+        let state = RiloSessionAttributes.ContentState(endsAt: session.endsAt)
+        do {
+            _ = try Activity.request(attributes: attrs,
+                                     content: ActivityContent(state: state, staleDate: session.endsAt),
+                                     pushType: nil)
+            RiloShared.liveActivityLog = "\(who): started"
+            return nil
+        } catch {
+            RiloShared.liveActivityLog = "\(who): \(error)"
+            return "\(error)"
+        }
+    }
+
+    static var running: Bool { !Activity<RiloSessionAttributes>.activities.isEmpty }
+
+    static func endAll() {
+        for a in Activity<RiloSessionAttributes>.activities {
+            Task { await a.end(nil, dismissalPolicy: .immediate) }
+        }
+    }
+}
+#endif
