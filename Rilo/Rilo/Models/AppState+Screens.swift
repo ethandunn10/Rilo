@@ -39,7 +39,7 @@ extension AppState {
     /// Real Screen Time: PickApps' button, once the apps are picked (the
     /// permission is already done, so straight on to the hours question)
     func pickAppsDoneReal() {
-        go(.hours)
+        go(.matchapps)
     }
 
     /// "about how many hours a day are you on your phone?" → the baseline

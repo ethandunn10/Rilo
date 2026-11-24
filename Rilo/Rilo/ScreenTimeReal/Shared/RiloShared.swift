@@ -23,6 +23,13 @@ nonisolated struct SharedApp: Codable, Equatable, Sendable {
     var minutesPerOpen: Int
     /// 'blocked' | 'noopens' | 'halfstranded' | 'bedtime' | 'school' | 'focus' | nil
     var lockKind: String?
+    /// true → the user's Shortcuts automation does this app's check-in, so
+    /// the shield only goes up when it's locked or its time just ran out
+    /// (optional so rules saved before it existed still decode)
+    var automated: Bool? = nil
+    /// the day's opens, so the monitor can hand them back at midnight
+    /// without the app (optional for the same reason)
+    var opensPerDay: Double? = nil
 }
 
 nonisolated struct SharedRules: Codable, Equatable, Sendable {
@@ -142,6 +149,19 @@ nonisolated enum RiloShared {
         write(EVENTS, [SharedEvent]?.none)
         let now = nowMs
         return list.filter { $0.kind != "shieldTapped" || now - $0.at <= SHIELD_TAP_FRESH_MS }
+    }
+
+    // MARK: kicked out (a session's time ran out)
+
+    private static let KICKED = "rilo.kicked"
+
+    /// Apps whose session time just ran out. Their shield goes up even if
+    /// the automation normally does their check-in, because a shield is the
+    /// only way iOS lets Rilo get someone out of an app. Cleared when they
+    /// check in again (the app) and at midnight (the monitor).
+    static var kicked: Set<String> {
+        get { Set(read(KICKED, as: [String].self) ?? []) }
+        set { write(KICKED, newValue.isEmpty ? nil : Array(newValue).sorted()) }
     }
 
     // MARK: usage the monitor saw (minutes per appKey, today)

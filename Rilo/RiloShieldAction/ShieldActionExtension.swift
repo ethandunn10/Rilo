@@ -35,31 +35,52 @@ nonisolated final class ShieldActionExtension: ShieldActionDelegate {
                          _ completionHandler: @escaping (ShieldActionResponse) -> Void) {
         switch action {
         case .primaryButtonPressed:
+            /* the app also reads this when it next opens (backup for the
+               notification); the two are de-duplicated there */
             RiloShared.post(SharedEvent(kind: "shieldTapped", app: key, at: RiloShared.nowMs))
-            /* the handler is only ever called once, after the notification is queued */
             nonisolated(unsafe) let finish = completionHandler
             notify(key: key) {
                 /* close the blocked app so the banner is the next thing they see */
                 finish(.close)
             }
         case .secondaryButtonPressed:
+            /* "never mind": a win, counted by the app when it next opens */
+            RiloShared.post(SharedEvent(kind: "shieldNeverMind", app: key, at: RiloShared.nowMs))
             completionHandler(.close)
         default:   /* newer SDKs add submenu items; Rilo has none */
             completionHandler(.close)
         }
     }
 
-    /// Banner.jsx: "RILO" / "tap to talk"
+    /// "tap to talk to rilo about instagram." Delivered at once (no trigger:
+    /// the old 1-second timer was part of the wait), time-sensitive (breaks
+    /// through Focus once the Time Sensitive Notifications capability is on;
+    /// without it iOS treats it as a normal alert), and with a fresh id
+    /// every time (reusing one id made iOS treat a second tap as an update
+    /// to the old notification and sometimes not show it at all).
     private func notify(key: String, then done: @escaping @Sendable () -> Void) {
         let content = UNMutableNotificationContent()
-        /* iOS puts the app's name ("RILO") on top itself, like the web banner */
-        content.body = "tap to talk"
+        /* the name the user gave this app in Rilo, if they did (App Group) */
+        let matches = AppGroup.defaults.dictionary(forKey: "rilo.appMatches") as? [String: String]
+        if let name = matches?[key] {
+            content.body = "tap to talk to rilo about \(name)."
+        } else {
+            content.body = "tap to talk to rilo."
+        }
         content.sound = .default
-        /* no "screen" key: RiloNotifications ignores it; the app's
-           handleScreenTimeEvents picks up the shieldTapped event instead */
+        content.interruptionLevel = .timeSensitive
+        content.relevanceScore = 1
+        content.threadIdentifier = "rilo-shield"
+        /* the app routes straight to this app's check-in from here */
         content.userInfo = ["rilo.shieldTapped": key]
-        let request = UNNotificationRequest(identifier: "rilo-shield-\(key)", content: content,
-                                            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false))
-        UNUserNotificationCenter.current().add(request) { _ in done() }
+        let center = UNUserNotificationCenter.current()
+        /* one banner at a time: clear the older shield ones */
+        center.getDeliveredNotifications { delivered in
+            let old = delivered.map(\.request.identifier).filter { $0.hasPrefix("rilo-shield-") }
+            if !old.isEmpty { center.removeDeliveredNotifications(withIdentifiers: old) }
+            let request = UNNotificationRequest(identifier: "rilo-shield-\(UUID().uuidString)", content: content,
+                                                trigger: nil)
+            center.add(request) { _ in done() }
+        }
     }
 }

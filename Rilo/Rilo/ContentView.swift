@@ -31,6 +31,10 @@ struct ContentView: View {
         }
         .onAppear {
             RiloNotifications.shared.onOpen = { [state] screen in state.openFromNotification(screen) }
+            /* the shield's "talk to rilo" notification, tapped */
+            RiloNotifications.shared.onShield = { [state] key in state.checkIn(key, via: "notification") }
+            /* the Shortcuts automation's "Rilo check-in" */
+            CheckInRouter.shared.handler = { [state] name in state.checkInFromShortcut(name) }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             switch phase {

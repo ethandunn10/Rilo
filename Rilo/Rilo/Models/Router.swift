@@ -3,12 +3,12 @@ import Foundation
 /// Every screen the web's router knows (App.jsx `render()`), by the same name.
 nonisolated enum Screen: String, CaseIterable, Codable, Sendable {
     /* onboarding, in order */
-    case welcome, name, pickapps, permission, hours, crunching, rather, yournumber, yourplan, limitsonboard
+    case welcome, name, pickapps, matchapps, automation, permission, hours, crunching, rather, yournumber, yourplan, limitsonboard
     case paywall
     /* the same paywall, opened from a locked feature: it hands you back */
     case upgrade
     case limits, nighttime, home, talkchat, daysummary, whyopen, nightcheckin, calendar
-    case sharecard, buddies, shield, appopen, intercept, suggestion, tired
+    case sharecard, buddies, shield, appopen, intercept, checkin, suggestion, tired
     case `break`
     case plan, creator, progress, pickrilo, you, levelup, results
 

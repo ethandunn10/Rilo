@@ -19,11 +19,23 @@ extension AppState {
         var apps: [String: ScreenTimeRules.App] = [:]
         for app in tracked {
             let lock = lockOf(app)
-            apps[app] = ScreenTimeRules.App(mode: lock.setting.mode,
-                                            shielded: ScreenTimeRules.shields(lock.setting.mode),
+            let mode = lock.setting.mode
+            let automated = Automation.isOn(app)
+            /* the shield is up when the app asks "what for?" (every mode but
+               always-allowed). With the user's Shortcuts automation doing the
+               check-in, only when it's locked outright (no opens, blocked,
+               bedtime / school / focus), so the two never show at once.
+               No shields until onboarding is done (the setup step's "test
+               it" has to reach the automation, not a shield). */
+            let shielded = onboarded && ScreenTimeRules.shields(mode)
+                && (!automated || lock.locked || mode == .blocked)
+            apps[app] = ScreenTimeRules.App(mode: mode,
+                                            shielded: shielded,
                                             opensLeft: availOf(app),
                                             minutesPerOpen: lock.setting.minutes,
-                                            lockKind: lock.locked ? lock.kind : nil)
+                                            lockKind: lock.locked ? lock.kind : nil,
+                                            automated: automated,
+                                            opensPerDay: Double(lock.setting.opens))
         }
         let sched = schedule
         return ScreenTimeRules(dateKey: dateKey, apps: apps, strict: strict.on,
@@ -70,6 +82,11 @@ extension AppState {
                 if screen == .appopen && session.app == app {
                     finishSession(app, minutesUsed: minutes)
                 }
+            case .shieldNeverMind(let app):
+                if onboarded && tracked.contains(app) {
+                    interceptReason("never mind")
+                    neverMindWin()
+                }
             }
         }
     }
@@ -77,10 +94,7 @@ extension AppState {
     /// The real shield's button → Rilo's notification → here. Same as the
     /// demo's openApp → shield → banner tap: count the open, then Intercept.
     func openedFromShield(_ app: String) {
-        guard onboarded else { return }
-        countOpen(app)
-        banner = false
-        goTo(.intercept)
+        checkIn(app, via: "shield")
     }
 
     // MARK: permission

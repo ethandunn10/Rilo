@@ -41,6 +41,12 @@ final class RiloNotifications: NSObject, UNUserNotificationCenterDelegate {
     var onOpen: ((Screen) -> Void)? {
         didSet { if let w = waiting, let onOpen { waiting = nil; onOpen(w) } }
     }
+    /// a tapped shield notification's app, waiting for the app to be ready
+    private var waitingShield: String? = nil
+    /// the shield's "talk to rilo" notification → the check-in for that app
+    var onShield: ((String) -> Void)? {
+        didSet { if let w = waitingShield, let onShield { waitingShield = nil; onShield(w) } }
+    }
 
     /// RiloApp.init: the delegate has to be in place before launch finishes
     /// so a tap that launched the app is delivered.
@@ -161,7 +167,17 @@ final class RiloNotifications: NSObject, UNUserNotificationCenterDelegate {
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter,
                                             didReceive response: UNNotificationResponse) async {
-        let raw = response.notification.request.content.userInfo["screen"] as? String
+        let info = response.notification.request.content.userInfo
+        let raw = info["screen"] as? String
+        /* the shield's notification carries the app's key: go straight to
+           its check-in (not via the App Group event, which can lag) */
+        if let key = info["rilo.shieldTapped"] as? String {
+            await MainActor.run {
+                track("notifications", "opened shield check-in")
+                if let onShield { onShield(key) } else { waitingShield = key }
+            }
+            return
+        }
         await MainActor.run {
             guard let raw, let screen = Screen(rawValue: raw) else { return }
             track("notifications", "opened \(raw)")

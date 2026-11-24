@@ -156,6 +156,8 @@ extension AppState {
             beginAppSession(Session(app: label, cap: 15, carried: 0, charged: 0, kind: "always", minutes: 15))
             return
         }
+        /* real Screen Time: tapping an app in Rilo is a check-in from Rilo */
+        if realScreenTime { checkIn(label, via: "rilo", counted: true); return }
         /* the demo draws its own shield; with real Screen Time iOS already
            showed one, so straight to Rilo's questions */
         go(screenTimeService.drawsShieldInApp ? .shield : .intercept)

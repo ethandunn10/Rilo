@@ -17,10 +17,24 @@ nonisolated final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
         guard activity == .riloDaily else { return }
-        /* fresh day: no session carries over midnight */
+        /* fresh day: no session carries over midnight, nobody stays kicked out */
         if let s = RiloShared.session { endSession(s, timeUp: false) }
+        RiloShared.kicked = []
         var rules = RiloShared.rules
         rules.dateKey = RiloShared.todayKey()
+        /* fresh opens even if Rilo isn't opened today: out-of-opens locks
+           lift, and apps whose check-in is the Shortcuts automation drop
+           their shield again (the app redoes all of this when it opens) */
+        for (k, var a) in rules.apps {
+            if a.lockKind == "noopens" || a.lockKind == "halfstranded" {
+                a.lockKind = nil
+                if let fresh = a.opensPerDay { a.opensLeft = fresh }
+                if a.automated == true { a.shielded = false }
+            } else if a.lockKind == nil, let fresh = a.opensPerDay {
+                a.opensLeft = fresh
+            }
+            rules.apps[k] = a
+        }
         RiloShared.rules = rules
         reshield()
     }
@@ -59,6 +73,10 @@ nonisolated final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
         else { minutes = min(1, s.minutes / 2) }
 
         RiloShared.session = nil
+        /* shield it now even if the automation does its check-ins: that's
+           the only way to get them out of the app (the app lifts it again
+           when they check in) */
+        if s.kind != "always" { RiloShared.kicked.insert(s.app) }
         RiloShared.addUsage(app: s.app, minutes: minutes)
         RiloShared.post(SharedEvent(kind: "sessionEnded", app: s.app, minutes: minutes, at: RiloShared.nowMs))
         reshield()

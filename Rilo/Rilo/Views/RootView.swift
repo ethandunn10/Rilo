@@ -33,6 +33,16 @@ struct RootView: View {
         }
     }
 
+    /// DEBUG `-realsession`: show the real-Screen-Time session screen while
+    /// a screenshot seed runs on the demo (QA screenshots)
+    private static var previewRealSession: Bool {
+        #if DEBUG
+        return DemoSeed.flag("-realsession")
+        #else
+        return false
+        #endif
+    }
+
     @ViewBuilder
     private func screenView(_ screen: Screen) -> some View {
         switch screen {
@@ -40,6 +50,8 @@ struct RootView: View {
         case .welcome: WelcomeView()
         case .name: NameView()
         case .pickapps: PickAppsView()
+        case .matchapps: MatchAppsView()
+        case .automation: AutomationSetupView()
         case .permission: PermissionView()
         case .hours: HoursView()
         case .crunching: CrunchingView()
@@ -57,7 +69,8 @@ struct RootView: View {
         /* the blocked-app pop-up and its reasons */
         case .shield: ShieldView()
         /* real Screen Time: the real app is open, not Rilo's pretend one */
-        case .appopen: if state.realScreenTime { RealSessionView() } else { AppOpenView() }
+        case .checkin: CheckInView()
+        case .appopen: if state.realScreenTime || Self.previewRealSession { RealSessionView() } else { AppOpenView() }
         case .intercept: InterceptView()
         case .whyopen: WhyOpenView()
         case .suggestion: SuggestionView()

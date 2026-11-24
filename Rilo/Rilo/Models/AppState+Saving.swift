@@ -15,6 +15,9 @@ extension AppState {
             /* a save from before Phase 7 has no screen */
             return saved.planChoice != nil ? .home : .welcome
         }
+        /* the app-matching and Shortcuts steps also come up from the You
+           tab, so they aren't in Screen.onboarding: mid-onboarding, resume there */
+        if saved.planChoice == nil && (s == .matchapps || s == .automation) { return s }
         return Screen.onboarding.contains(s) ? s : .home
     }
 
@@ -91,7 +94,10 @@ extension AppState {
     func appBecameActive() {
         rollOverIfNeeded()
         rescheduleNotifications(force: true)
-        /* Phase 8: shields match the rules, then whatever happened while away */
+        /* Phase 8: shields match the rules, then whatever happened while away.
+           They're in Rilo, not in an app, so nobody needs kicking out any
+           more: apps whose time ran out go back to their usual check-in. */
+        if realScreenTime { RiloShared.kicked = [] }
         syncScreenTime(force: true)
         handleScreenTimeEvents()
         /* the calendar may have changed while away */

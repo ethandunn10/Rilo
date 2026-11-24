@@ -14,8 +14,10 @@ nonisolated final class ShieldConfigurationExtension: ShieldConfigurationDataSou
     // RiloColors.swift
     private static let ink = UIColor(red: 0x12 / 255, green: 0x30 / 255, blue: 0x1A / 255, alpha: 1)    // RC.ink
     private static let ink2 = UIColor(red: 0x2C / 255, green: 0x4A / 255, blue: 0x36 / 255, alpha: 1)   // RC.ink2
-    private static let green = UIColor(red: 0x4C / 255, green: 0xC1 / 255, blue: 0x60 / 255, alpha: 1)  // RC.green
-    private static let sky = UIColor(red: 0xEE / 255, green: 0xF8 / 255, blue: 0xEE / 255, alpha: 1)    // RC.skyBottom
+    /// RC.greenDeep: white text on it stays readable (RC.green is too light)
+    private static let green = UIColor(red: 0x2E / 255, green: 0x8B / 255, blue: 0x3E / 255, alpha: 1)
+    /// RC.card, Rilo's cream
+    private static let cream = UIColor(red: 0xFF / 255, green: 0xFB / 255, blue: 0xF1 / 255, alpha: 1)
 
     override func configuration(shielding application: Application) -> ShieldConfiguration {
         let key = application.token.map { RiloTokens.key(for: $0) }
@@ -38,56 +40,69 @@ nonisolated final class ShieldConfigurationExtension: ShieldConfigurationDataSou
         make(name: webDomain.domain ?? "this site", key: category.token.map { RiloTokens.key(for: $0) })
     }
 
-    // MARK: Shield.jsx
+    // MARK: what the shield says
 
+    /// Apple lets a shield set: the background colour and blur, one icon,
+    /// the title and subtitle (text + colour), and two buttons' labels and
+    /// colours. Nothing else: no fonts, no layout, no icon size, no extra
+    /// buttons, and the buttons can't open Rilo (ShieldActionExtension
+    /// sends a notification instead).
     private func make(name: String, key: String?) -> ShieldConfiguration {
         let app = name.lowercased()
         let rules = RiloShared.rules
         let rule = key.flatMap { rules.apps[$0] }
-        let scheduleLocked = rules.scheduleKind != nil
-        let locked = scheduleLocked || rule?.lockKind != nil
-        let mode = rule?.mode ?? "limited"
+        let kicked = key.map { RiloShared.kicked.contains($0) } ?? false
+        let lockKind = rules.scheduleKind ?? rule?.lockKind
+        let locked = lockKind != nil
 
         let skin = RiloShared.widget?.skin ?? "original"
-        let mood = locked ? "letdown" : "coach"
-        let icon = UIImage(named: "rilo-\(skin)-\(mood)") ?? UIImage(named: "rilo-original-\(mood)")
+        let mood = locked || kicked ? "letdown" : "coach"
+        /* the square, trimmed panda (Assets rilo-shield-*): as big as the
+           shield's fixed icon box allows */
+        let icon = UIImage(named: "rilo-shield-\(skin)-\(mood)") ?? UIImage(named: "rilo-shield-original-\(mood)")
+            ?? UIImage(named: "rilo-original-\(mood)")
 
         return ShieldConfiguration(
-            backgroundBlurStyle: .systemUltraThinMaterialLight,
-            backgroundColor: Self.sky,
+            backgroundBlurStyle: nil,
+            backgroundColor: Self.cream,
             icon: icon,
-            title: .init(text: locked ? "rilo locked \(app)" : "\(app)?", color: Self.ink),
-            subtitle: .init(text: subline(rules: rules, mode: mode, locked: locked, rule: rule), color: Self.ink2),
+            title: .init(text: Self.title(app: app, lockKind: lockKind, kicked: kicked), color: Self.ink),
+            subtitle: .init(text: Self.subtitle(rules: rules, rule: rule, lockKind: lockKind, kicked: kicked), color: Self.ink2),
             primaryButtonLabel: .init(text: "talk to rilo", color: .white),
             primaryButtonBackgroundColor: Self.green,
-            secondaryButtonLabel: .init(text: "close", color: Self.ink))
+            secondaryButtonLabel: .init(text: "never mind", color: Self.ink))
     }
 
-    /// ShieldView.subline, plus the opens line the web shows as circles
-    private func subline(rules: SharedRules, mode: String, locked: Bool, rule: SharedApp?) -> String {
-        if let kind = rules.scheduleKind {
-            let at = Self.fmtClock(rules.scheduleUntil)
-            switch kind {
-            case "bedtime": return "bedtime. open again at \(at)"
-            case "school": return "school hours. open again at \(at)"
-            default: return "focus block. open again at \(at)"
-            }
+    static func title(app: String, lockKind: String?, kicked: Bool) -> String {
+        switch lockKind {
+        case "bedtime": return "bedtime. \(app) can wait."
+        case "school": return "school hours. \(app) can wait."
+        case "focus": return "focus block. \(app) can wait."
+        case "blocked": return "\(app) is blocked."
+        case "noopens", "halfstranded": return "no opens left for \(app)."
+        default: return kicked ? "time's up on \(app)." : "hey. \(app) again?"
         }
-        if mode == "blocked" { return "blocked. your pass still works." }
-        if locked { return "no opens left. fresh ones at midnight." }
-        if mode == "limited", let rule {
-            return "tap through and i’ll ask what for.\n\(Self.opensText(rule.opensLeft, rule.minutesPerOpen))"
-        }
-        return "tap through and i’ll ask what for."
     }
 
-    /// Limits.opensText ("2½ opens left · 15 min each")
+    static func subtitle(rules: SharedRules, rule: SharedApp?, lockKind: String?, kicked: Bool) -> String {
+        if rules.scheduleKind != nil { return "opens again at \(fmtClock(rules.scheduleUntil))." }
+        switch lockKind {
+        case "blocked": return "talk to rilo if it's an emergency."
+        case "noopens", "halfstranded": return "fresh opens at midnight.\ntalk to rilo about your emergency pass."
+        default: break
+        }
+        guard let rule, rule.mode == "limited" else { return "talk to rilo first." }
+        let left = opensText(rule.opensLeft, rule.minutesPerOpen)
+        return kicked ? "\(left)\ntalk to rilo to go again." : "\(left)\ntalk to rilo first."
+    }
+
+    /// Limits.opensText ("2½ opens left today · 15 min each")
     private static func opensText(_ left: Double, _ minutes: Int) -> String {
-        if left <= 0 { return "no opens left · \(minutes) min each" }
-        if left == 0.5 { return "½ an open left · \(minutes) min each" }
+        if left <= 0 { return "no opens left today" }
+        if left == 0.5 { return "½ an open left today · \(minutes) min" }
         let whole = Int(left)
         let n = "\(whole)\(left - Double(whole) >= 0.5 ? "½" : "")"
-        return "\(n) \(left == 1 ? "open" : "opens") left · \(minutes) min each"
+        return "\(n) \(left == 1 ? "open" : "opens") left today · \(minutes) min each"
     }
 
     /// Addons.fmtClock: "07:00" → "7:00am", "15:30" → "3:30pm"

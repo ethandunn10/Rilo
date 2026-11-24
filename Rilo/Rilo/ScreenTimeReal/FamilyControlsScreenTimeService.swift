@@ -77,7 +77,8 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
             dateKey: rules.dateKey,
             apps: rules.apps.mapValues { a in
                 SharedApp(mode: a.mode.rawValue, shielded: a.shielded, opensLeft: a.opensLeft,
-                          minutesPerOpen: a.minutesPerOpen, lockKind: a.lockKind)
+                          minutesPerOpen: a.minutesPerOpen, lockKind: a.lockKind, automated: a.automated,
+                          opensPerDay: a.opensPerDay)
             },
             strict: rules.strict, scheduleKind: rules.scheduleKind, scheduleUntil: rules.scheduleUntil)
         shieldNow()
@@ -179,6 +180,7 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
             switch e.kind {
             case "shieldTapped": return .shieldTapped(app: e.app)
             case "sessionEnded": return .sessionEnded(app: e.app, minutes: e.minutes)
+            case "shieldNeverMind": return .shieldNeverMind(app: e.app)
             default: return nil
             }
         }

@@ -1,0 +1,6 @@
+{
+  "images" : [
+    { "filename" : "rilo-shield-pinkpanda-coach.png", "idiom" : "universal", "scale" : "3x" }
+  ],
+  "info" : { "author" : "xcode", "version" : 1 }
+}

@@ -89,6 +89,10 @@ nonisolated struct ScreenTimeRules: Equatable, Sendable {
         /// why it's locked outright: 'blocked' | 'noopens' | 'halfstranded' |
         /// 'bedtime' | 'school' | 'focus' | nil (just asks "what for?")
         var lockKind: String?
+        /// the user's Shortcuts automation does this app's check-in
+        var automated: Bool = false
+        /// a fresh day's opens (the monitor's midnight reset)
+        var opensPerDay: Double = 0
     }
 
     var dateKey: String
@@ -132,6 +136,8 @@ nonisolated enum ScreenTimeEvent: Equatable, Sendable {
     /// they left and the session's window closed). The shield is already
     /// back up; charge it as `minutes` used.
     case sessionEnded(app: String, minutes: Double)
+    /// the shield's "never mind": they didn't open it (a win)
+    case shieldNeverMind(app: String)
 }
 
 // MARK: - the demo (DEBUG only: never in TestFlight / App Store builds)

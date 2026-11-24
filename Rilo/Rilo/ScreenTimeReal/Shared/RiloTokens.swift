@@ -71,17 +71,20 @@ nonisolated enum RiloTokens {
     static func applyShields(rules: SharedRules, session: SharedSession?, store: ManagedSettingsStore) {
         let sel = selection
         let open = session.flatMap { s in s.kind == "always" ? nil : s.app }
+        let kicked = RiloShared.kicked
+        /* shielded by its rule, or its session time just ran out */
+        func up(_ rule: SharedApp, _ k: String) -> Bool { rule.shielded || (kicked.contains(k) && rule.mode != "always") }
 
         var apps = Set<ApplicationToken>()
         for token in sel.applicationTokens {
             let k = key(for: token)
-            guard let rule = rules.apps[k], rule.shielded, k != open else { continue }
+            guard let rule = rules.apps[k], up(rule, k), k != open else { continue }
             apps.insert(token)
         }
         var cats = Set<ActivityCategoryToken>()
         for token in sel.categoryTokens {
             let k = key(for: token)
-            guard let rule = rules.apps[k], rule.shielded, k != open else { continue }
+            guard let rule = rules.apps[k], up(rule, k), k != open else { continue }
             cats.insert(token)
         }
         /* an app picked on its own and open right now stays open even if
