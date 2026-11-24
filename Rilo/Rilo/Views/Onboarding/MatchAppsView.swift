@@ -78,7 +78,8 @@ struct MatchAppsView: View {
             }
             ChipFlow(spacing: 6) {
                 ForEach(Self.QUICK, id: \.self) { n in
-                    chip(n, on: said == n) { set(n, key) }
+                    /* a lone "x" reads as a close button */
+                    chip(n == "x" ? "x (twitter)" : n, on: said == n) { set(n, key) }
                 }
                 chip(said != nil && !Self.QUICK.contains(said!) ? said! : "other…",
                      on: said != nil && !Self.QUICK.contains(said!)) {

@@ -33,7 +33,7 @@ struct RatherView: View {
         VStack(alignment: .leading, spacing: 12) {
             Dots(active: 2)
 
-            BackButton { state.goTo(.pickapps, dir: .back) }
+            BackButton { state.goTo(.hours, dir: .back) }   // the step just before (via crunching)
 
             HStack(spacing: 10) {
                 RiloView(skin: AppState.OG_SKIN, mood: "curious", size: 92, talks: true)

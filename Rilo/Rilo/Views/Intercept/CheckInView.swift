@@ -119,9 +119,11 @@ struct CheckInView: View {
             Text(title)
                 .font(.fredoka(20, 700))
                 .monospacedDigit()
-                .foregroundStyle(ready ? .white : RC.ink.opacity(0.6))
+                .foregroundStyle(ready ? .white : RC.ink.opacity(0.8))
                 .frame(maxWidth: .infinity, minHeight: 58)
-                .background(Capsule().fill(ready ? RC.greenDeep : Color.white.opacity(0.6)))
+                /* waiting: a solid pale pill with dark text (readable over the hills) */
+                .background(Capsule().fill(ready ? RC.greenDeep : Color.white.opacity(0.9)))
+                .overlay(Capsule().strokeBorder(ready ? Color.clear : RC.line, lineWidth: 1.5))
                 .contentTransition(.numericText())
         }
         .buttonStyle(.tap)

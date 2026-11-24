@@ -140,6 +140,9 @@ struct YourPlanView: View {
                     AppName(app: app)
                         .font(.fredoka(16, 600))
                         .foregroundStyle(RC.ink)
+                        /* big Text Size: shrink a long name, never break it mid-word */
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text(s.mode == .limited ? "\(Limits.fmtOpens(s.opens)) opens × \(s.minutes) min"
                          : s.mode == .blocked ? "blocked" : "no limit")
