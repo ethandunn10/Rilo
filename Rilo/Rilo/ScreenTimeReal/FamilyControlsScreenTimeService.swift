@@ -47,6 +47,9 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
             /* cancelled, or Screen Time is off / restricted */
             track("screentime", "ios said no: \(error.localizedDescription)")
         }
+        /* a fresh install's launch-time schedule failed (no permission yet):
+           start the midnight reset now that it's allowed */
+        if authorization == .approved { startDailySchedule() }
         return authorization
     }
 

@@ -13,6 +13,9 @@ struct PermissionView: View {
     @Environment(AppState.self) private var state
     @State private var sheet = false
     @State private var denied = false
+    @State private var asking = false
+
+    private var real: Bool { ScreenTime.isReal(state.screenTimeService) }
 
     var body: some View {
         ZStack {
@@ -22,12 +25,14 @@ struct PermissionView: View {
             GeometryReader { geo in
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
-                        BackButton { state.goTo(.pickapps, dir: .back) }
+                        BackButton { state.goTo(real ? .name : .pickapps, dir: .back) }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         RiloView(skin: AppState.OG_SKIN, mood: denied ? "letdown" : "coach", size: 190, talks: true)
                         Text(denied
-                             ? "no problem. i'll go off your hours and your goal instead."
-                             : "i need to see where your time goes to build your plan.")
+                             ? (real ? "i need screen time to put limits on your apps. it stays on your phone."
+                                     : "no problem. i'll go off your hours and your goal instead.")
+                             : (real ? "turn on screen time so i can help with the apps you pick."
+                                     : "i need to see where your time goes to build your plan."))
                             .font(.fredoka(28, 600))
                             .webLineHeight(28, 1.25)
                             .foregroundStyle(RC.ink)
@@ -83,7 +88,16 @@ struct PermissionView: View {
                     denied = false
                     ask()
                 }
-                outlineButton("keep going without it") { state.permissionSkip() }
+                /* real Screen Time: Rilo can't pick or limit apps without it */
+                if !real {
+                    outlineButton("keep going without it") { state.permissionSkip() }
+                } else {
+                    Text("if the prompt doesn't show, turn it on in settings \u{25B8} screen time.")
+                        .font(.inter(13, 600))
+                        .foregroundStyle(RC.ink2)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             } else {
                 bigButton("allow") { ask() }
                 outlineButton("don't allow") {
@@ -94,13 +108,25 @@ struct PermissionView: View {
         }
     }
 
-    /// "allow" / "try again": the drawn alert only in DEBUG with demo Screen
-    /// Time; everywhere else straight to the real request (permissionAllow)
+    /// "allow" / "try again": real Screen Time → Apple's prompt
+    /// (AuthorizationCenter, .individual), then Apple's app picker. The drawn
+    /// alert only in DEBUG with demo Screen Time.
     private func ask() {
+        if real {
+            guard !asking else { return }
+            asking = true
+            Task { @MainActor in
+                let ok = await state.permissionAllowReal()
+                asking = false
+                if !ok { denied = true }
+            }
+            return
+        }
         #if DEBUG
-        if !FeatureFlags.REAL_SCREEN_TIME { sheet = true; return }
-        #endif
+        sheet = true
+        #else
         state.permissionAllow()
+        #endif
     }
 
     private func bigButton(_ title: String, action: @escaping () -> Void) -> some View {

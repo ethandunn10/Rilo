@@ -18,6 +18,30 @@ extension AppState {
         if !Track.muted { RiloNotifications.shared.askPermission() }
     }
 
+    /// Real Screen Time: permission comes BEFORE picking apps (Apple's picker
+    /// only works once Screen Time is allowed). "allow" shows Apple's real
+    /// prompt (AuthorizationCenter, `.individual`); a yes goes on to Apple's
+    /// app picker. Returns false when iOS said no, so the screen can say so.
+    func permissionAllowReal() async -> Bool {
+        let answer = await screenTimeService.requestAuthorization()
+        guard answer == .approved else {
+            screenTime = false
+            track("screentime", "denied by ios")
+            return false
+        }
+        screenTime = true
+        track("screentime", "allowed")
+        go(.pickapps)
+        if !Track.muted { RiloNotifications.shared.askPermission() }
+        return true
+    }
+
+    /// Real Screen Time: PickApps' button, once the apps are picked (the
+    /// permission is already done, so straight on to the crunching beat)
+    func pickAppsDoneReal() {
+        go(.crunching)
+    }
+
     func permissionDeny() {
         screenTime = false
         track("screentime", "denied")

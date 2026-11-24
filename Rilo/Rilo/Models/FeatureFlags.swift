@@ -10,15 +10,27 @@ import Foundation
 /// `Levels.UNLOCK_ALL` (skins) and `AppState.showDemoPanel`, never directly
 /// from a screen.
 nonisolated enum FeatureFlags {
-    /// THE Screen Time switch, for every build (Debug, TestFlight, App Store).
+    /// THE Screen Time switch.
     ///
+    /// true  → real blocking with Apple's Screen Time: Apple's permission
+    ///         prompt, Apple's app picker, real shields, real timers. Only
+    ///         works on a real iPhone. ALWAYS true in Release (TestFlight +
+    ///         App Store), and the default in Debug.
     /// false → pretend blocking, like the web demo: Rilo's own app list and
-    ///         his own drawn shield. Works on any phone and the simulator.
-    /// true  → real blocking with Apple's Screen Time: Apple's app picker,
-    ///         real shields, real timers. Needs the paid account, the Family
-    ///         Controls capability and the four extensions first
-    ///         (SETUP_AFTER_PAID_ACCOUNT.md), and only works on a real iPhone.
-    static let REAL_SCREEN_TIME = false
+    ///         his own drawn shield. Works on the simulator. DEBUG only, via
+    ///         the demo panel's "demo screen time" toggle or `-demoscreentime`.
+    #if DEBUG
+    static let REAL_SCREEN_TIME: Bool = !DEMO_SCREEN_TIME
+
+    /// DEBUG only: the saved "demo screen time" toggle (demo panel). Off by
+    /// default. Read once at launch, so switching it needs a relaunch.
+    static let DEMO_SCREEN_TIME_KEY = "rilo.debug.demoScreenTime"
+    static let DEMO_SCREEN_TIME: Bool =
+        ProcessInfo.processInfo.arguments.contains("-demoscreentime")
+        || UserDefaults.standard.bool(forKey: DEMO_SCREEN_TIME_KEY)
+    #else
+    static let REAL_SCREEN_TIME = true
+    #endif
 
     /// THE payments switch, for every build (Debug, TestFlight, App Store).
     ///

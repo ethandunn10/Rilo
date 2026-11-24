@@ -7,6 +7,8 @@ struct PickAppsView: View {
     @State private var sheet = false
     @State private var refused = ""
 
+    private var real: Bool { ScreenTime.isReal(state.screenTimeService) }
+
     var body: some View {
         @Bindable var s = state
         /* nothing is pre-checked, so there's nothing to turn on until they pick */
@@ -26,7 +28,7 @@ struct PickAppsView: View {
                         header.rise(0, duration: 0.5)
 
                         /* real Screen Time (FeatureFlags.REAL_SCREEN_TIME): Apple's picker */
-                        if ScreenTime.isReal(state.screenTimeService) {
+                        if real {
                             AppPickerView()
                                 .rise(0.1, duration: 0.5)
                         } else {
@@ -52,8 +54,8 @@ struct PickAppsView: View {
                 }
                 .padding(.horizontal, -4)
 
-                Button { state.go(.permission) } label: {
-                    Text("turn on screen time")
+                Button { real ? state.pickAppsDoneReal() : state.go(.permission) } label: {
+                    Text(real ? "continue" : "turn on screen time")
                         .font(.fredoka(20, 600))
                         .foregroundStyle(picked ? RC.ink : RC.ink.opacity(0.45))
                         .frame(maxWidth: .infinity)
@@ -70,6 +72,11 @@ struct PickAppsView: View {
         }
         .appSheetHost(apps: $s.apps, sheet: $sheet, refused: $refused)
         .onAppear {
+            /* real Screen Time: Apple's picker needs the permission first
+               (e.g. a half-finished onboarding restored here) */
+            if real && state.screenTimeService.authorization != .approved {
+                state.goTo(.permission, dir: .back)
+            }
             #if DEBUG
             if DemoSeed.arguments.contains("-appsheet") { sheet = true }
             #endif

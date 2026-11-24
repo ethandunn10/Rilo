@@ -19,6 +19,7 @@ extension DemoPanelOverlay {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 4)
 
+            DemoScreenTimeToggle()
             simulate
             waysThrough
             strictSection
@@ -208,6 +209,31 @@ extension DemoPanelOverlay {
             DemoButton("the check-in") { state.go(.nightcheckin) }
             DemoButton("pick check-in time") { state.go(.nighttime) }
             DemoButton("calendar") { state.go(.calendar) }
+        }
+    }
+}
+/// DEBUG ONLY: switch between real Screen Time (the default) and the old
+/// demo (Rilo's own app list + drawn shield, works on the simulator). The
+/// choice is saved and read at launch, so it needs a relaunch.
+private struct DemoScreenTimeToggle: View {
+    @AppStorage(FeatureFlags.DEMO_SCREEN_TIME_KEY) private var demo = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("SCREEN TIME")
+                .font(.inter(11, 700))
+                .tracking(11 * 0.08)
+                .foregroundStyle(RC.ink2)
+                .padding(.top, 10)
+            ChipFlow(spacing: 6) {
+                DemoButton("real", on: !demo) { demo = false }
+                DemoButton("demo", on: demo) { demo = true }
+            }
+            Text(demo == FeatureFlags.DEMO_SCREEN_TIME
+                 ? (demo ? "demo: fake apps, rilo draws the shield." : "real: apple's permission, picker and shields.")
+                 : "close rilo and open it again to switch.")
+                .font(.inter(11.5, 600))
+                .foregroundStyle(RC.ink3)
         }
     }
 }

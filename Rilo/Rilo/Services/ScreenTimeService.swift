@@ -6,7 +6,7 @@ import Foundation
 /// tells this service what they mean right now. The service is the only
 /// thing that touches the phone's real Screen Time:
 ///
-/// - `DemoScreenTimeService` (below, the default): blocks nothing. Apps are
+/// - `DemoScreenTimeService` (below, DEBUG builds only): blocks nothing. Apps are
 ///   the names the models use, and Rilo draws his own fake shield screen.
 ///   The app behaves exactly like the web demo.
 /// - `FamilyControlsScreenTimeService` (Rilo/ScreenTimeReal/, kept out of
@@ -134,8 +134,9 @@ nonisolated enum ScreenTimeEvent: Equatable, Sendable {
     case sessionEnded(app: String, minutes: Double)
 }
 
-// MARK: - the demo (default)
+// MARK: - the demo (DEBUG only: never in TestFlight / App Store builds)
 
+#if DEBUG
 /// DEMO: what the app has always done. No real blocking; the shield is
 /// Rilo's own ShieldView, the "notification" is BannerOverlay, the session
 /// is AppOpenView's timer. It only remembers what it was told (handy for
@@ -165,20 +166,22 @@ final class DemoScreenTimeService: ScreenTimeService {
     func dayRolledOver(to dateKey: String) { session = nil }
     func takeEvents() -> [ScreenTimeEvent] { [] }
 }
+#endif
 
 // MARK: - THE switch
 
 enum ScreenTime {
-    /// Demo → real: `FeatureFlags.REAL_SCREEN_TIME`, one line. The real code
-    /// (Rilo/Rilo/ScreenTimeReal/) is always compiled, so it can't rot while
-    /// it's off. See SETUP_AFTER_PAID_ACCOUNT.md for the one-time setup.
+    /// Real Screen Time everywhere. The demo service only exists in DEBUG:
+    /// the demo panel's "demo screen time" toggle (`FeatureFlags`), and the
+    /// screenshot seeds and checks. Release never builds it in as an option.
     @MainActor
     static func make() -> any ScreenTimeService {
         #if DEBUG
         /* the screenshot seeds and checks always run on the demo */
         if DemoSeed.screenArg != nil || DemoSeed.flag("-selfcheck") || DemoSeed.flag("-flowcheck") { return DemoScreenTimeService() }
+        if !FeatureFlags.REAL_SCREEN_TIME { return DemoScreenTimeService() }
         #endif
-        return FeatureFlags.REAL_SCREEN_TIME ? FamilyControlsScreenTimeService() : DemoScreenTimeService()
+        return FamilyControlsScreenTimeService()
     }
 
     /// true when Rilo is really blocking (the switch is on and it's not a

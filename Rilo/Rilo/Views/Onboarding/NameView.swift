@@ -11,9 +11,14 @@ struct NameView: View {
 
     private var ready: Bool { !draft.trimmingCharacters(in: .whitespaces).isEmpty }
 
+    /// real Screen Time asks for the permission before the picker
+    private var after: Screen {
+        next == .pickapps && ScreenTime.isReal(state.screenTimeService) ? .permission : next
+    }
+
     private func onward() {
         state.name = draft.trimmingCharacters(in: .whitespaces)
-        state.go(next)
+        state.go(after)
     }
 
     var body: some View {
@@ -34,7 +39,7 @@ struct NameView: View {
                     form
                     Button {
                         state.name = ""
-                        state.go(next)
+                        state.go(after)
                     } label: {
                         Text("skip")
                             .font(.fredoka(15, 600))
