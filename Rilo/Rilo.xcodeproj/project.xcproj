@@ -210,7 +210,7 @@
         "INFOPLIST_FILE": "RiloShieldConfiguration/Info.plist",
         "INFOPLIST_KEY_CFBundleDisplayName": "RiloShieldConfiguration",
         "INFOPLIST_KEY_NSHumanReadableCopyright": "",
-        "IPHONEOS_DEPLOYMENT_TARGET": "27.2",
+        "IPHONEOS_DEPLOYMENT_TARGET": "27.0",
         "LD_RUNPATH_SEARCH_PATHS": [
           "$(inherited)",
           "@executable_path/Frameworks",
@@ -247,7 +247,7 @@
         "INFOPLIST_FILE": "RiloShieldAction/Info.plist",
         "INFOPLIST_KEY_CFBundleDisplayName": "RiloShieldAction",
         "INFOPLIST_KEY_NSHumanReadableCopyright": "",
-        "IPHONEOS_DEPLOYMENT_TARGET": "27.2",
+        "IPHONEOS_DEPLOYMENT_TARGET": "27.0",
         "LD_RUNPATH_SEARCH_PATHS": [
           "$(inherited)",
           "@executable_path/Frameworks",
@@ -284,7 +284,7 @@
         "INFOPLIST_FILE": "RiloActivityMonitor/Info.plist",
         "INFOPLIST_KEY_CFBundleDisplayName": "RiloActivityMonitor",
         "INFOPLIST_KEY_NSHumanReadableCopyright": "",
-        "IPHONEOS_DEPLOYMENT_TARGET": "27.2",
+        "IPHONEOS_DEPLOYMENT_TARGET": "27.0",
         "LD_RUNPATH_SEARCH_PATHS": [
           "$(inherited)",
           "@executable_path/Frameworks",
@@ -323,7 +323,7 @@
         "INFOPLIST_FILE": "RiloWidget/Info.plist",
         "INFOPLIST_KEY_CFBundleDisplayName": "RiloWidget",
         "INFOPLIST_KEY_NSHumanReadableCopyright": "",
-        "IPHONEOS_DEPLOYMENT_TARGET": "27.2",
+        "IPHONEOS_DEPLOYMENT_TARGET": "27.0",
         "LD_RUNPATH_SEARCH_PATHS": [
           "$(inherited)",
           "@executable_path/Frameworks",
