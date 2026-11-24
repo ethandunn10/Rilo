@@ -75,13 +75,20 @@ struct RiloAppLabel: View {
     var selection: FamilyActivitySelection = RiloTokens.selection
 
     var body: some View {
-        if let token = RiloTokens.appToken(key, in: selection) {
-            Label(token)
-        } else if let token = RiloTokens.categoryToken(key, in: selection) {
-            Label(token)
-        } else {
-            /* no longer in the picked set: never show the raw "app-1a2b…" code */
-            Text(RiloTokens.looksLikeTokenKey(key) ? "an app you picked" : key)
+        Group {
+            if let token = RiloTokens.appToken(key, in: selection) {
+                Label(token)
+            } else if let token = RiloTokens.categoryToken(key, in: selection) {
+                Label(token)
+            } else {
+                /* no longer in the picked set: never show the raw "app-1a2b…" code */
+                Text(RiloTokens.looksLikeTokenKey(key) ? "an app you picked" : key)
+            }
         }
+        /* iOS draws the name in the system's text colour, which is white in
+           dark mode, on Rilo's light cards. Rilo is always light: force
+           dark text. */
+        .foregroundStyle(RC.ink)
+        .environment(\.colorScheme, .light)
     }
 }

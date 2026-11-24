@@ -30,7 +30,7 @@ struct CheckInView: View {
                     VStack(spacing: 14) {
                         HStack(spacing: 10) {
                             AppLogo(label: app, size: 34, radius: 10)
-                            Text(name)
+                            AppName(app: app)
                                 .font(.fredoka(19, 600))
                                 .foregroundStyle(RC.ink)
                         }
