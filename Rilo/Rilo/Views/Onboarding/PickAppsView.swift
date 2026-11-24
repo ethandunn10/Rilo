@@ -65,6 +65,14 @@ struct PickAppsView: View {
                 }
                 .buttonStyle(.tap(0.97))
                 .disabled(!picked)
+                if real {
+                    /* the notification prompt comes up on "continue": say why first */
+                    Text("next, allow notifications so rilo can check in when you open these apps.")
+                        .font(.inter(14, 600))
+                        .foregroundStyle(RC.ink2)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
             .padding(.top, WebLayout.top(56))
             .padding(.horizontal, 24)

@@ -75,19 +75,32 @@ extension YouView {
             /* real Screen Time (FeatureFlags.REAL_SCREEN_TIME): Apple's picker */
             if ScreenTime.isReal(state.screenTimeService) {
                 AppPickerView(maxApps: state.hasPro ? .max : Plan.FREE_MAX_APPS)
-                /* which app is which, and the Shortcuts check-in */
-                HStack(spacing: 10) {
-                    Button { state.go(.matchapps) } label: {
-                        Text("which app is which").font(.fredoka(16, 600)).foregroundStyle(RC.greenDeep)
+                /* optional extras, not part of onboarding: names for the
+                   apps (Apple never tells Rilo them), the Shortcuts check-in,
+                   and what the Live Activity did last (for phone testing) */
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("advanced (optional)")
+                        .font(.inter(12, 700))
+                        .foregroundStyle(RC.ink2)
+                    HStack(spacing: 10) {
+                        Button { state.go(.matchapps) } label: {
+                            Text("name my apps").font(.fredoka(16, 600)).foregroundStyle(RC.greenDeep)
+                        }
+                        .buttonStyle(.tap)
+                        Spacer(minLength: 0)
+                        Button { state.go(.automation) } label: {
+                            Text("shortcut check-in").font(.fredoka(16, 600)).foregroundStyle(RC.greenDeep)
+                        }
+                        .buttonStyle(.tap)
                     }
-                    .buttonStyle(.tap)
-                    Spacer(minLength: 0)
-                    Button { state.go(.automation) } label: {
-                        Text("shortcut check-in").font(.fredoka(16, 600)).foregroundStyle(RC.greenDeep)
+                    .frame(minHeight: 44)
+                    if let log = RiloShared.liveActivityLog {
+                        Text("live activity: \(log)")
+                            .font(.inter(12, 600))
+                            .foregroundStyle(RC.ink2)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
-                    .buttonStyle(.tap)
                 }
-                .frame(minHeight: 44)
             } else {
                 AppPicker(apps: $s.apps, sheet: $appSheet, refused: $refused,
                           maxApps: state.hasPro ? .max : Plan.FREE_MAX_APPS,

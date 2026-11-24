@@ -33,7 +33,7 @@ struct RatherView: View {
         VStack(alignment: .leading, spacing: 12) {
             Dots(active: 2)
 
-            BackButton { state.goTo(.hours, dir: .back) }   // the step just before (via crunching)
+            BackButton { state.goTo(.yournumber, dir: .back) }
 
             HStack(spacing: 10) {
                 RiloView(skin: AppState.OG_SKIN, mood: "curious", size: 92, talks: true)
@@ -126,7 +126,7 @@ struct RatherView: View {
 
     private var pinned: some View {
         Button {
-            state.ratherContinue(.yournumber, extras: extras)
+            state.ratherContinue(.yourplan, extras: extras)
         } label: {
             Text(ready ? "next" : "pick at least one")
                 .font(.fredoka(20, 600))

@@ -23,27 +23,17 @@ struct MeetRiloTourOverlay: View {
         var ask = false
     }
 
+    /// Home → Progress → Pick Rilo, five steps (skip is always there).
+    /// Each line has to be true of the app as built: picked apps are
+    /// shielded with a few opens a day and Rilo's countdown each time.
     static let STEPS: [Step] = [
-        /* home — what he tracks and what to do instead */
-        Step(screen: .home, target: "home-talk", title: "Hey \u{2014} I'm Rilo. Tap me any time to talk.", mood: "wave"),
-        Step(screen: .home, target: "score", title: "Your day at a glance \u{2014} time, goal, streak.", mood: "coach"),
-        Step(screen: .home, target: "home-apps", title: "These are your apps. Leave early, it costs half an open.", mood: "coach"),
-        Step(screen: .home, target: "next", title: "And something to do instead of scrolling.", mood: "proud"),
-        /* the plan */
-        Step(screen: .plan, target: "plan-day", title: "Your day, built around what you told me.", mood: "coach"),
-        /* the one question */
-        Step(screen: .plan, target: nil, ask: true),
-        /* progress, and the rilos you unlock */
-        Step(screen: .progress, target: "progress-level", title: "Every day under your goal earns xp.", mood: "proud"),
-        Step(screen: .pickrilo, target: "skins", title: "Level up and you unlock a new me.", mood: "wave"),
-        /* the settings worth knowing about */
-        Step(screen: .you, target: "you-creator", title: "Posting isn't scrolling \u{2014} it counts on its own.", mood: "proud"),
-        Step(screen: .you, target: "you-strict", title: "Strict mode: 24 hours before anything loosens.", mood: "coach"),
-        Step(screen: .you, target: "you-schedule", title: "Bedtime, school and focus times go here.", mood: "coach"),
-        Step(screen: .you, target: "you-buddies", title: "Add a friend \u{2014} they see your streak, not your numbers.", mood: "wave"),
-    ].filter { FeatureFlags.BUDDIES || $0.target != "you-buddies" }
-        /* Creator Mode is demo Screen Time only (see YouView+Settings) */
-        .filter { !FeatureFlags.REAL_SCREEN_TIME || $0.target != "you-creator" }
+        Step(screen: .home, target: "home-apps",
+             title: "these are your apps. you get a few opens a day, i'll check in each time.", mood: "coach"),
+        Step(screen: .home, target: "next", title: "and something to do instead of scrolling.", mood: "proud"),
+        Step(screen: .home, target: "home-talk", title: "tap me any time to talk.", mood: "wave"),
+        Step(screen: .progress, target: "progress-level", title: "every day under your goal earns xp.", mood: "proud"),
+        Step(screen: .pickrilo, target: "skins", title: "level up and you unlock a new me.", mood: "wave"),
+    ]
 
     /// DEBUG -tourstep n: start on that step (screenshots)
     static var debugStep: Int {

@@ -195,7 +195,7 @@ struct YourNumberView: View {
 
     private var showPlan: some View {
         PillButton(title: "show me the plan", fill: Color(hex: "#2E8B3E"), textColor: .white) {
-            state.go(.yourplan)
+            state.go(.rather)
         }
         .padding(.top, 10)
         .padding(.horizontal, 22)
@@ -208,7 +208,7 @@ struct YourNumberView: View {
 
     /// back steps through the beats before it leaves the screen
     private func back() {
-        if beat > 0 { state.numberBeat = beat - 1 } else { state.goTo(.rather, dir: .back) }
+        if beat > 0 { state.numberBeat = beat - 1 } else { state.goTo(.hours, dir: .back) }
     }
 
     /// useCountUp: 0 → `to` over `ms`, eased out; lands on it instantly when

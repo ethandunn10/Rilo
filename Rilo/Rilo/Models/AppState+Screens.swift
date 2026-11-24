@@ -31,15 +31,20 @@ extension AppState {
         }
         screenTime = true
         track("screentime", "allowed")
+        /* notifications are asked after picking apps (pickAppsDoneReal),
+           where the reason makes sense */
         go(.pickapps)
-        if !Track.muted { RiloNotifications.shared.askPermission() }
         return true
     }
 
     /// Real Screen Time: PickApps' button, once the apps are picked (the
-    /// permission is already done, so straight on to the hours question)
+    /// permission is already done). Notifications are asked here, with the
+    /// reason on the screen ("so rilo can check in when you open these
+    /// apps"), then the hours question. No Shortcuts and no app matching in
+    /// onboarding: those are optional, in You ▸ advanced.
     func pickAppsDoneReal() {
-        go(.matchapps)
+        if !Track.muted { RiloNotifications.shared.askPermission() }
+        go(.hours)
     }
 
     /// "about how many hours a day are you on your phone?" → the baseline
@@ -66,18 +71,18 @@ extension AppState {
 
     func crunchingDone() {
         startFromApps(true)
-        go(.rather)
+        numberBeat = 0
+        go(.yournumber)
     }
 
     // MARK: rather → your number → your plan
 
     /// "what would you rather spend it on?" continue: fold the picks into
-    /// `about`, build the plan, and play the number sequence from the top.
-    func ratherContinue(_ next: Screen = .yournumber, extras: [String] = []) {
+    /// `about`, build the plan, then the plan (your number comes before it)
+    func ratherContinue(_ next: Screen = .yourplan, extras: [String] = []) {
         about = Rather.applyRather(about, rather, extras)
         buildPlanFor(rather)
         track("rather", rather.isEmpty ? "nothing picked" : rather.joined(separator: ", "))
-        numberBeat = 0
         go(next)
     }
 
@@ -295,7 +300,10 @@ extension AppState {
 
     func handoffDone() { handoff = false }
 
-    /// MeetRiloTour's "do you post?" — turns Creator Mode on. It never grants Pro:
+    /// The old tour's "do you post?" question (the tour no longer asks it;
+    /// FlowCheck still calls this). Creator Mode stays off unless they turn
+    /// it on themselves in You: the safe default.
+    /// It used to turn Creator Mode on. It never grants Pro:
     /// Pro only comes from a purchase (PurchaseService), so Creator Mode stays
     /// locked behind the paywall for free users.
     func tourCreatorAnswer(_ postsFrequently: Bool) {

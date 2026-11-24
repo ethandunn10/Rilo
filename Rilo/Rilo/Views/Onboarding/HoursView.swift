@@ -19,7 +19,7 @@ struct HoursView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
                     Dots(active: 3)
-                    BackButton { state.goTo(state.realScreenTime ? .automation : .permission, dir: .back) }
+                    BackButton { state.goTo(state.realScreenTime ? .pickapps : .permission, dir: .back) }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     RiloView(skin: AppState.OG_SKIN, mood: "curious", size: 170, talks: true)
                     Text("about how many hours a day are you on your phone?")

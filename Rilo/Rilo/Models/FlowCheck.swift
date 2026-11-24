@@ -86,7 +86,8 @@ enum FlowCheck {
         state.hoursAnswered(6); await settle()
         ok("hours → crunching, answer kept", state.screen == .crunching && state.time.now == 6)
         state.crunchingDone(); await settle()
-        at("crunching → rather", .rather)
+        at("crunching → your number, from the top", .yournumber)
+        ok("number starts on beat 0", state.numberBeat == 0)
         ok("crunching built the baseline", state.breakdown != nil && state.time.now > 0 && state.time.goal >= 1)
         ok("baseline is what they said (6h)", state.time.now == 6 && state.breakdown?.total == 360)
         ok("starting goal is half of it (3h)", state.time.goal == 3)
@@ -94,28 +95,28 @@ enum FlowCheck {
             ok("per-app split is even", b.apps.allSatisfy { abs($0.mins - first.mins) < 0.01 } && b.other == 0,
                "\(b.apps.map(\.mins))")
         }
+        state.numberBeat = 2
+        /* YourNumber's back: a beat back, then the hours question */
+        state.numberBeat -= 1
+        ok("number back → the beat before", state.screen == .yournumber && state.numberBeat == 1)
+        state.numberBeat = 0
+        state.goTo(.hours, dir: .back); await settle()
+        ok("number back on beat 0 → hours", state.screen == .hours)
+        state.goTo(.yournumber); await settle()
+        state.numberBeat = 2
+        state.go(.rather); await settle()
+        at("your number → rather", .rather)
         state.goTo(.pickapps, dir: .back); await settle()
-        ok("rather back → pick apps, apps kept", state.screen == .pickapps
+        ok("pick apps kept", state.screen == .pickapps
            && state.tracked.count == (FeatureFlags.PAYMENTS ? 3 : 5))
         state.goTo(.rather); await settle()
         state.rather = ["gym", "studying"]
         state.ratherContinue(); await settle()
-        ok("rather → your number, from the top", state.screen == .yournumber && state.numberBeat == 0)
+        ok("rather → your plan", state.screen == .yourplan)
         ok("rather built rilo's limits", !state.appSettings.isEmpty && state.limitMode == "rilo")
         ok("rather folded into about", !state.profileList("hobby").isEmpty)
-        state.numberBeat = 2
-        /* YourNumber's back: a beat back, then Rather */
-        state.numberBeat -= 1
-        ok("number back → the beat before", state.screen == .yournumber && state.numberBeat == 1)
-        state.numberBeat = 0
         state.goTo(.rather, dir: .back); await settle()
-        ok("number back on beat 0 → rather, picks kept", state.screen == .rather && state.rather == ["gym", "studying"])
-        state.goTo(.yournumber); await settle()
-        state.numberBeat = 2
-        state.go(.yourplan); await settle()
-        at("your number → your plan", .yourplan)
-        state.goTo(.yournumber, dir: .back); await settle()
-        ok("plan back → your number, last beat", state.screen == .yournumber && state.numberBeat == 2)
+        ok("plan back → rather, picks kept", state.screen == .rather && state.rather == ["gym", "studying"])
         state.go(.yourplan); await settle()
         let goalBefore = state.goalMins
         var t = state.time; t.goal += 0.5
@@ -495,7 +496,7 @@ enum FlowCheck {
         ok("skip screen time → hours", state.screen == .hours && state.screenTime == nil)
         state.hoursAnswered(3); await settle()
         state.crunchingDone(); await settle()
-        ok("hours → crunching → rather", state.screen == .rather && state.time.now == 3)
+        ok("hours → crunching → your number", state.screen == .yournumber && state.time.now == 3)
         state.ratherContinue(); await settle()
         state.goTo(.paywall); await settle()
         state.plan = "free"

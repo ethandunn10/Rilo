@@ -66,7 +66,7 @@ struct YourPlanView: View {
         VStack(alignment: .leading, spacing: 12) {
             Dots(active: 3)
 
-            BackButton { state.goTo(.yournumber, dir: .back) }
+            BackButton { state.goTo(.rather, dir: .back) }
 
             HStack(spacing: 10) {
                 RiloView(skin: AppState.OG_SKIN, mood: "proud", size: 92, talks: true)
