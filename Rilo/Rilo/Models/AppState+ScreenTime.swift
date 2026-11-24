@@ -89,6 +89,10 @@ extension AppState {
                                       minutes: m, startedAt: JS.nowMs - minutes * 60_000)
                 }
                 finishSession(app, minutesUsed: minutes, goHome: screen == .appopen)
+            case .automationMissing(let app):
+                Automation.turnOff(app)
+                track("automation", "missing for an app: back on the shield")
+                syncScreenTime(force: true)
             case .shieldNeverMind(let app):
                 if onboarded && tracked.contains(app) {
                     interceptReason("never mind")

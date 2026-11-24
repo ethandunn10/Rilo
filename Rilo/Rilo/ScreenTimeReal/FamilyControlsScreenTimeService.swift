@@ -83,6 +83,13 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
             strict: rules.strict, scheduleKind: rules.scheduleKind, scheduleUntil: rules.scheduleUntil)
         shieldNow()
         updateWidget(rules)
+        /* the Shortcuts apps changed: re-register the daily schedule with
+           their safety-net events */
+        let now = rules.apps.filter { $0.value.automated }.map(\.key).sorted()
+        if now != guarded {
+            guarded = now
+            startDailySchedule(force: true)
+        }
     }
 
     private func shieldNow() {
@@ -145,7 +152,11 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
     }
 
     func endSession(app: String, minutesUsed: Double) {
-        if RiloShared.session?.app == app { RiloShared.session = nil }
+        if RiloShared.session?.app == app {
+            RiloShared.session = nil
+            /* the monitor's safety net reads this: a Rilo session ran today */
+            if minutesUsed > 0 { RiloShared.addUsage(app: app, minutes: minutesUsed) }
+        }
         activity.stopMonitoring([.riloSession])
         shieldNow()
     }
@@ -154,14 +165,28 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
 
     /// midnight to midnight, repeating: the monitor's intervalDidStart is
     /// the daily reset even when Rilo isn't running
-    private func startDailySchedule() {
-        guard !activity.activities.contains(.riloDaily) else { return }
+    private func startDailySchedule(force: Bool = false) {
+        guard force || !activity.activities.contains(.riloDaily) else { return }
         let schedule = DeviceActivitySchedule(intervalStart: DateComponents(hour: 0, minute: 0),
                                               intervalEnd: DateComponents(hour: 23, minute: 59, second: 59),
                                               repeats: true)
-        do { try activity.startMonitoring(.riloDaily, during: schedule) }
+        /* the Shortcuts safety net: 2 minutes of an automated app in a day
+           (the monitor checks whether Rilo had a session behind it) */
+        let sel = RiloTokens.selection
+        var events: [DeviceActivityEvent.Name: DeviceActivityEvent] = [:]
+        for key in guarded {
+            let apps: Set<ApplicationToken> = RiloTokens.appToken(key, in: sel).map { [$0] } ?? []
+            let cats: Set<ActivityCategoryToken> = RiloTokens.categoryToken(key, in: sel).map { [$0] } ?? []
+            if apps.isEmpty && cats.isEmpty { continue }
+            events[.riloGuard(key)] = DeviceActivityEvent(applications: apps, categories: cats, webDomains: [],
+                                                          threshold: DateComponents(minute: 2))
+        }
+        do { try activity.startMonitoring(.riloDaily, during: schedule, events: events) }
         catch { track("screentime", "daily schedule failed: \(error.localizedDescription)") }
     }
+
+    /// the apps whose check-in is the Shortcuts automation right now
+    private var guarded: [String] = []
 
     func dayRolledOver(to dateKey: String) {
         RiloShared.session = nil
@@ -181,6 +206,7 @@ final class FamilyControlsScreenTimeService: ScreenTimeService {
             case "shieldTapped": return .shieldTapped(app: e.app)
             case "sessionEnded": return .sessionEnded(app: e.app, minutes: e.minutes)
             case "shieldNeverMind": return .shieldNeverMind(app: e.app)
+            case "automationMissing": return .automationMissing(app: e.app)
             default: return nil
             }
         }

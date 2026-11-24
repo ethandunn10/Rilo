@@ -138,6 +138,9 @@ nonisolated enum ScreenTimeEvent: Equatable, Sendable {
     case sessionEnded(app: String, minutes: Double)
     /// the shield's "never mind": they didn't open it (a win)
     case shieldNeverMind(app: String)
+    /// an app whose check-in was the Shortcuts automation got used with no
+    /// check-in: the automation is gone, so it's back on the shield
+    case automationMissing(app: String)
 }
 
 // MARK: - the demo (DEBUG only: never in TestFlight / App Store builds)

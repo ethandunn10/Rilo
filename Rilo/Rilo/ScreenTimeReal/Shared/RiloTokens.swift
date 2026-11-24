@@ -116,4 +116,14 @@ extension DeviceActivityEvent.Name {
     nonisolated static var riloHalf: Self { Self("rilo.half") }
     /// all of the session's minutes used: shield again
     nonisolated static var riloTimeUp: Self { Self("rilo.timeup") }
+    /// the Shortcuts safety net for one app (RiloTokens.guardedKey)
+    nonisolated static func riloGuard(_ key: String) -> Self { Self("rilo.guard.\(key)") }
+}
+
+extension RiloTokens {
+    /// the app key behind a safety-net event, if it is one
+    nonisolated static func guardedKey(_ event: DeviceActivityEvent.Name) -> String? {
+        let raw = event.rawValue
+        return raw.hasPrefix("rilo.guard.") ? String(raw.dropFirst("rilo.guard.".count)) : nil
+    }
 }

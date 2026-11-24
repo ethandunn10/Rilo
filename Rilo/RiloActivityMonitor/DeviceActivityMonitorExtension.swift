@@ -17,6 +17,9 @@ nonisolated final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
     override func intervalDidStart(for activity: DeviceActivityName) {
         super.intervalDidStart(for: activity)
         guard activity == .riloDaily else { return }
+        /* only on a real new day: the app re-registers this schedule mid-day
+           (when its Shortcuts apps change) and that can start it again */
+        guard RiloShared.rules.dateKey != RiloShared.todayKey() else { return }
         /* fresh day: no session carries over midnight, nobody stays kicked out */
         if let s = RiloShared.session { endSession(s, timeUp: false) }
         RiloShared.kicked = []
@@ -50,6 +53,17 @@ nonisolated final class DeviceActivityMonitorExtension: DeviceActivityMonitor {
 
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
+        /* the Shortcuts safety net: an app whose check-in is the automation
+           got 2 minutes of use today with no Rilo session behind it. The
+           automation is gone (or off), so put its shield back. */
+        if activity == .riloDaily, let key = RiloTokens.guardedKey(event) {
+            if RiloShared.session?.app == key { return }
+            if (RiloShared.usageToday()[key] ?? 0) > 0 { return }
+            RiloShared.kicked.insert(key)
+            RiloShared.post(SharedEvent(kind: "automationMissing", app: key, at: RiloShared.nowMs))
+            reshield()
+            return
+        }
         guard activity == .riloSession, var s = RiloShared.session else { return }
         if event == .riloHalf {
             s.halfReached = true

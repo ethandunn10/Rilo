@@ -59,6 +59,24 @@ struct AutomationSetupView: View {
                                         Text(Automation.isOn(key) ? "✓ working" : "not yet")
                                             .font(.fredoka(16, 700))
                                             .foregroundStyle(Automation.isOn(key) ? RC.greenDeep : RC.ink2)
+                                        /* deleted the shortcut? put the shield back on this app */
+                                        if Automation.isOn(key) {
+                                            Button {
+                                                Automation.turnOff(key)
+                                                state.syncScreenTime(force: true)
+                                                rev += 1
+                                            } label: {
+                                                Text("use shield")
+                                                    .font(.fredoka(14, 600))
+                                                    .foregroundStyle(RC.ink)
+                                                    .padding(.vertical, 6)
+                                                    .padding(.horizontal, 10)
+                                                    .background(Capsule().fill(Color.white))
+                                                    .overlay(Capsule().strokeBorder(RC.line, lineWidth: 1.2))
+                                            }
+                                            .buttonStyle(.tap)
+                                            .accessibilityLabel("use the shield for \(Apps.name(key)) instead")
+                                        }
                                     }
                                 }
                             }
