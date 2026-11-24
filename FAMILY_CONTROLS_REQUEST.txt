@@ -10,14 +10,16 @@ Bundle IDs that need the entitlement:
 
 Rilo uses the Screen Time APIs for these things:
 
-1. FamilyControls: the person picks the apps they want help with in Apple's own app picker (FamilyActivityPicker). The Rilo app only gets Apple's tokens for those apps. It never sees their names, their bundle IDs, or anything else on the phone. The only place an app's name appears is on Apple's shield screen, drawn by Rilo's shield configuration extension.
+1. FamilyControls: the person picks the apps they want help with in Apple's own app picker (FamilyActivityPicker). Rilo only gets Apple's tokens for those apps, never their names or bundle IDs. Right after picking, Rilo shows each picked app with Apple's own label and asks "which app is this?"; the person taps a match from a short list (Instagram, TikTok, YouTube and so on) or types a name. Those names are the only app names Rilo ever knows, they come only from what the person tells Rilo, and they stay on the iPhone. Rilo uses them to show the right name in its own screens, to open the right app again after a check-in, and for its Shortcuts action.
 
-2. ManagedSettings: Rilo puts a shield on the picked apps. Each app gets a few "opens" a day, and each open lasts a set number of minutes. When an app is opened, the shield asks what it's being opened for, then lets it through for that session. When the opens run out, the app stays shielded until midnight. People can also block an app fully, or block apps during bedtime, school hours or a focus block they set. An optional strict mode turns on "deny app removal", so the person can't just delete an app to get around their own limits.
+2. ManagedSettings: Rilo puts a shield on the picked apps. Each app gets a few "opens" a day, and each open lasts a set number of minutes. Before an app opens, Rilo asks what it's being opened for, waits a few seconds, then lets it through for one session. When the opens run out, the app stays shielded until midnight. People can also block an app fully, or block apps during bedtime, school hours or a focus block they set. An optional strict mode turns on "deny app removal", so the person can't just delete an app to get around their own limits.
 
 3. DeviceActivity: Rilo schedules a daily reset at midnight (fresh opens), and it ends a session when its minutes are used up so the shield goes back on.
 
-4. Shield configuration and shield action extensions: these show Rilo's own message on the shield screen, with a "talk to rilo" button.
+4. Shield configuration and shield action extensions: these show Rilo's own message on the shield screen (the app's name, which Apple provides to this extension, and how many opens are left today), with a "talk to rilo" button that sends a local notification to open Rilo's check-in, and a "never mind" button.
+
+Rilo also offers an optional App Intent, "Rilo check-in", that the person can add to their own Shortcuts automation ("when Instagram is opened, run Rilo check-in"). It opens Rilo's check-in for that app. While that automation handles an app, Rilo keeps that app's shield down except when it is out of opens, blocked, in a schedule, or its session time has just run out, so the shield and the check-in never show at the same time.
 
 Rilo also has a home screen widget. It shows Rilo's mood and how many opens are left today. It does not use the Screen Time APIs; it reads that summary from the app's App Group on the phone.
 
-Everything stays on the iPhone. Rilo has no accounts, no server and no analytics. No Screen Time data, app list or usage is sent anywhere, shared or used for ads. The only thing that can leave the phone is a weekly share image (minutes saved, streak and level), and only when the person taps share and picks where to send it.
+Everything stays on the iPhone. Rilo has no accounts, no server and no analytics. No Screen Time data, app list, app names or usage is sent anywhere, shared or used for ads. The only thing that can leave the phone is a weekly share image (minutes saved, streak and level), and only when the person taps share and picks where to send it.
