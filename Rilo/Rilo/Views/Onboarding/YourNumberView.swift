@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Port of app/src/screens/YourNumber.jsx — "here's your number", three
-/// beats: the hit (days a year + the pile), the flip (the same time counted
-/// in what they'd rather do), the promise (and the per-app split).
+/// "here's your number", three beats: what the hours they said cost a year
+/// (one big number + a bar of the year), what cutting to the starting goal
+/// gives back (same), then the promise (and the per-app split).
 /// Beats one and two advance themselves (BEAT_MS); a tap anywhere moves it
 /// on, "skip" jumps to the last beat, back steps back through the beats.
 /// The beat lives in `state.numberBeat` so it survives a trip to the paywall.
@@ -14,7 +14,6 @@ struct YourNumberView: View {
 
     @State private var bigDays = 0
     @State private var bigFlip = 0
-    @State private var columnHeight: CGFloat = 345
 
     /// DEBUG `-beat N`: show that beat settled (no auto-advance, counters
     /// on their final numbers) so a screenshot isn't mid-animation.
@@ -63,7 +62,7 @@ struct YourNumberView: View {
             await countUp(to: days, ms: 2000, run: beat == 0) { bigDays = $0 }
         }
         .task(id: beat >= 1) {
-            await countUp(to: flip.count, ms: 1700, run: beat >= 1) { bigFlip = $0 }
+            await countUp(to: daysBack, ms: 1700, run: beat >= 1) { bigFlip = $0 }
         }
     }
 
@@ -93,75 +92,62 @@ struct YourNumberView: View {
         .onTapGesture {}
     }
 
-    // MARK: beats 1 and 2: the stage
+    // MARK: beats 1 and 2: one big number, one big bar
 
+    /// beat 1: what the hours they said cost a year. beat 2: what cutting to
+    /// the starting goal gives back. One number, one bar of the year, a few
+    /// words: readable in a second.
     private var stage: some View {
         GeometryReader { geo in
-            ZStack {
-                YourNumberPile(days: days, flipped: beat >= 1, reduced: reduced)
-                    .opacity(0.45)
-                    .position(x: geo.size.width / 2, y: geo.size.height - YourNumberPile.budget / 2)
-                    .allowsHitTesting(false)
-                    .accessibilityHidden(true)
-
-                /* top: 43% with translateY(-50%) — but on the web the `rise`
-                   entry animation (fill: both) ends on translateY(0), which
-                   replaces the -50%, so the column's TOP sits at 43%. Only
-                   with reduced motion (no animation) is it centred there. */
-                /* short phones (SE): lift the column so it ends above the
-                   pile instead of running into it (tall phones: unchanged) */
-                let top = max(110,
-                              min(geo.size.height * 0.43, geo.size.height - YourNumberPile.budget - columnHeight))
-                VStack(spacing: 0) {
-                    if reduced { Spacer(minLength: 0) }
-                    numberColumn
-                        .id("num-\(beat)")
-                        .frame(width: geo.size.width)
-                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { columnHeight = $0 }
-                    Spacer(minLength: 0)
-                }
-                .frame(width: geo.size.width, height: reduced ? geo.size.height * 0.86 : geo.size.height - top)
-                .position(x: geo.size.width / 2,
-                          y: reduced ? geo.size.height * 0.43 : top + (geo.size.height - top) / 2)
+            VStack(spacing: 18) {
+                Spacer(minLength: 70)
+                RiloView(skin: AppState.OG_SKIN, mood: mood, size: min(130, geo.size.height * 0.17))
+                numberColumn
+                    .id("num-\(beat)")
+                YearBar(fraction: Double(beat == 0 ? days : daysBack) / 365,
+                        color: beat == 0 ? Color(hex: "#C0532F") : RC.greenDeep,
+                        reduced: reduced || pinned)
+                    .id("bar-\(beat)")
+                    .padding(.horizontal, 26)
+                Spacer(minLength: 40)
             }
+            .frame(width: geo.size.width, height: geo.size.height)
         }
-        .ignoresSafeArea()
     }
 
+    /// "6 hrs a day" / "5½ hrs"
+    static func hrs(_ mins: Double) -> String {
+        let h = mins / 60
+        let whole = h.rounded(.down)
+        let half = h - whole >= 0.5
+        if whole == 1 && !half { return "1 hr" }
+        return "\(Int(whole))\(half ? "½" : "") hrs"
+    }
+
+    private var goalMinsNow: Double { Double(state.goalMins) }
+    private var daysBack: Int { Rather.daysPerYear(max(0, perDay - goalMinsNow)) }
+
     private var numberColumn: some View {
-        VStack(spacing: 10) {
-            RiloView(skin: AppState.OG_SKIN, mood: mood, size: 124)
-
-            Text(beat == 0 ? "\(Plan.fmtMins(perDay)) a day on your phone" : "the same time, spent your way")
-                .font(.inter(15.5, 800))
-                .tracking(15.5 * 0.07)
-                .textCase(.uppercase)
-                .foregroundStyle(Color(hex: "#1E3A27"))
-                .padding(.top, 4)
-
-            Text(verbatim: String(beat == 0 ? bigDays : bigFlip))
-                .font(.fredoka(104, 700))
-                .tracking(-104 * 0.02)
-                .foregroundStyle(beat == 0 ? RC.ink : Color(hex: "#2E8B3E"))
-                .frame(height: 104 * 0.95)
-                .monospacedDigit()
-
-            Text(beat == 0 ? "days a year. awake, scrolling." : "\(flip.unit). that's what it's worth.")
+        VStack(spacing: 4) {
+            Text(beat == 0 ? "\(Self.hrs(perDay)) a day" : "cut to \(Self.hrs(goalMinsNow))")
                 .font(.fredoka(30, 700))
-                .webLineHeight(30, 1.2)
-                .foregroundStyle(beat == 0 ? Color(hex: "#0E2615") : Color(hex: "#1B5F28"))
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: 320)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, 6)
+                .foregroundStyle(RC.ink)
+            Text(verbatim: "= \(beat == 0 ? bigDays : bigFlip) days")
+                .font(.fredoka(76, 700))
+                .minimumScaleFactor(0.6)
+                .lineLimit(1)
+                .monospacedDigit()
+                .foregroundStyle(beat == 0 ? Color(hex: "#9E3B1E") : RC.greenDeep)
+            Text(beat == 0 ? "a year on your phone" : "back this year")
+                .font(.fredoka(28, 700))
+                .foregroundStyle(RC.ink)
         }
-        .padding(.horizontal, 18)
         .multilineTextAlignment(.center)
-        /* read the final numbers, not the count-up */
+        .padding(.horizontal, 18)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(beat == 0
-            ? "\(A11ySpeak.mins(perDay)) a day on your phone. \(days) days a year. awake, scrolling."
-            : "the same time, spent your way. \(flip.count) \(flip.unit). that's what it's worth.")
+            ? "\(Self.hrs(perDay)) a day equals \(days) days a year on your phone."
+            : "cut to \(Self.hrs(goalMinsNow)) equals \(daysBack) days back this year.")
         .accessibilityAddTraits(.isHeader)
         .modifier(BeatRise(reduced: reduced))
     }
@@ -254,5 +240,39 @@ private struct BeatRise: ViewModifier {
             .opacity(shown || reduced ? 1 : 0)
             .offset(y: shown || reduced ? 0 : 18)
             .onAppear { withAnimation(.easeOut(duration: 0.5).delay(delay)) { shown = true } }
+    }
+}
+
+/// A bar the width of the screen: the whole year, with the share of it in
+/// question filling in smoothly.
+private struct YearBar: View {
+    let fraction: Double
+    let color: Color
+    let reduced: Bool
+    @State private var shown: Double = 0
+
+    var body: some View {
+        VStack(spacing: 6) {
+            GeometryReader { g in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.75))
+                    Capsule().fill(color)
+                        .frame(width: max(44, g.size.width * min(1, max(0, shown))))
+                }
+            }
+            .frame(height: 44)
+            .overlay(Capsule().strokeBorder(RC.ink.opacity(0.85), lineWidth: 2.5))
+            HStack {
+                Text("today").font(.inter(13, 700))
+                Spacer()
+                Text("1 year").font(.inter(13, 700))
+            }
+            .foregroundStyle(RC.ink)
+        }
+        .accessibilityHidden(true)
+        .onAppear {
+            if reduced { shown = fraction; return }
+            withAnimation(.easeOut(duration: 1.6).delay(0.15)) { shown = fraction }
+        }
     }
 }
