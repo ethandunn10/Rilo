@@ -132,7 +132,7 @@ struct YourNumberView: View {
         VStack(spacing: 10) {
             RiloView(skin: AppState.OG_SKIN, mood: mood, size: 124)
 
-            Text(beat == 0 ? "\(Plan.fmtMins(perDay)) a day, on these apps" : "the same time, spent your way")
+            Text(beat == 0 ? "\(Plan.fmtMins(perDay)) a day on your phone" : "the same time, spent your way")
                 .font(.inter(15.5, 800))
                 .tracking(15.5 * 0.07)
                 .textCase(.uppercase)
@@ -160,7 +160,7 @@ struct YourNumberView: View {
         /* read the final numbers, not the count-up */
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(beat == 0
-            ? "\(A11ySpeak.mins(perDay)) a day, on these apps. \(days) days a year. awake, scrolling."
+            ? "\(A11ySpeak.mins(perDay)) a day on your phone. \(days) days a year. awake, scrolling."
             : "the same time, spent your way. \(flip.count) \(flip.unit). that's what it's worth.")
         .accessibilityAddTraits(.isHeader)
         .modifier(BeatRise(reduced: reduced))

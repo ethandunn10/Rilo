@@ -3,7 +3,7 @@ import Foundation
 /// Every screen the web's router knows (App.jsx `render()`), by the same name.
 nonisolated enum Screen: String, CaseIterable, Codable, Sendable {
     /* onboarding, in order */
-    case welcome, name, pickapps, permission, crunching, rather, yournumber, yourplan, limitsonboard
+    case welcome, name, pickapps, permission, hours, crunching, rather, yournumber, yourplan, limitsonboard
     case paywall
     /* the same paywall, opened from a locked feature: it hands you back */
     case upgrade
@@ -14,7 +14,7 @@ nonisolated enum Screen: String, CaseIterable, Codable, Sendable {
 
     /// App.jsx ONBOARDING — loosening a limit here never asks "are you sure"
     static let onboarding: [Screen] = [
-        .welcome, .name, .pickapps, .permission, .crunching,
+        .welcome, .name, .pickapps, .permission, .hours, .crunching,
         .yournumber, .rather, .yourplan, .limitsonboard, .paywall,
     ]
 

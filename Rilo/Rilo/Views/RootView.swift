@@ -41,6 +41,7 @@ struct RootView: View {
         case .name: NameView()
         case .pickapps: PickAppsView()
         case .permission: PermissionView()
+        case .hours: HoursView()
         case .crunching: CrunchingView()
         case .rather: RatherView()
         case .yournumber: YourNumberView()

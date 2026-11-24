@@ -8,7 +8,7 @@ extension AppState {
     func permissionAllow() {
         screenTime = true
         track("screentime", "allowed")
-        go(.crunching)
+        go(.hours)
         /* Phase 8: the real Screen Time prompt (the demo just says yes) */
         requestScreenTimeAuth()
         /* Phase 7: the one moment we ask for notifications — right after
@@ -37,8 +37,16 @@ extension AppState {
     }
 
     /// Real Screen Time: PickApps' button, once the apps are picked (the
-    /// permission is already done, so straight on to the crunching beat)
+    /// permission is already done, so straight on to the hours question)
     func pickAppsDoneReal() {
+        go(.hours)
+    }
+
+    /// "about how many hours a day are you on your phone?" → the baseline
+    /// for your number, your plan, the starting goal and the per-app split
+    func hoursAnswered(_ hours: Double) {
+        time = TimeGoal(now: hours, goal: time.goal)
+        track("hours", GoalStepper.fmtHours(hours))
         go(.crunching)
     }
 
@@ -53,8 +61,7 @@ extension AppState {
     }
 
     func permissionSkip() {
-        startFromApps(false)
-        go(.rather)
+        go(.hours)
     }
 
     func crunchingDone() {

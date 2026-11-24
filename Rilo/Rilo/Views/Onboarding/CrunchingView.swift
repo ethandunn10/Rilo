@@ -1,7 +1,8 @@
 import SwiftUI
 
-/// Port of app/src/screens/Crunching.jsx: the beat between allowing
-/// Screen Time and seeing the damage. 1.5s, then crunchingDone().
+/// Port of app/src/screens/Crunching.jsx: a short beat after the hours
+/// question while Rilo builds the plan from them. It doesn't analyze any
+/// data (it can't), so it doesn't say it does. 1.5s, then crunchingDone().
 struct CrunchingView: View {
     @Environment(AppState.self) private var state
 
@@ -10,7 +11,7 @@ struct CrunchingView: View {
             SkyView(hills: .low)
             VStack(spacing: 18) {
                 RiloView(skin: AppState.OG_SKIN, mood: "curious", size: 190, talks: true)
-                Text("rilo's crunching your numbers…")
+                Text("building your plan…")
                     .accessibilityAddTraits(.isHeader)
                     .font(.fredoka(26, 600))
                     .foregroundStyle(RC.ink)

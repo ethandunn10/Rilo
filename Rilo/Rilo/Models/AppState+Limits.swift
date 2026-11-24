@@ -5,32 +5,32 @@ import Foundation
 extension AppState {
     // MARK: the baseline and Rilo's first plan
 
-    /// The web can't read real Screen Time, so the baseline comes from the
-    /// hours they gave (5h if they never said).
-    func makeBreakdown(_ allowed: Bool) {
-        let total = Double(Plan.hoursToMins(time.now != 0 ? time.now : 5))
-        breakdown = Plan.buildBreakdown(watched, total, allowed)
+    /// Apple doesn't let apps read Screen Time minutes, so the baseline is
+    /// the hours they gave on the hours screen (5h if they never said),
+    /// split evenly across the picked apps. No per-app guesses.
+    var saidMins: Double { Double(Plan.hoursToMins(time.now != 0 ? time.now : 5)) }
+
+    func makeBreakdown() {
+        breakdown = Plan.buildBreakdown(watched, saidMins, false)
     }
 
     /// hours from the apps they picked; goal roughly half, on a clean half
     /// hour, floored at an hour
     func startFromApps(_ allowed: Bool) {
-        let picked = watched
-        let mins = MockAI.demoDailyMinutes(picked)
-        let hours = JS.round(mins / 60 * 100) / 100
+        /* the starting goal: about half what they said, on a clean half
+           hour, at least an hour */
+        let hours = time.now != 0 ? time.now : 5
         let goal = max(1, JS.round(hours / 2 / 0.5) * 0.5)
-        breakdown = Plan.buildBreakdown(picked, mins, allowed)
-        /* the web's breakdown effect then runs on the new time.now */
         time = TimeGoal(now: hours, goal: goal)
+        makeBreakdown()
     }
 
     /// Rilo writes the plan himself from the apps, the number and what they
     /// said they'd rather be doing.
     func buildPlanFor(_ picks: [String]) {
         let picked = watched
-        let mins = MockAI.demoDailyMinutes(picked)
-        let goal = Plan.hoursToMins(max(1, JS.round(mins / 60 / 2 / 0.5) * 0.5))
-        let bd = breakdown ?? Plan.buildBreakdown(picked, mins, screenTime == true)
+        let goal = Plan.hoursToMins(max(1, JS.round(saidMins / 60 / 2 / 0.5) * 0.5))
+        let bd = breakdown ?? Plan.buildBreakdown(picked, saidMins, false)
         var hobbies: [String] = []
         var goals: [String] = []
         for id in picks {

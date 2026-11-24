@@ -5,7 +5,7 @@ The real app is the SwiftUI iPhone app in Rilo/. The web demo (app*/ folders) is
 Hard rules, autopilot or not:
 - Never push to GitHub, never deploy, never run `vercel`.
 - Never touch signing, Team, bundle IDs, entitlements, capabilities, App Group names, or Info.plist principal classes. Those are set by hand in Xcode.
-- Never flip FeatureFlags.REAL_SCREEN_TIME.
+- Real Screen Time (FamilyControls, `.individual`) is the default in every build. Demo Screen Time is DEBUG-only (demo panel toggle or `-demoscreentime`); never make it the default and never let it into Release (TestFlight / App Store) builds.
 - Don't edit Rilo.xcodeproj by hand. Files dropped in the existing folders get picked up automatically.
 - Don't change the mascot, the logo/app icon, the grass theme, skins, or the privacy promises on rilo.one/privacy (everything stays on the phone).
 - No real API keys, no paid services, never open .env files.

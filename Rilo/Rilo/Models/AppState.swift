@@ -305,8 +305,8 @@ final class AppState {
         let key = breakdownKey
         if key == lastBreakdownKey { return }
         lastBreakdownKey = key
-        guard let st = screenTime else { return }
-        makeBreakdown(st == true)
+        guard screenTime != nil else { return }
+        makeBreakdown()
     }
 
     /// The first time they reach the onboarding limits screen there's nothing

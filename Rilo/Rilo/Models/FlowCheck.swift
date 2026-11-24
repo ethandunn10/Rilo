@@ -82,10 +82,18 @@ enum FlowCheck {
         state.permissionTriedAgain()
         ok("try again remembered", state.triedAgain)
         state.permissionAllow(); await settle()
-        ok("allow → crunching", state.screen == .crunching && state.screenTime == true)
+        ok("allow → hours", state.screen == .hours && state.screenTime == true)
+        state.hoursAnswered(6); await settle()
+        ok("hours → crunching, answer kept", state.screen == .crunching && state.time.now == 6)
         state.crunchingDone(); await settle()
         at("crunching → rather", .rather)
         ok("crunching built the baseline", state.breakdown != nil && state.time.now > 0 && state.time.goal >= 1)
+        ok("baseline is what they said (6h)", state.time.now == 6 && state.breakdown?.total == 360)
+        ok("starting goal is half of it (3h)", state.time.goal == 3)
+        if let b = state.breakdown, let first = b.apps.first {
+            ok("per-app split is even", b.apps.allSatisfy { abs($0.mins - first.mins) < 0.01 } && b.other == 0,
+               "\(b.apps.map(\.mins))")
+        }
         state.goTo(.pickapps, dir: .back); await settle()
         ok("rather back → pick apps, apps kept", state.screen == .pickapps
            && state.tracked.count == (FeatureFlags.PAYMENTS ? 3 : 5))
@@ -474,7 +482,7 @@ enum FlowCheck {
         state.goTo(.home); await settle()
         _ = (state.riloMood, state.riloNote, state.back, state.check, state.goalLeft, state.currentApp,
              state.weekAhead, state.stepApp, state.suggestStrict)
-        state.makeBreakdown(true)
+        state.makeBreakdown()
         ok("empty account: breakdown builds", state.breakdown != nil)
         _ = Plan.buildBreakdown([], 0, true)
         ok("empty account: still alive", state.currentApp == "the feed")
@@ -484,7 +492,10 @@ enum FlowCheck {
         state.apps = PickedApps(on: ["tiktok": true], extra: [])
         state.goTo(.permission); await settle()
         state.permissionSkip(); await settle()
-        ok("skip screen time → rather", state.screen == .rather && state.screenTime == nil)
+        ok("skip screen time → hours", state.screen == .hours && state.screenTime == nil)
+        state.hoursAnswered(3); await settle()
+        state.crunchingDone(); await settle()
+        ok("hours → crunching → rather", state.screen == .rather && state.time.now == 3)
         state.ratherContinue(); await settle()
         state.goTo(.paywall); await settle()
         state.plan = "free"

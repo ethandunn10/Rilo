@@ -141,9 +141,9 @@ enum DemoSeed {
             state.apps = PickedApps(on: ["tiktok": true, "instagram": true, "youtube": true, "snapchat": true],
                                     extra: [])
         }
-        let past: [Screen] = [.permission, .crunching]
+        let past: [Screen] = [.permission, .hours, .crunching]
         if !blank.contains(screen) && !past.contains(screen) {
-            /* what Permission → Crunching → Rather do */
+            /* what Permission → Hours → Crunching → Rather do */
             state.screenTime = true
             state.startFromApps(true)
             state.rather = ["gym", "studying"]
