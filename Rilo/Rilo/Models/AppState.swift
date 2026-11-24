@@ -123,6 +123,8 @@ final class AppState {
     @ObservationIgnored var lastNotifyKey: String? = nil
     /// the last check-in that was opened (AppState+CheckIn's de-dupe)
     @ObservationIgnored var lastCheckIn: (app: String, at: Double)? = nil
+    /// the session (by its start) already charged (AppState+Sessions)
+    @ObservationIgnored var finishedSessionAt: Double = 0
     @ObservationIgnored private var lastBreakdownKey: String? = nil
     @ObservationIgnored private var ticker: Task<Void, Never>? = nil
     /// Phase 8: the phone's Screen Time (demo or real, see ScreenTime.make)

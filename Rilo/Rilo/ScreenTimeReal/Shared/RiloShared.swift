@@ -99,12 +99,12 @@ nonisolated enum RiloShared {
     /// (Limits.CONTINUE_MS), never under 15.
     static func windowMinutes(for minutes: Double) -> Double { max(15, minutes + 2) }
 
-    /// the same YYYY-MM-DD key the app uses (JS.isoDay: UTC, like the web)
+    /// the same YYYY-MM-DD key the app uses (JS.isoDay: the phone's local day)
     static func todayKey(_ date: Date = Date()) -> String {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
         f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
+        f.timeZone = .current   // the phone's day, same as JS.isoDay
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: date)
     }

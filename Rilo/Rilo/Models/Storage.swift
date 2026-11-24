@@ -114,10 +114,10 @@ nonisolated enum Storage {
     /// called, so it isn't ported)
     static let RESET_KEY = "rilo.riloReset.v1"
 
-    /// today's date key — UTC, exactly like the web's toISOString().slice(0, 10)
+    /// today's date key, the phone's local day (YYYY-MM-DD)
     static func today() -> String { JS.isoDay() }
 
-    /// tomorrow, as a YYYY-MM-DD key (local +1 day, then UTC like the web)
+    /// tomorrow, as a YYYY-MM-DD key (local)
     static func tomorrow(from: Date = Date()) -> String {
         JS.isoDay(Calendar.current.date(byAdding: .day, value: 1, to: from) ?? from)
     }

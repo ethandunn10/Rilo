@@ -78,10 +78,17 @@ extension AppState {
             case .shieldTapped(let app):
                 openedFromShield(app)
             case .sessionEnded(let app, let minutes):
-                /* the session ran out (or they left) while Rilo was away: charge it */
-                if screen == .appopen && session.app == app {
-                    finishSession(app, minutesUsed: minutes)
+                /* the session ran out (or they left) while Rilo was away:
+                   charge it, wherever Rilo is now. If Rilo was closed in the
+                   meantime the session itself is gone, so rebuild a plain
+                   one from the app's own numbers: the open still counts. */
+                guard tracked.contains(app) else { break }
+                if session.app != app || session.startedAt <= 0 {
+                    let m = settingOf(app).minutes
+                    session = Session(app: app, cap: Double(m), carried: 0, charged: 0, kind: "open",
+                                      minutes: m, startedAt: JS.nowMs - minutes * 60_000)
                 }
+                finishSession(app, minutesUsed: minutes, goHome: screen == .appopen)
             case .shieldNeverMind(let app):
                 if onboarded && tracked.contains(app) {
                     interceptReason("never mind")

@@ -26,7 +26,10 @@ nonisolated enum JS {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
         f.locale = Locale(identifier: "en_US_POSIX")
-        f.timeZone = TimeZone(identifier: "UTC")
+        /* the PHONE's day, not UTC (the web port used UTC, which made the
+           day, fresh opens and the streak roll over in the evening in the
+           US, hours before iOS's own midnight reset) */
+        f.timeZone = .current
         f.dateFormat = "yyyy-MM-dd"
         return f.string(from: date)
     }

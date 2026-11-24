@@ -78,7 +78,13 @@ extension AppState {
         go(.whyopen)
     }
 
-    func finishSession(_ appName: String, minutesUsed: Double) {
+    func finishSession(_ appName: String, minutesUsed: Double, goHome: Bool = true) {
+        /* real Screen Time can end one session two ways at once (Rilo's own
+           clock and iOS's timer event): charge it once */
+        if session.startedAt > 0 {
+            if session.startedAt == finishedSessionAt { return }
+            finishedSessionAt = session.startedAt
+        }
         let used = max(0, minutesUsed)
         /* the shield goes back up */
         screenTimeService.endSession(app: appName, minutesUsed: used)
@@ -144,7 +150,7 @@ extension AppState {
             self.promise = nil
         }
 
-        goToSoon(.home, dir: .back)
+        if goHome { goToSoon(.home, dir: .back) }
     }
 
     /// "pretend you opened X": bump that app's real count for today
