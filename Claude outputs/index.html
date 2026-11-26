@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#A6DDF0">
+<title>Backpack · the study buddy that remembers your homework</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎒</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#12301A; --ink-2:#2C4A36; --ink-3:#5B7563; --card:#FFFBF1; --line:#12301A;
+    --green:#246E31; --green-soft:#DDF3D5; --sun:#FFD66B; --sun-soft:#FFF1C7;
+    --red:#C8402F; --red-soft:#FCE3DD; --r:22px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;color:var(--ink);font-family:Inter,system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+  body{min-height:100vh;background:linear-gradient(180deg,#A6DDF0 0%,#CDEDF0 26%,#EAF6E6 52%,#EEF8E6 100%) fixed}
+  .hills{position:fixed;left:0;right:0;bottom:0;height:150px;z-index:-1;pointer-events:none}
+  .hills svg{width:100%;height:100%;display:block}
+  button,input,select,textarea{font:inherit;color:inherit}
+  h1,h2,.brand,.btn,.count b,.score,.label,.q,.tab,.next .t{font-family:Fredoka,Inter,sans-serif}
+  .wrap{max-width:560px;margin:0 auto;padding:max(18px,env(safe-area-inset-top)) 18px 120px}
+
+  header{display:flex;align-items:center;justify-content:space-between;margin:2px 0 18px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:23px}
+  .brand .m{width:38px;height:38px;border-radius:12px;background:var(--card);border:2px solid var(--line);box-shadow:0 3px 0 var(--line);display:grid;place-items:center;font-size:20px}
+  .hello{font-size:34px;font-weight:600;line-height:1.08;margin:0 0 6px;letter-spacing:-.01em}
+  .lead{color:var(--ink-2);margin:0 0 20px;font-size:16px;line-height:1.5}
+
+  .card{background:var(--card);border:2px solid var(--line);border-radius:var(--r);padding:18px;margin-bottom:16px;box-shadow:0 5px 0 var(--line)}
+  .label{font-size:14px;font-weight:600;color:var(--ink-3);margin:0 0 10px;letter-spacing:.01em}
+  h2{font-size:21px;font-weight:600;margin:0 0 4px;line-height:1.15}
+  .muted{color:var(--ink-3);font-size:14px}
+
+  .next{background:var(--ink);color:#fff}
+  .next .label{color:#A9C6AF}
+  .next .row{display:flex;align-items:center;gap:14px}
+  .count{min-width:70px;height:70px;border-radius:18px;background:var(--sun);color:var(--ink);border:2px solid #0a1d10;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+  .count b{font-size:30px;line-height:1;font-weight:700}
+  .count span{font-size:11.5px;font-weight:700}
+  .next .t{font-weight:600;font-size:19px;line-height:1.15}
+  .next .s{color:#A9C6AF;font-size:13.5px;margin-top:3px}
+
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:2px solid var(--line);border-radius:999px;padding:13px 22px;font-weight:600;font-size:17px;cursor:pointer;background:var(--ink);color:#fff;width:100%;box-shadow:0 4px 0 var(--line);transition:transform .12s,box-shadow .12s}
+  .btn:hover{transform:translateY(2px);box-shadow:0 2px 0 var(--line)}
+  .btn:active{transform:translateY(4px);box-shadow:0 0 0 var(--line)}
+  .btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+  .btn.light,.btn.white{background:var(--card);color:var(--ink)}
+  .next .btn.white{border-color:#0a1d10;box-shadow:0 4px 0 #0a1d10}
+  .btn.sm{padding:9px 18px;font-size:15px;width:auto}
+  .link{background:none;border:0;color:var(--ink-2);cursor:pointer;font-size:14px;padding:6px;text-decoration:underline;text-underline-offset:3px}
+
+  .item{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1.5px dashed rgba(18,48,26,.18)}
+  .item:first-of-type{border-top:0;padding-top:2px}
+  .chk{width:28px;height:28px;border-radius:10px;border:2px solid var(--line);background:#fff;flex:none;cursor:pointer;display:grid;place-items:center;color:#fff;font-size:15px;font-weight:800}
+  .chk.on{background:var(--green)}
+  .item .main{flex:1;min-width:0;cursor:pointer}
+  .item .t{font-weight:600;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item .s{font-size:13px;color:var(--ink-3);margin-top:1px}
+  .item.done .t{text-decoration:line-through;color:var(--ink-3)}
+  .when{font-size:12.5px;font-weight:700;color:var(--ink-3);white-space:nowrap;padding:4px 9px;border-radius:999px}
+  .when.hot{color:#fff;background:var(--red)} .when.warm{background:var(--sun);color:var(--ink)}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;vertical-align:0;border:1.5px solid var(--line)}
+  .ic{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;flex:none;font-size:15px;border:2px solid var(--line)}
+
+  .tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 14px calc(12px + env(safe-area-inset-bottom))}
+  .tabbar .in{max-width:420px;margin:0 auto;display:flex;align-items:center;justify-content:space-around;height:66px;background:var(--card);border:2px solid var(--line);border-radius:999px;box-shadow:0 5px 0 var(--line)}
+  .tab{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;font-weight:600;color:var(--ink-3);cursor:pointer;min-width:72px}
+  .tab .i{font-size:20px}
+  .tab.on{color:var(--ink)}
+  .plus{width:58px;height:58px;border-radius:50%;border:2px solid var(--line);background:var(--sun);color:var(--ink);font-size:32px;font-weight:600;cursor:pointer;margin-top:-30px;box-shadow:0 4px 0 var(--line);font-family:Fredoka,sans-serif;line-height:1}
+  .plus:active{transform:translateY(3px);box-shadow:0 1px 0 var(--line)}
+
+  .sheet-bg{position:fixed;inset:0;background:rgba(18,48,26,.45);display:none;align-items:flex-end;justify-content:center;z-index:40}
+  .sheet-bg.show{display:flex}
+  .sheet{background:#F4FAEE;width:100%;max-width:560px;max-height:92vh;overflow:auto;border:2px solid var(--line);border-bottom:0;border-radius:26px 26px 0 0;padding:14px 18px calc(24px + env(safe-area-inset-bottom))}
+  .sheet .grab{width:44px;height:5px;border-radius:9px;background:rgba(18,48,26,.25);margin:0 auto 14px}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px}
+  .sheet-head h2{margin:0}
+  @media(min-width:640px){.sheet-bg{align-items:center}.sheet{border-radius:26px;border-bottom:2px solid var(--line);box-shadow:0 6px 0 var(--line)}.sheet .grab{display:none}}
+
+  .drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:2px dashed var(--ink);background:var(--card);border-radius:20px;padding:26px 12px;cursor:pointer;text-align:center}
+  .drop .big{font-size:32px}
+  .drop b{font-size:17px;font-family:Fredoka,sans-serif;font-weight:600}
+  .drop span{font-size:13.5px;color:var(--ink-3)}
+  .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .thumbs div{position:relative}
+  .thumbs img{width:64px;height:64px;object-fit:cover;border-radius:12px;border:2px solid var(--line)}
+  .thumbs button{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:11px;cursor:pointer}
+  .or{display:flex;align-items:center;gap:10px;color:var(--ink-3);font-size:13px;margin:14px 0;font-weight:600}
+  .or:before,.or:after{content:"";flex:1;height:2px;background:rgba(18,48,26,.15);border-radius:2px}
+  textarea,input[type=text],input[type=date],input[type=password],select{width:100%;border:2px solid var(--line);border-radius:14px;padding:12px 13px;background:#fff;outline:none;font-size:15.5px}
+  textarea:focus,input:focus,select:focus{box-shadow:0 0 0 4px rgba(255,214,107,.7)}
+  textarea{min-height:96px;resize:vertical}
+  .fl{display:block;font-size:13px;font-weight:600;color:var(--ink-2);margin:12px 0 6px}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .found{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:14px;margin-bottom:12px}
+  details summary{cursor:pointer;color:var(--ink-2);font-size:14px;margin-top:12px;font-weight:600}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .chip{font-size:13px;font-weight:600;background:var(--green-soft);border:1.5px solid var(--line);border-radius:999px;padding:4px 11px}
+
+  .step{display:flex;gap:12px;padding:6px 0}
+  .step .d{width:46px;flex:none;text-align:center}
+  .step .d b{display:block;font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.05em}
+  .step .d span{font-size:19px;font-weight:700;font-family:Fredoka,sans-serif}
+  .step .w{flex:1;background:#fff;border:2px solid rgba(18,48,26,.15);border-radius:14px;padding:10px 12px;font-size:14.5px}
+  .step.today .w{background:var(--sun-soft);border-color:var(--line)}
+  .step.test .w{background:var(--ink);border-color:var(--line);color:#fff;font-weight:600}
+
+  .q{font-size:21px;font-weight:600;line-height:1.25;margin:8px 0 14px}
+  .opt{display:block;width:100%;text-align:left;border:2px solid var(--line);background:#fff;border-radius:16px;padding:14px;margin:0 0 10px;cursor:pointer;font-size:15.5px;font-weight:500;box-shadow:0 3px 0 var(--line);transition:transform .1s,box-shadow .1s}
+  .opt:hover:not(:disabled){transform:translateY(1px);box-shadow:0 2px 0 var(--line)}
+  .opt.right{background:var(--green-soft)}
+  .opt.wrong{background:var(--red-soft)}
+  .opt:disabled{cursor:default}
+  .why{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:12px 14px;font-size:14.5px;margin:4px 0 14px}
+  .bar{height:10px;background:#fff;border:2px solid var(--line);border-radius:9px;overflow:hidden;margin:0 0 8px}
+  .bar i{display:block;height:100%;background:var(--sun);transition:width .3s}
+  .score{font-size:72px;font-weight:700;text-align:center;margin:10px 0 0;line-height:1}
+
+  .empty{text-align:center;padding:26px 10px}
+  .empty .e{font-size:46px;margin-bottom:6px}
+  .toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(10px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:999px;font-size:14.5px;font-weight:600;z-index:60;opacity:0;transition:.2s;pointer-events:none;max-width:88vw;text-align:center;border:2px solid #0a1d10}
+  .toast.show{opacity:1;transform:translateX(-50%)}
+  .spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:8px}
+  .spin.dark{border-color:rgba(18,48,26,.15);border-top-color:var(--ink)}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .hidden{display:none !important}
+  .center{text-align:center}
+  .mt{margin-top:12px}
+  .err{background:var(--red-soft);color:#7a1f14;border:2px solid var(--red);border-radius:14px;padding:10px 12px;font-size:14px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="hills" aria-hidden="true"><svg viewBox="0 0 1440 150" preserveAspectRatio="none"><path d="M0,70 C240,20 420,110 720,60 C1000,15 1220,95 1440,50 L1440,150 L0,150 Z" fill="#B8E3A4"/><path d="M0,105 C300,60 520,140 820,95 C1100,55 1280,120 1440,95 L1440,150 L0,150 Z" fill="#8FD07A"/></svg></div>
+<div class="wrap">
+  <header>
+    <div class="brand"><div class="m">🎒</div>Backpack</div>
+    <button class="link" data-act="settings" aria-label="settings">⚙︎</button>
+  </header>
+  <main id="screen"></main>
+</div>
+
+<nav class="tabbar"><div class="in">
+  <button class="tab on" data-tab="today"><span class="i">🏠</span>Today</button>
+  <button class="plus" data-act="add" aria-label="Add homework">+</button>
+  <button class="tab" data-tab="tests"><span class="i">🎯</span>Tests</button>
+</div></nav>
+
+<div id="sheet" class="sheet-bg"><div class="sheet"><div class="grab"></div><div id="sheet-body"></div></div></div>
+<div id="toast" class="toast"></div>
+<input id="file" type="file" accept="image/*" multiple class="hidden">
+
+<script>
+(() => {
+"use strict";
+
+/* ---------- state ---------- */
+const KEY = "backpack-v2", CODE_KEY = "backpack-code";
+const KINDS = {hw:"Homework", test:"Test", quiz:"Quiz", project:"Project"};
+const COLORS = ["#ff6b35","#3b82f6","#a855f7","#16a34a","#eab308","#ec4899","#14b8a6","#64748b"];
+const S = { items:[], quizzes:{}, tab:"today", photos:[], found:null, quiz:null, showDone:false };
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const pad = n => String(n).padStart(2, "0");
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const t0 = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const parse = s => { if (!s || !/^\d{4}-\d{2}-\d{2}$/.test(s)) return null; const [y,m,d] = s.split("-").map(Number); return new Date(y, m-1, d); };
+const days = s => { const d = parse(s); return d ? Math.round((d - t0())/864e5) : null; };
+const wk = d => d.toLocaleDateString(undefined, {weekday:"long"});
+const short = d => d.toLocaleDateString(undefined, {weekday:"short", month:"short", day:"numeric"});
+const isTest = i => i.kind === "test" || i.kind === "quiz";
+function when(s){
+  const n = days(s);
+  if (n === null) return {t:"no date", c:""};
+  if (n < 0) return {t: n === -1 ? "yesterday" : `${-n}d late`, c:"hot"};
+  if (n === 0) return {t:"today", c:"hot"};
+  if (n === 1) return {t:"tomorrow", c:"warm"};
+  if (n < 7) return {t: wk(parse(s)), c: n <= 3 ? "warm" : ""};
+  return {t: short(parse(s)), c:""};
+}
+function color(subj){
+  const subs = [...new Set(S.items.map(i => (i.subject||"").toLowerCase()))].sort();
+  const k = subs.indexOf((subj||"").toLowerCase());
+  return COLORS[(k < 0 ? 0 : k) % COLORS.length];
+}
+function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("show"); clearTimeout(t.h); t.h = setTimeout(() => t.classList.remove("show"), 2600); }
+
+/* ---------- storage (this device) ---------- */
+function load(){ try { const d = JSON.parse(localStorage.getItem(KEY) || "null"); if (d) { S.items = Array.isArray(d.items) ? d.items : []; S.quizzes = d.quizzes || {}; } } catch {} }
+function save(){ try { localStorage.setItem(KEY, JSON.stringify({items:S.items, quizzes:S.quizzes})); } catch { toast("Couldn't save on this device"); } }
+const getCode = () => { try { return localStorage.getItem(CODE_KEY) || ""; } catch { return ""; } };
+const setCode = c => { try { localStorage.setItem(CODE_KEY, c); } catch {} };
+
+/* ---------- AI (through our own /api/ai) ---------- */
+async function ai(payload){
+  const r = await fetch("/api/ai", {method:"POST", headers:{"content-type":"application/json", "x-access-code": getCode()}, body: JSON.stringify(payload)});
+  let data = {}; try { data = await r.json(); } catch {}
+  if (r.status === 401) { const e = new Error(data.message || "Access code needed"); e.code = "code"; throw e; }
+  if (!r.ok) throw new Error(data.message || "Something went wrong. Try again.");
+  return data;
+}
+function askCode(then){
+  S.afterCode = then;
+  openSheet(`<div class="sheet-head"><h2>Enter access code</h2><button class="link" data-act="close">Close</button></div>
+    <p class="muted" style="margin:0 0 12px">Backpack's AI is locked with a code so nobody runs up the bill. Ask Ethan for it.</p>
+    <input id="code" type="password" placeholder="Access code" value="${esc(getCode())}" autocomplete="off">
+    <button class="btn mt" data-act="save-code">Unlock</button>`);
+  setTimeout(() => $("#code") && $("#code").focus(), 50);
+}
+
+/* ---------- photos ---------- */
+async function toJpegB64(file){
+  const bmp = await createImageBitmap(file);
+  const max = 1280, k = Math.min(1, max / Math.max(bmp.width, bmp.height));
+  const c = document.createElement("canvas"); c.width = Math.round(bmp.width*k); c.height = Math.round(bmp.height*k);
+  c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL("image/jpeg", 0.8).split(",")[1];
+}
+
+/* ---------- planning (instant, no AI) ---------- */
+function related(test){
+  const subj = (test.subject||"").toLowerCase().trim();
+  const tops = new Set((test.topics||[]).map(t => t.toLowerCase()));
+  return S.items.filter(i => i.id !== test.id && !isTest(i) && ((subj && (i.subject||"").toLowerCase().trim() === subj) || (i.topics||[]).some(t => tops.has(t.toLowerCase()))));
+}
+function plan(test){
+  const n = days(test.due), out = [];
+  if (n === null || n < 0) return out;
+  const T = [...new Set([...(test.topics||[]), ...related(test).flatMap(r => r.topics||[])])].slice(0, 8);
+  const tops = T.length ? T : ["everything on the test"];
+  if (n === 0) return [{d:t0(), w:"Warm up: one quick practice quiz, then look over what you missed.", test:true}];
+  const sd = Math.min(n, 7), start = n - sd, learn = sd >= 3 ? sd - 2 : sd - 1;
+  for (let k = 0; k < sd; k++) {
+    const left = sd - k; let w;
+    if (left === 1) w = "Final review: take a practice quiz and re-study what you miss.";
+    else if (left === 2 && sd >= 3) w = "Practice quiz, then fix your weak spots.";
+    else { const c = tops.filter((_, i) => i % learn === k); w = "Study " + (c.length ? c : [tops[k % tops.length]]).join(", "); }
+    out.push({d: addDays(t0(), start + k), w});
+  }
+  out.push({d: addDays(t0(), n), w: `${KINDS[test.kind]} day: ${test.title}`, test:true});
+  return out;
+}
+function tonight(){
+  const out = [];
+  S.items.filter(i => !i.done).forEach(i => {
+    const n = days(i.due);
+    if (!isTest(i)) { if (n !== null && n <= 1) out.push({id:i.id, t:`Finish ${i.title}`, s:`${i.subject} · due ${when(i.due).t}`, n, ic:"✏️"}); return; }
+    if (n === null || n < 0 || n > 7) return;
+    const p = plan(i).find(x => ymd(x.d) === ymd(t0()));
+    if (p) out.push({id:i.id, t:p.w, s:`for ${i.title} · ${when(i.due).t}`, n, ic:"📖", quiz:/quiz/i.test(p.w)});
+  });
+  return out.sort((a,b) => a.n - b.n).slice(0, 5);
+}
+
+/* ---------- screens ---------- */
+function row(i){
+  const w = when(i.due);
+  return `<div class="item ${i.done?"done":""}" data-id="${esc(i.id)}">
+    <button class="chk ${i.done?"on":""}" data-act="toggle" aria-label="done">${i.done?"✓":""}</button>
+    <div class="main" data-act="edit"><div class="t">${esc(i.title)}</div>
+      <div class="s"><span class="dot" style="background:${color(i.subject)}"></span>${esc(i.subject)}${isTest(i)?` · <b style="color:var(--ink)">${KINDS[i.kind]}</b>`:""}</div></div>
+    <div class="when ${i.done?"":w.c}">${i.done?"":esc(w.t)}</div></div>`;
+}
+function today(){
+  if (!S.items.length) return `
+    <h1 class="hello">Never forget homework again.</h1>
+    <p class="lead">Snap a worksheet or paste what your teacher said. Backpack remembers it, tells you what to do tonight, and quizzes you on your own homework before tests.</p>
+    <button class="btn" data-act="add">📸 Add homework</button>
+    <div class="center mt"><button class="link" data-act="demo">or try it with a sample week</button></div>`;
+  const open = S.items.filter(i => !i.done).sort((a,b) => (days(a.due)??999) - (days(b.due)??999));
+  const done = S.items.filter(i => i.done);
+  const nextTest = open.filter(isTest).find(t => (days(t.due) ?? -1) >= 0);
+  const tn = tonight();
+  const h = new Date().getHours();
+  let html = `<h1 class="hello">${h < 12 ? "Morning" : h < 18 ? "Hey" : "Tonight"} 👋</h1>
+    <p class="lead">${open.filter(i => { const n = days(i.due); return n !== null && n <= 7; }).length} things due this week.</p>`;
+  if (nextTest) { const n = days(nextTest.due); html += `<div class="card next">
+      <p class="label">Next test</p>
+      <div class="row"><div class="count"><b>${n}</b><span>${n===1?"day":"days"}</span></div>
+      <div style="flex:1;min-width:0"><div class="t">${esc(nextTest.title)}</div><div class="s">${esc(nextTest.subject)} · ${esc(when(nextTest.due).t)}</div></div></div>
+      <button class="btn white mt" data-act="quiz" data-id="${esc(nextTest.id)}">🧠 Quiz me on my homework</button></div>`; }
+  html += `<div class="card"><p class="label">Tonight</p>${tn.length ? tn.map(x => `<div class="item" data-id="${esc(x.id)}"><div class="ic" style="background:#fff">${x.ic}</div>
+      <div class="main" data-act="${x.quiz?"quiz":"edit"}"><div class="t" style="white-space:normal">${esc(x.t)}</div><div class="s">${esc(x.s)}</div></div></div>`).join("")
+      : `<p class="muted" style="margin:0">Nothing urgent. You're ahead 🙌</p>`}</div>`;
+  html += `<div class="card"><p class="label">Coming up</p>${open.length ? open.map(row).join("") : `<p class="muted" style="margin:0">All caught up.</p>`}</div>`;
+  if (done.length) html += `<div class="center"><button class="link" data-act="show-done">${S.showDone ? "Hide" : "Show"} finished (${done.length})</button></div>
+    ${S.showDone ? `<div class="card mt">${done.map(row).join("")}<div class="center mt"><button class="link" data-act="clear-done">Clear finished</button></div></div>` : ""}`;
+  return html;
+}
+function tests(){
+  const list = S.items.filter(isTest).filter(t => !t.done).sort((a,b) => (days(a.due)??999) - (days(b.due)??999));
+  if (!list.length) return `<h1 class="hello">Tests</h1><div class="card empty"><div class="e">🎯</div><p class="muted">No tests yet. When a teacher announces one, add it and Backpack makes your study plan.</p><button class="btn sm" data-act="add">Add a test</button></div>`;
+  return `<h1 class="hello">Tests</h1><p class="lead">Your study plan, built from your homework.</p>` + list.map(t => {
+    const n = days(t.due), rel = related(t), p = plan(t), last = (S.quizzes[t.id]||[]).slice(-1)[0];
+    return `<div class="card">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="flex:1;min-width:0"><div class="muted"><span class="dot" style="background:${color(t.subject)}"></span>${esc(t.subject)} · ${KINDS[t.kind]}</div><h2 style="margin-top:4px">${esc(t.title)}</h2>
+          <div class="muted">${n===null?"No date yet":n<0?"Already happened":`${esc(when(t.due).t)} · ${n} day${n===1?"":"s"} left`}</div></div>
+      </div>
+      ${(t.topics||[]).length ? `<div class="chips">${t.topics.map(x => `<span class="chip">${esc(x)}</span>`).join("")}</div>` : ""}
+      <p class="muted mt" style="margin-bottom:0">📎 Quizzes use ${rel.length} saved homework${rel.length===1?"":"s"}${rel.length?"":" (add some for better questions)"}</p>
+      ${last ? `<p class="muted" style="margin:4px 0 0">Last quiz: <b style="color:var(--ink)">${last.score}/${last.total}</b>${last.missed.length?` · work on ${esc([...new Set(last.missed)].slice(0,2).join(", "))}`:""}</p>` : ""}
+      ${p.length ? `<div class="mt">${p.map(x => `<div class="step ${ymd(x.d)===ymd(t0())?"today":""} ${x.test?"test":""}"><div class="d"><b>${ymd(x.d)===ymd(t0())?"today":x.d.toLocaleDateString(undefined,{weekday:"short"})}</b><span>${x.d.getDate()}</span></div><div class="w">${esc(x.w)}</div></div>`).join("")}</div>` : ""}
+      <button class="btn mt" data-act="quiz" data-id="${esc(t.id)}">🧠 Practice quiz</button>
+      <div class="center"><button class="link" data-act="edit" data-id="${esc(t.id)}">Edit</button></div>
+    </div>`;
+  }).join("");
+}
+function render(){
+  $("#screen").innerHTML = S.tab === "tests" ? tests() : today();
+  document.querySelectorAll(".tab").forEach(b => b.classList.toggle("on", b.dataset.tab === S.tab));
+}
+
+/* ---------- sheets ---------- */
+function openSheet(html){ $("#sheet-body").innerHTML = html; $("#sheet").classList.add("show"); }
+function closeSheet(){ $("#sheet").classList.remove("show"); S.quiz = null; S.editing = null; }
+
+function addSheet(err){
+  openSheet(`<div class="sheet-head"><h2>Add homework</h2><button class="link" data-act="close">Close</button></div>
+    <label class="drop" for="file"><div class="big">📸</div><b>Snap or upload a photo</b><span>Worksheet, assignment page, test announcement</span></label>
+    <div class="thumbs" id="thumbs">${S.photos.map((f,i) => `<div><img src="${URL.createObjectURL(f)}" alt=""><button data-rm="${i}">✕</button></div>`).join("")}</div>
+    <div class="or">or type it</div>
+    <textarea id="paste" placeholder="Bio worksheet on cell respiration due Thursday. Unit 4 test next Tuesday.">${esc(S.draft||"")}</textarea>
+    ${err ? `<div class="err">${esc(err)}</div>` : ""}
+    <button class="btn mt" id="read" data-act="read">✨ Remember it</button>
+    <div class="center"><button class="link" data-act="manual">Add without AI</button></div>`);
+}
+function fields(i, k){
+  return `<div class="two">
+      <div><label class="fl">Type</label><select data-f="kind" data-k="${k}">${Object.entries(KINDS).map(([v,l]) => `<option value="${v}" ${i.kind===v?"selected":""}>${l}</option>`).join("")}</select></div>
+      <div><label class="fl">Due</label><input type="date" data-f="due" data-k="${k}" value="${esc(i.due||"")}"></div></div>
+    <label class="fl">Title</label><input type="text" data-f="title" data-k="${k}" value="${esc(i.title)}" placeholder="e.g. Chapter 5 worksheet">
+    <label class="fl">Class</label><input type="text" data-f="subject" data-k="${k}" value="${esc(i.subject)}" placeholder="e.g. Biology">
+    <details ${i.notes?"":"open"}><summary>Topics & notes (quizzes use these)</summary>
+      <label class="fl">Topics, separated by commas</label><input type="text" data-f="topics" data-k="${k}" value="${esc((i.topics||[]).join(", "))}">
+      <label class="fl">Notes</label><textarea data-f="notes" data-k="${k}">${esc(i.notes||"")}</textarea></details>`;
+}
+function foundSheet(){
+  const F = S.found;
+  openSheet(`<div class="sheet-head"><h2>${F.length > 1 ? `Found ${F.length} things` : "Look right?"}</h2><button class="link" data-act="close">Close</button></div>
+    <p class="muted" style="margin:0 0 12px">Check the due dates, then save.</p>
+    ${F.map((i,k) => `<div class="found">${fields(i,k)}${F.length>1?`<div class="center"><button class="link" data-rmfound="${k}">Remove</button></div>`:""}</div>`).join("")}
+    <button class="btn" data-act="save-found">Save ${F.length > 1 ? "all" : ""}</button>`);
+}
+function editSheet(id){
+  const i = S.items.find(x => x.id === id); if (!i) return;
+  S.editing = JSON.parse(JSON.stringify(i));
+  openSheet(`<div class="sheet-head"><h2>Edit</h2><button class="link" data-act="close">Close</button></div>
+    ${fields(S.editing, "e")}
+    <button class="btn mt" data-act="save-edit">Save</button>
+    <div class="center"><button class="link" data-act="delete" data-id="${esc(id)}" style="color:var(--red)">Delete</button></div>`);
+}
+function clean(x){
+  return { id: uid(), kind: KINDS[x && x.kind] ? x.kind : "hw", title: String(x && x.title || "").slice(0,120), subject: String(x && x.subject || "").slice(0,40),
+    due: parse(x && x.due) ? x.due : null, topics: Array.isArray(x && x.topics) ? x.topics.map(String).filter(Boolean).slice(0,8) : [],
+    notes: String(x && x.notes || "").slice(0,1500), done:false, at: Date.now() };
+}
+
+async function read(){
+  const text = ($("#paste") ? $("#paste").value : "").trim();
+  S.draft = text;
+  if (!text && !S.photos.length) return toast("Add a photo or type something first");
+  const b = $("#read"); b.disabled = true; b.innerHTML = `<span class="spin"></span>Reading…`;
+  try {
+    const images = [];
+    for (const f of S.photos) images.push({media_type:"image/jpeg", data: await toJpegB64(f)});
+    const t = t0();
+    const r = await ai({task:"extract", text, images, today: ymd(t), weekday: wk(t)});
+    const list = (r.items||[]).map(clean).filter(i => i.title);
+    if (!list.length) throw new Error("Couldn't find any homework in that. Try a clearer photo, or add it without AI.");
+    S.found = list; foundSheet();
+  } catch (e) {
+    if (e.code === "code") return askCode(() => { addSheet(); read(); });
+    addSheet(e.message);
+  }
+}
+
+async function startQuiz(id){
+  const t = S.items.find(x => x.id === id); if (!t) return;
+  S.quiz = {id, i:0, pick:null, score:0, missed:[], qs:null};
+  quizSheet();
+  try {
+    const pick = o => ({kind:o.kind, title:o.title, subject:o.subject, topics:o.topics, notes:o.notes});
+    const r = await ai({task:"quiz", test: pick(t), related: related(t).slice(0,6).map(pick)});
+    const qs = (r.questions||[]).filter(q => q && q.q && Array.isArray(q.options) && q.options.length >= 2 && Number.isInteger(+q.answer) && +q.answer >= 0 && +q.answer < q.options.length).map(q => ({...q, answer:+q.answer}));
+    if (!qs.length) throw new Error("Couldn't make a quiz. Add a few notes or topics to this test first.");
+    if (S.quiz && S.quiz.id === id) { S.quiz.qs = qs; quizSheet(); }
+  } catch (e) {
+    if (e.code === "code") return askCode(() => startQuiz(id));
+    if (S.quiz) { S.quiz.err = e.message; quizSheet(); }
+  }
+}
+function quizSheet(){
+  const Q = S.quiz; if (!Q) return;
+  const t = S.items.find(x => x.id === Q.id) || {};
+  const head = `<div class="sheet-head"><div><div class="muted" style="font-size:12.5px;font-weight:600">PRACTICE QUIZ</div><h2>${esc(t.title)}</h2></div><button class="link" data-act="close">Close</button></div>`;
+  if (Q.err) return openSheet(head + `<div class="err">${esc(Q.err)}</div><button class="btn mt" data-act="quiz" data-id="${esc(Q.id)}">Try again</button>`);
+  if (!Q.qs) return openSheet(head + `<div class="empty"><div class="e">🧠</div><p class="muted"><span class="spin dark"></span>Making questions from your homework…</p></div>`);
+  if (Q.i >= Q.qs.length) {
+    const pct = Q.score / Q.qs.length, weak = [...new Set(Q.missed)];
+    return openSheet(head + `<div class="score">${Q.score}/${Q.qs.length}</div>
+      <p class="center muted">${pct>=.9?"You're ready. 🔥":pct>=.7?"Solid. Fix a couple spots and you've got it.":pct>=.5?"Getting there. Review these:":"Good thing you practiced. Focus on these:"}</p>
+      ${weak.length ? `<div class="chips" style="justify-content:center">${weak.map(w => `<span class="chip">${esc(w)}</span>`).join("")}</div>` : ""}
+      <button class="btn mt" data-act="quiz" data-id="${esc(Q.id)}">New quiz</button>
+      <button class="btn light mt" data-act="close">Done</button>`);
+  }
+  const q = Q.qs[Q.i], a = Q.pick !== null;
+  openSheet(head + `<div class="bar"><i style="width:${Q.i/Q.qs.length*100}%"></i></div>
+    <div class="muted" style="font-size:13px">${Q.i+1} of ${Q.qs.length}${q.topic?" · "+esc(q.topic):""}</div>
+    <div class="q">${esc(q.q)}</div>
+    ${q.options.map((o,k) => `<button class="opt ${a?(k===q.answer?"right":k===Q.pick?"wrong":""):""}" data-pick="${k}" ${a?"disabled":""}>${esc(o)}</button>`).join("")}
+    ${a ? `<div class="why">${Q.pick===q.answer?"✅ Nice.":"❌ Not quite."} ${esc(q.explain||"")}${q.from?`<div class="muted" style="margin-top:6px;font-size:12.5px">📎 From your homework: ${esc(q.from)}</div>`:""}</div>
+    <button class="btn" data-act="next">${Q.i+1===Q.qs.length?"See my score":"Next"}</button>` : ""}`);
+}
+
+/* ---------- sample week ---------- */
+function demo(){
+  const d = n => ymd(addDays(t0(), n)), mk = o => clean(o);
+  S.items = [
+    mk({kind:"hw", title:"Cellular respiration worksheet", subject:"Biology", due:d(1), topics:["Glycolysis","Krebs cycle","Electron transport chain","ATP"], notes:"C6H12O6 + 6O2 → 6CO2 + 6H2O + ATP. Glycolysis: cytoplasm, glucose → 2 pyruvate, net 2 ATP + 2 NADH, no oxygen needed. Krebs cycle: mitochondrial matrix, makes CO2, NADH, FADH2, 2 ATP. Electron transport chain: inner mitochondrial membrane, oxygen is the final electron acceptor (makes water), ~32-34 ATP via ATP synthase. No oxygen → fermentation (lactic acid in muscles, alcohol in yeast)."}),
+    mk({kind:"hw", title:"Photosynthesis reading questions", subject:"Biology", due:d(3), topics:["Photosynthesis","Light reactions","Calvin cycle"], notes:"6CO2 + 6H2O + light → C6H12O6 + 6O2. Light reactions in thylakoid membranes: split water, release O2, make ATP + NADPH. Calvin cycle in the stroma: uses ATP + NADPH to fix CO2 into sugar (G3P), enzyme rubisco. Chlorophyll absorbs red and blue light, reflects green."}),
+    mk({kind:"test", title:"Unit 4 Test: Cell Energy", subject:"Biology", due:d(5), topics:["Cellular respiration","Photosynthesis","ATP","Fermentation"], notes:"Respiration vs photosynthesis, where each stage happens, inputs/outputs, ATP yields, fermentation."}),
+    mk({kind:"hw", title:"Unit circle practice #1-20", subject:"Precalc", due:d(2), topics:["Unit circle","Radians","Reference angles"], notes:"Radians = degrees × π/180. Unit circle point = (cos θ, sin θ). sin(π/6)=1/2, cos(π/6)=√3/2, sin(π/4)=cos(π/4)=√2/2, sin(π/3)=√3/2, cos(π/3)=1/2. Reference angle = acute angle to the x-axis. All Students Take Calculus: all positive QI, sin QII, tan QIII, cos QIV."}),
+    mk({kind:"quiz", title:"Trig quiz", subject:"Precalc", due:d(4), topics:["Unit circle","Radians","Reference angles"], notes:"Unit circle values, degrees ↔ radians, signs by quadrant."}),
+    mk({kind:"project", title:"Essay draft: The Outsiders", subject:"English", due:d(6), topics:["Theme","Thesis","Evidence"], notes:"Thesis about a theme (class divide, loyalty, growing up). 3 body paragraphs with quotes + analysis."}),
+    mk({kind:"hw", title:"Vocab list 7", subject:"English", due:d(0), topics:["Vocabulary"], notes:"10 vocab words with definitions and sentences."}),
+  ];
+  S.quizzes = {}; save(); render(); toast("Sample week loaded");
+}
+
+/* ---------- events ---------- */
+document.addEventListener("click", ev => {
+  const el = ev.target.closest("[data-act],[data-tab],[data-pick],[data-rm],[data-rmfound]");
+  if (!el) { if (ev.target.id === "sheet") closeSheet(); return; }
+  if (el.dataset.tab) { S.tab = el.dataset.tab; render(); window.scrollTo(0,0); return; }
+  if (el.dataset.pick !== undefined) { const Q = S.quiz; if (!Q || Q.pick !== null) return; const q = Q.qs[Q.i]; Q.pick = +el.dataset.pick; if (Q.pick === q.answer) Q.score++; else Q.missed.push(q.topic || "review"); return quizSheet(); }
+  if (el.dataset.rm !== undefined) { S.draft = $("#paste") ? $("#paste").value : S.draft; S.photos.splice(+el.dataset.rm, 1); return addSheet(); }
+  if (el.dataset.rmfound !== undefined) { S.found.splice(+el.dataset.rmfound, 1); return S.found.length ? foundSheet() : closeSheet(); }
+  const row = el.closest("[data-id]"), id = el.dataset.id || (row && row.dataset.id), act = el.dataset.act;
+  switch (act) {
+    case "add": S.photos = []; S.draft = ""; addSheet(); break;
+    case "read": read(); break;
+    case "manual": S.found = [clean({kind:"hw", due: ymd(addDays(t0(),1))})]; foundSheet(); break;
+    case "close": closeSheet(); break;
+    case "toggle": { const i = S.items.find(x => x.id === id); if (i) { i.done = !i.done; save(); render(); if (i.done) toast("Done ✓"); } break; }
+    case "edit": editSheet(id); break;
+    case "quiz": startQuiz(id); break;
+    case "next": { const Q = S.quiz; Q.i++; Q.pick = null; if (Q.i >= Q.qs.length) { (S.quizzes[Q.id] ||= []).push({score:Q.score, total:Q.qs.length, missed:Q.missed, at:Date.now()}); S.quizzes[Q.id] = S.quizzes[Q.id].slice(-10); save(); render(); } quizSheet(); break; }
+    case "save-found": {
+      const ok = S.found.filter(i => i.title.trim());
+      if (!ok.length) return toast("Give it a title first");
+      ok.forEach(i => { i.title = i.title.trim(); i.subject = (i.subject||"").trim() || "Other"; S.items.push(i); });
+      save(); closeSheet(); S.found = null; S.photos = []; S.draft = ""; S.tab = "today"; render(); toast(`Saved. Backpack's got it 🎒`); break;
+    }
+    case "save-edit": { const e = S.editing, i = S.items.find(x => x.id === e.id); if (i) { Object.assign(i, {kind:e.kind, title:(e.title||"").trim()||i.title, subject:(e.subject||"").trim()||"Other", due:e.due||null, topics:e.topics||[], notes:e.notes||""}); save(); render(); } closeSheet(); toast("Saved"); break; }
+    case "delete": if (el.dataset.sure) { S.items = S.items.filter(x => x.id !== id); delete S.quizzes[id]; save(); render(); closeSheet(); toast("Deleted"); } else { el.dataset.sure = 1; el.textContent = "Tap again to delete"; } break;
+    case "show-done": S.showDone = !S.showDone; render(); break;
+    case "clear-done": S.items = S.items.filter(i => !i.done); save(); render(); break;
+    case "demo": demo(); break;
+    case "save-code": { const c = ($("#code").value||"").trim(); if (!c) return toast("Enter the code"); setCode(c); closeSheet(); const f = S.afterCode; S.afterCode = null; if (f) f(); else toast("Unlocked"); break; }
+    case "settings": openSheet(`<div class="sheet-head"><h2>Settings</h2><button class="link" data-act="close">Close</button></div>
+      <button class="btn light" data-act="demo-close">Load sample week</button>
+      <button class="btn light mt" data-act="reset" style="color:var(--red)">Erase everything</button>
+      <p class="muted center mt">Your homework is saved on this device only.</p>`); break;
+    case "change-code": askCode(null); break;
+    case "demo-close": closeSheet(); demo(); break;
+    case "reset": if (el.dataset.sure) { S.items = []; S.quizzes = {}; save(); closeSheet(); render(); toast("Fresh start"); } else { el.dataset.sure = 1; el.textContent = "Tap again to erase everything"; } break;
+  }
+});
+document.addEventListener("input", ev => {
+  const el = ev.target; if (!el.dataset || !el.dataset.f) return;
+  const tgt = el.dataset.k === "e" ? S.editing : S.found && S.found[+el.dataset.k]; if (!tgt) return;
+  const f = el.dataset.f;
+  if (f === "topics") tgt.topics = el.value.split(",").map(s => s.trim()).filter(Boolean).slice(0,8);
+  else tgt[f] = f === "due" ? (el.value || null) : el.value;
+});
+document.addEventListener("change", ev => { if (ev.target.tagName === "SELECT" || ev.target.type === "date") ev.target.dispatchEvent(new Event("input", {bubbles:true})); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); if (e.key === "Enter" && e.target.id === "code") document.querySelector("[data-act=save-code]").click(); });
+$("#file").addEventListener("change", e => {
+  S.draft = $("#paste") ? $("#paste").value : S.draft;
+  const add = [...e.target.files].filter(f => f.type.startsWith("image/")).slice(0, Math.max(0, 3 - S.photos.length));
+  if (e.target.files.length > add.length) toast("Up to 3 photos at a time");
+  S.photos.push(...add); e.target.value = ""; addSheet();
+});
+
+load(); render();
+})();
+</script>
+</body>
+</html>

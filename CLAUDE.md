@@ -3,7 +3,8 @@
 The real app is the SwiftUI iPhone app in Rilo/. The web demo (app*/ folders) is old; don't work on it unless a job says so.
 
 Hard rules, autopilot or not:
-- Never push to GitHub, never deploy, never run `vercel`.
+- Never push to GitHub, never deploy, never run `vercel`. Never push to main.
+  Exception: the nightly cloud bug-fix agent may push to branches named agent/... and open pull requests into main. It can't run xcodebuild in the cloud, so it must say the fix is untested, and Ethan builds and tests it in Xcode before merging.
 - Never touch signing, Team, bundle IDs, entitlements, capabilities, App Group names, or Info.plist principal classes. Those are set by hand in Xcode.
 - Real Screen Time (FamilyControls, `.individual`) is the default in every build. Demo Screen Time is DEBUG-only (demo panel toggle or `-demoscreentime`); never make it the default and never let it into Release (TestFlight / App Store) builds.
 - Don't edit Rilo.xcodeproj by hand. Files dropped in the existing folders get picked up automatically.
